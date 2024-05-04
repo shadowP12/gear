@@ -22,6 +22,10 @@ void AssetManager::save(Asset* asset)
 
     {
         std::string json_path = asset->get_asset_path() + ".json";
+        if (!DirAccess::dir_exists(Path::parent_path(json_path))) {
+            DirAccess::make_dir_recursive(Path::parent_path(json_path));
+        }
+
         std::shared_ptr<FileAccess> fa = std::shared_ptr<FileAccess>(FileAccess::open(json_path, FileAccess::WRITE));
         fa->store_string(str_buffer.GetString());
     }
@@ -29,6 +33,10 @@ void AssetManager::save(Asset* asset)
     if (!bin.empty())
     {
         std::string bin_path = asset->get_asset_path() + ".bin";
+        if (!DirAccess::dir_exists(Path::parent_path(bin_path))) {
+            DirAccess::make_dir_recursive(Path::parent_path(bin_path));
+        }
+
         std::shared_ptr<FileAccess> fa = std::shared_ptr<FileAccess>(FileAccess::open(bin_path, FileAccess::WRITE));
         fa->store_buffer(bin.data(), bin.size());
     }

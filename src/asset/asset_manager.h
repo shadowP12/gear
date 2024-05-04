@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <memory>
 #include <core/module.h>
+#include <core/path.h>
+#include <core/io/dir_access.h>
 #include <core/io/file_access.h>
 
 class AssetManager : public Module<AssetManager>
