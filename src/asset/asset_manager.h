@@ -2,6 +2,7 @@
 
 #include "asset.h"
 #include <string>
+#include <unordered_map>
 #include <memory>
 #include <core/module.h>
 #include <core/io/file_access.h>
@@ -9,13 +10,31 @@
 class AssetManager : public Module<AssetManager>
 {
 public:
-    AssetManager();
+    AssetManager() = default;
+    ~AssetManager() = default;
 
-    ~AssetManager();
+    void setup();
+
+    void clear();
+
+    template<class T>
+    T* create(const std::string& asset_path)
+    {
+        if (has_asset(asset_path))
+            return nullptr;
+
+        T* asset = new T(asset_path);
+        _asset_dict[asset_path] = asset;
+
+        return (T*)asset;
+    }
 
     template<class T>
     T* load(const std::string& asset_path)
     {
+        if (has_asset(asset_path))
+            return (T*)get_asset(asset_path);
+
         std::string json_path = asset_path + ".json";
         std::string bin_path = asset_path + ".bin";
 
@@ -44,11 +63,20 @@ public:
             fa->get_buffer(bin.data(), bin_size);
         }
 
-        T* asset = T(asset_path);
+        T* asset = create<T>(asset_path);
         asset->deserialize(dom.GetObject(), bin);
 
         return asset;
     }
 
     void save(Asset* asset);
+
+    bool exist_asset(const std::string& asset_path);
+
+    bool has_asset(const std::string& asset_path);
+
+    Asset* get_asset(const std::string& asset_path);
+
+private:
+    std::unordered_map<std::string, Asset*> _asset_dict;
 };

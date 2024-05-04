@@ -2,7 +2,8 @@
 #include "camera.h"
 #include "camera_controller.h"
 #include "renderer.h"
-
+#include "asset/asset_manager.h"
+#include "importer/gltf_importer.h"
 #include <core/path.h>
 #include <input/input_events.h>
 #include <rhi/ez_vulkan.h>
@@ -71,6 +72,8 @@ void Application::setup(const ApplicationSetting& setting)
     ez_create_swapchain(glfwGetWin32Window(_window_ptr), _swapchain);
     ez_create_query_pool(16, VK_QUERY_TYPE_TIMESTAMP, _timestamp_query_pool);
 
+    AssetManager::get()->setup();
+
     _main_camera = new Camera();
     _main_camera->set_aspect((float)setting.window_width / (float)setting.window_height);
     _main_camera->set_translation(glm::vec3(0.0f, -2.0f, 18.0f));
@@ -84,6 +87,8 @@ void Application::setup(const ApplicationSetting& setting)
 
 void Application::exit()
 {
+    AssetManager::get()->clear();
+
     delete _renderer;
     delete _main_camera;
     delete _camera_controller;

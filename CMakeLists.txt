@@ -8,6 +8,7 @@ add_definitions(-DPROJECT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.h" "src/*.cpp")
 add_executable(gear ${SOURCE_FILES})
+target_include_directories(gear PUBLIC "src")
 
 # cgltf
 add_library(cgltf INTERFACE)
