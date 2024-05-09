@@ -2,6 +2,7 @@
 
 #include <string>
 #include <core/serializable.h>
+#include <core/serialization.h>
 
 class Asset : public Serializable
 {

@@ -138,17 +138,16 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
 
             // Gen json
             rapidjson::Document doc;
-            doc.SetObject();
-            rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
-            rapidjson::Value json_uri;
-            json_uri.SetString(Path::filename(output_image_path).c_str(), allocator);
-            doc.AddMember("uri", json_uri, allocator);
-
-            // Gen bin
-            std::vector<uint8_t> bin;
+            rapidjson::StringBuffer str_buffer;
+            rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
+            writer.StartObject();
+            writer.Key("uri");
+            writer.String(Path::filename(output_image_path).c_str());
+            writer.EndObject();
+            doc.Parse(str_buffer.GetString());
 
             Texture2D* tex_2d = AssetManager::get()->create<Texture2D>(asset_path);
-            tex_2d->deserialize(doc.GetObject(), bin);
+            tex_2d->deserialize(doc.GetObject(), std::vector<uint8_t>());
             AssetManager::get()->save(tex_2d);
         }
 
@@ -255,47 +254,59 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
 
         // Gen json
         rapidjson::Document doc;
-        doc.SetObject();
-        rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
-        rapidjson::Value json_data_size;
-        json_data_size.SetInt(bin.size());
-        doc.AddMember("data_size", json_data_size, allocator);
+        rapidjson::StringBuffer str_buffer;
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
+        writer.StartObject();
+        writer.Key("data_size");
+        writer.Int(bin.size());
 
-        rapidjson::Value jaon_sub_meshes(rapidjson::kArrayType);
+        writer.Key("sub_meshes");
+        writer.StartArray();
         for (int j = 0; j < gltf_sub_meshes.size(); ++j)
         {
             GltfSubMesh& gltf_sub_mesh = gltf_sub_meshes[j];
-            rapidjson::Value json_sub_mesh(rapidjson::kObjectType);
-            json_sub_mesh.AddMember("total_size", gltf_sub_mesh.total_size, allocator);
-            json_sub_mesh.AddMember("total_offset", gltf_sub_mesh.total_offset, allocator);
-            json_sub_mesh.AddMember("vertex_count", gltf_sub_mesh.vertex_count, allocator);
-            json_sub_mesh.AddMember("vertex_size", gltf_sub_mesh.vertex_size, allocator);
-            json_sub_mesh.AddMember("position_size", gltf_sub_mesh.position_size, allocator);
-            json_sub_mesh.AddMember("position_offset", gltf_sub_mesh.position_offset, allocator);
-            json_sub_mesh.AddMember("normal_size", gltf_sub_mesh.normal_size, allocator);
-            json_sub_mesh.AddMember("normal_offset", gltf_sub_mesh.normal_offset, allocator);
-            json_sub_mesh.AddMember("tangent_size", gltf_sub_mesh.tangent_size, allocator);
-            json_sub_mesh.AddMember("tangent_offset", gltf_sub_mesh.tangent_offset, allocator);
-            json_sub_mesh.AddMember("uv_size", gltf_sub_mesh.uv_size, allocator);
-            json_sub_mesh.AddMember("uv_offset", gltf_sub_mesh.uv_offset, allocator);
-            json_sub_mesh.AddMember("index_count", gltf_sub_mesh.index_count, allocator);
-            json_sub_mesh.AddMember("index_size", gltf_sub_mesh.index_size, allocator);
-            json_sub_mesh.AddMember("index_offset", gltf_sub_mesh.index_offset, allocator);
-            json_sub_mesh.AddMember("using_16u", gltf_sub_mesh.using_16u_index, allocator);
-
-            rapidjson::Value json_maxp(rapidjson::kArrayType);
-            rapidjson::Value json_minp(rapidjson::kArrayType);
-            for (int k = 0; k < 3; ++k)
-            {
-                json_maxp.PushBack(gltf_sub_mesh.bounding_box.bb_max[k], allocator);
-                json_minp.PushBack(gltf_sub_mesh.bounding_box.bb_min[k], allocator);
-            }
-            json_sub_mesh.AddMember("maxp", json_maxp, allocator);
-            json_sub_mesh.AddMember("minp", json_minp, allocator);
-
-            jaon_sub_meshes.PushBack(json_sub_mesh, allocator);
+            writer.StartObject();
+            writer.Key("total_size");
+            writer.Int(gltf_sub_mesh.total_size);
+            writer.Key("total_offset");
+            writer.Int(gltf_sub_mesh.total_offset);
+            writer.Key("vertex_count");
+            writer.Int(gltf_sub_mesh.vertex_count);
+            writer.Key("vertex_size");
+            writer.Int(gltf_sub_mesh.vertex_size);
+            writer.Key("position_size");
+            writer.Int(gltf_sub_mesh.position_size);
+            writer.Key("position_offset");
+            writer.Int(gltf_sub_mesh.position_offset);
+            writer.Key("normal_size");
+            writer.Int(gltf_sub_mesh.normal_size);
+            writer.Key("normal_offset");
+            writer.Int(gltf_sub_mesh.normal_offset);
+            writer.Key("tangent_size");
+            writer.Int(gltf_sub_mesh.tangent_size);
+            writer.Key("tangent_offset");
+            writer.Int(gltf_sub_mesh.tangent_offset);
+            writer.Key("uv_size");
+            writer.Int(gltf_sub_mesh.uv_size);
+            writer.Key("uv_offset");
+            writer.Int(gltf_sub_mesh.uv_offset);
+            writer.Key("index_count");
+            writer.Int(gltf_sub_mesh.index_count);
+            writer.Key("index_size");
+            writer.Int(gltf_sub_mesh.index_size);
+            writer.Key("index_offset");
+            writer.Int(gltf_sub_mesh.index_offset);
+            writer.Key("using_16u");
+            writer.Bool(gltf_sub_mesh.using_16u_index);
+            writer.Key("maxp");
+            Serialization::w_vec3(writer, gltf_sub_mesh.bounding_box.bb_max);
+            writer.Key("minp");
+            Serialization::w_vec3(writer, gltf_sub_mesh.bounding_box.bb_min);
+            writer.EndObject();
         }
-        doc.AddMember("sub_meshes", jaon_sub_meshes, allocator);
+        writer.EndArray();
+        writer.EndObject();
+        doc.Parse(str_buffer.GetString());
 
         if (!AssetManager::get()->exist_asset(asset_path))
         {

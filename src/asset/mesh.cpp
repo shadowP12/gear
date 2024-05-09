@@ -69,18 +69,11 @@ void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, s
         }
 
         writer.Key("maxp");
-        writer.StartArray();
-        writer.Double(sub_mesh->bounding_box.bb_max[0]);
-        writer.Double(sub_mesh->bounding_box.bb_max[1]);
-        writer.Double(sub_mesh->bounding_box.bb_max[2]);
-        writer.EndArray();
+        Serialization::w_vec3(writer, sub_mesh->bounding_box.bb_max);
 
         writer.Key("minp");
-        writer.StartArray();
-        writer.Double(sub_mesh->bounding_box.bb_min[0]);
-        writer.Double(sub_mesh->bounding_box.bb_min[1]);
-        writer.Double(sub_mesh->bounding_box.bb_min[2]);
-        writer.EndArray();
+        Serialization::w_vec3(writer, sub_mesh->bounding_box.bb_min);
+
         writer.EndObject();
     }
     writer.EndArray();
@@ -119,10 +112,8 @@ void Mesh::deserialize(const rapidjson::Value& reader, const std::vector<uint8_t
             sub_mesh->index_type = VK_INDEX_TYPE_UINT32;
         }
 
-        const rapidjson::Value& json_maxp = reader["sub_meshes"][i]["maxp"].GetArray();
-        const rapidjson::Value& json_minp = reader["sub_meshes"][i]["minp"].GetArray();
-        glm::vec3 maxp = glm::vec3(json_maxp[0].GetDouble(), json_maxp[1].GetDouble(), json_maxp[2].GetDouble());
-        glm::vec3 minp = glm::vec3(json_minp[0].GetDouble(), json_minp[1].GetDouble(), json_minp[2].GetDouble());
+        glm::vec3 maxp = Serialization::r_vec3(reader["sub_meshes"][i]["maxp"]);
+        glm::vec3 minp = Serialization::r_vec3(reader["sub_meshes"][i]["minp"]);;
         sub_mesh->bounding_box.merge(maxp);
         sub_mesh->bounding_box.merge(minp);
 
