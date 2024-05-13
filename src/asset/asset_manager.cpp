@@ -14,7 +14,7 @@ void AssetManager::clear()
 
 void AssetManager::save(Asset* asset)
 {
-    std::vector<uint8_t> bin;
+    Serialization::BinaryStream bin;
     rapidjson::StringBuffer str_buffer;
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
 
@@ -30,7 +30,7 @@ void AssetManager::save(Asset* asset)
         fa->store_string(str_buffer.GetString());
     }
 
-    if (!bin.empty())
+    if (bin.get_size() > 0)
     {
         std::string bin_path = asset->get_asset_path() + ".bin";
         if (!DirAccess::dir_exists(Path::parent_path(bin_path))) {
@@ -38,7 +38,7 @@ void AssetManager::save(Asset* asset)
         }
 
         std::shared_ptr<FileAccess> fa = std::shared_ptr<FileAccess>(FileAccess::open(bin_path, FileAccess::WRITE));
-        fa->store_buffer(bin.data(), bin.size());
+        fa->store_buffer(bin.get_data(), bin.get_size());
     }
 }
 

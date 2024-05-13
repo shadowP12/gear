@@ -14,7 +14,7 @@ Mesh::~Mesh()
     _sub_meshes.clear();
 }
 
-void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, std::vector<uint8_t>& bin)
+void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
 {
     writer.StartObject();
     writer.Key("data_size");
@@ -79,41 +79,42 @@ void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, s
     writer.EndArray();
     writer.EndObject();
 
-    bin.insert(bin.end(), _data.data(), _data.data() + _data.size());
+    bin.write(_data.data(), _data.size());
 }
 
-void Mesh::deserialize(const rapidjson::Value& reader, const std::vector<uint8_t>& bin)
+void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
 {
-     uint32_t data_size = reader["data_size"].GetInt();
-     _data.insert(_data.end(), bin.data(), bin.data() + data_size);
+     uint32_t data_size = value["data_size"].GetInt();
+     uint8_t* data = bin.read(data_size);
+     _data.insert(_data.end(), data, data + data_size);
 
-     for(int i = 0; i < reader["sub_meshes"].Size(); i++)
+     for(int i = 0; i < value["sub_meshes"].Size(); i++)
      {
         SubMesh* sub_mesh = new SubMesh();
-        sub_mesh->total_size = reader["sub_meshes"][i]["total_size"].GetInt();
-        sub_mesh->total_offset = reader["sub_meshes"][i]["total_offset"].GetInt();
-        sub_mesh->vertex_count = reader["sub_meshes"][i]["vertex_count"].GetInt();
-        sub_mesh->vertex_size = reader["sub_meshes"][i]["vertex_size"].GetInt();
-        sub_mesh->position_size = reader["sub_meshes"][i]["position_size"].GetInt();
-        sub_mesh->position_offset = reader["sub_meshes"][i]["position_offset"].GetInt();
-        sub_mesh->normal_size = reader["sub_meshes"][i]["normal_size"].GetInt();
-        sub_mesh->normal_offset = reader["sub_meshes"][i]["normal_offset"].GetInt();
-        sub_mesh->tangent_size = reader["sub_meshes"][i]["tangent_size"].GetInt();
-        sub_mesh->tangent_offset = reader["sub_meshes"][i]["tangent_offset"].GetInt();
-        sub_mesh->uv_size = reader["sub_meshes"][i]["uv_size"].GetInt();
-        sub_mesh->uv_offset = reader["sub_meshes"][i]["uv_offset"].GetInt();
-        sub_mesh->index_count = reader["sub_meshes"][i]["index_count"].GetInt();
-        sub_mesh->index_size = reader["sub_meshes"][i]["index_size"].GetInt();
-        sub_mesh->index_offset = reader["sub_meshes"][i]["index_offset"].GetInt();
+        sub_mesh->total_size = value["sub_meshes"][i]["total_size"].GetInt();
+        sub_mesh->total_offset = value["sub_meshes"][i]["total_offset"].GetInt();
+        sub_mesh->vertex_count = value["sub_meshes"][i]["vertex_count"].GetInt();
+        sub_mesh->vertex_size = value["sub_meshes"][i]["vertex_size"].GetInt();
+        sub_mesh->position_size = value["sub_meshes"][i]["position_size"].GetInt();
+        sub_mesh->position_offset = value["sub_meshes"][i]["position_offset"].GetInt();
+        sub_mesh->normal_size = value["sub_meshes"][i]["normal_size"].GetInt();
+        sub_mesh->normal_offset = value["sub_meshes"][i]["normal_offset"].GetInt();
+        sub_mesh->tangent_size = value["sub_meshes"][i]["tangent_size"].GetInt();
+        sub_mesh->tangent_offset = value["sub_meshes"][i]["tangent_offset"].GetInt();
+        sub_mesh->uv_size = value["sub_meshes"][i]["uv_size"].GetInt();
+        sub_mesh->uv_offset = value["sub_meshes"][i]["uv_offset"].GetInt();
+        sub_mesh->index_count = value["sub_meshes"][i]["index_count"].GetInt();
+        sub_mesh->index_size = value["sub_meshes"][i]["index_size"].GetInt();
+        sub_mesh->index_offset = value["sub_meshes"][i]["index_offset"].GetInt();
 
-        if (reader["sub_meshes"][i]["using_16u"].GetBool()) {
+        if (value["sub_meshes"][i]["using_16u"].GetBool()) {
             sub_mesh->index_type = VK_INDEX_TYPE_UINT16;
         } else {
             sub_mesh->index_type = VK_INDEX_TYPE_UINT32;
         }
 
-        glm::vec3 maxp = Serialization::r_vec3(reader["sub_meshes"][i]["maxp"]);
-        glm::vec3 minp = Serialization::r_vec3(reader["sub_meshes"][i]["minp"]);;
+        glm::vec3 maxp = Serialization::r_vec3(value["sub_meshes"][i]["maxp"]);
+        glm::vec3 minp = Serialization::r_vec3(value["sub_meshes"][i]["minp"]);;
         sub_mesh->bounding_box.merge(maxp);
         sub_mesh->bounding_box.merge(minp);
 

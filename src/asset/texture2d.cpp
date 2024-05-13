@@ -9,7 +9,7 @@ Texture2D::~Texture2D()
 {
 }
 
-void Texture2D::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, std::vector<uint8_t>& bin)
+void Texture2D::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
 {
     writer.StartObject();
     writer.Key("uri");
@@ -17,7 +17,7 @@ void Texture2D::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writ
     writer.EndObject();
 }
 
-void Texture2D::deserialize(const rapidjson::Value& reader, const std::vector<uint8_t>& bin)
+void Texture2D::deserialize(const rapidjson::Value& value, Serialization::BinaryStream& bin)
 {
-    _uri = reader["uri"].GetString();
+    _uri = value["uri"].GetString();
 }

@@ -55,14 +55,14 @@ public:
                 return nullptr;
         }
 
-        std::vector<uint8_t> bin;
+        Serialization::BinaryStream bin;
         if (FileAccess::exist(bin_path))
         {
             std::shared_ptr<FileAccess> fa = std::shared_ptr<FileAccess>(FileAccess::open(bin_path, FileAccess::READ));
             uint32_t bin_size;
             bin_size = fa->get_length();
             bin.resize(bin_size);
-            fa->get_buffer(bin.data(), bin_size);
+            fa->get_buffer(bin.get_data(), bin_size);
         }
 
         T* asset = create<T>(asset_path);

@@ -146,8 +146,9 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             writer.EndObject();
             doc.Parse(str_buffer.GetString());
 
+            Serialization::BinaryStream bin;
             Texture2D* tex_2d = AssetManager::get()->create<Texture2D>(asset_path);
-            tex_2d->deserialize(doc.GetObject(), std::vector<uint8_t>());
+            tex_2d->deserialize(doc.GetObject(), bin);
             AssetManager::get()->save(tex_2d);
         }
 
@@ -168,14 +169,14 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
         cgltf_mesh* cmesh = &data->meshes[i];
         std::string asset_path = output_path + "/meshes/" + cmesh->name;
 
-        std::vector<uint8_t> bin;
+        Serialization::BinaryStream bin;
         std::vector<GltfSubMesh> gltf_sub_meshes;
         for (int i = 0; i < cmesh->primitives_count; i++)
         {
             cgltf_primitive* cprimitive = &cmesh->primitives[i];
             GltfSubMesh gltf_sub_mesh;
             gltf_sub_mesh.total_size = 0;
-            gltf_sub_mesh.total_offset = bin.size();
+            gltf_sub_mesh.total_offset = bin.get_size();
 
             cgltf_attribute* position_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_position);
             cgltf_accessor* position_accessor = position_attribute->data;
@@ -192,9 +193,9 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             uint8_t* position_data = (uint8_t*)(position_view->buffer->data) + position_accessor->offset + position_view->offset;
             gltf_sub_mesh.vertex_size += 3 * sizeof(float);
             gltf_sub_mesh.position_size = vertex_count * 3 * sizeof(float);
-            gltf_sub_mesh.position_offset = bin.size();
+            gltf_sub_mesh.position_offset = bin.get_size();
             gltf_sub_mesh.total_size += gltf_sub_mesh.position_size;
-            bin.insert(bin.end(), position_data, position_data + vertex_count * 3 * sizeof(float));
+            bin.write(position_data, gltf_sub_mesh.position_size);
 
             cgltf_attribute* normal_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_normal);
             cgltf_accessor* normal_accessor = normal_attribute->data;
@@ -202,9 +203,9 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             uint8_t* normal_data = (uint8_t*)(normal_view->buffer->data) + normal_accessor->offset + normal_view->offset;
             gltf_sub_mesh.vertex_size += 3 * sizeof(float);
             gltf_sub_mesh.normal_size = vertex_count * 3 * sizeof(float);
-            gltf_sub_mesh.normal_offset = bin.size();
+            gltf_sub_mesh.normal_offset = bin.get_size();
             gltf_sub_mesh.total_size += gltf_sub_mesh.normal_size;
-            bin.insert(bin.end(), normal_data, normal_data + vertex_count * 3 * sizeof(float));
+            bin.write(normal_data, gltf_sub_mesh.normal_size);
 
             cgltf_attribute* tangent_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_tangent);
             cgltf_accessor* tangent_accessor = tangent_attribute->data;
@@ -212,9 +213,9 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             uint8_t* tangent_data = (uint8_t*)(tangent_view->buffer->data) + tangent_accessor->offset + tangent_view->offset;
             gltf_sub_mesh.vertex_size += 3 * sizeof(float);
             gltf_sub_mesh.tangent_size = vertex_count * 3 * sizeof(float);
-            gltf_sub_mesh.tangent_offset = bin.size();
+            gltf_sub_mesh.tangent_offset = bin.get_size();
             gltf_sub_mesh.total_size += gltf_sub_mesh.tangent_size;
-            bin.insert(bin.end(), tangent_data, tangent_data + vertex_count * 3 * sizeof(float));
+            bin.write(tangent_data, gltf_sub_mesh.tangent_size);
 
             cgltf_attribute* texcoord_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_texcoord);
             cgltf_accessor* texcoord_accessor = texcoord_attribute->data;
@@ -222,9 +223,9 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             uint8_t* uv_data = (uint8_t*)(texcoord_view->buffer->data) + texcoord_accessor->offset + texcoord_view->offset;
             gltf_sub_mesh.vertex_size += 2 * sizeof(float);
             gltf_sub_mesh.uv_size = vertex_count * 2 * sizeof(float);
-            gltf_sub_mesh.uv_offset = bin.size();
+            gltf_sub_mesh.uv_offset = bin.get_size();
             gltf_sub_mesh.total_size += gltf_sub_mesh.uv_size;
-            bin.insert(bin.end(), uv_data, uv_data + vertex_count * 2 * sizeof(float));
+            bin.write(uv_data, gltf_sub_mesh.uv_size);
 
             cgltf_accessor* index_accessor = cprimitive->indices;
             cgltf_buffer_view* index_buffer_view = index_accessor->buffer_view;
@@ -236,17 +237,17 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             {
                 gltf_sub_mesh.using_16u_index = true;
                 gltf_sub_mesh.index_size = index_count * sizeof(uint16_t);
-                gltf_sub_mesh.index_offset = bin.size();
+                gltf_sub_mesh.index_offset = bin.get_size();
                 gltf_sub_mesh.total_size += gltf_sub_mesh.index_size;
-                bin.insert(bin.end(), index_data, index_data + index_count * sizeof(uint16_t));
+                bin.write(index_data, gltf_sub_mesh.index_size);
             }
             else
             {
                 gltf_sub_mesh.using_16u_index = false;
                 gltf_sub_mesh.index_size = index_count * sizeof(uint32_t);
-                gltf_sub_mesh.index_offset = bin.size();
+                gltf_sub_mesh.index_offset = bin.get_size();
                 gltf_sub_mesh.total_size += gltf_sub_mesh.index_size;
-                bin.insert(bin.end(), index_data, index_data + index_count * sizeof(uint32_t));
+                bin.write(index_data, gltf_sub_mesh.index_size);
             }
 
             gltf_sub_meshes.push_back(gltf_sub_mesh);
@@ -258,7 +259,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
         rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
         writer.StartObject();
         writer.Key("data_size");
-        writer.Int(bin.size());
+        writer.Int(bin.get_size());
 
         writer.Key("sub_meshes");
         writer.StartArray();

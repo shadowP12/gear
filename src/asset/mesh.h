@@ -32,8 +32,8 @@ public:
 
     virtual ~Mesh();
 
-    virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, std::vector<uint8_t>& bin);
-    virtual void deserialize(const rapidjson::Value& reader, const std::vector<uint8_t>& bin);
+    virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+    virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
     std::vector<uint8_t>& get_data() {return _data;}
 

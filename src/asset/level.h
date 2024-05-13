@@ -2,16 +2,18 @@
 
 #include "asset.h"
 
-class Texture2D : public Asset
+class Entity;
+
+class Level : public Asset
 {
 public:
-    Texture2D(const std::string& asset_path = "");
+    Level(const std::string& asset_path = "");
 
-    virtual ~Texture2D();
+    virtual ~Level();
 
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
     virtual void deserialize(const rapidjson::Value& value, Serialization::BinaryStream& bin);
 
-private:
-    std::string _uri;
+protected:
+    std::vector<Entity*> _entities;
 };
