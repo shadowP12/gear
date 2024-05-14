@@ -1,4 +1,6 @@
 #include "mesh.h"
+#include "material.h"
+#include "asset_manager.h"
 
 Mesh::Mesh(const std::string& asset_path)
     : Asset(asset_path)
@@ -74,6 +76,9 @@ void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, S
         writer.Key("minp");
         Serialization::w_vec3(writer, sub_mesh->bounding_box.bb_min);
 
+        writer.Key("material");
+        writer.String(sub_mesh->material->get_asset_path().c_str());
+
         writer.EndObject();
     }
     writer.EndArray();
@@ -114,9 +119,11 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
         }
 
         glm::vec3 maxp = Serialization::r_vec3(value["sub_meshes"][i]["maxp"]);
-        glm::vec3 minp = Serialization::r_vec3(value["sub_meshes"][i]["minp"]);;
+        glm::vec3 minp = Serialization::r_vec3(value["sub_meshes"][i]["minp"]);
         sub_mesh->bounding_box.merge(maxp);
         sub_mesh->bounding_box.merge(minp);
+
+        sub_mesh->material = AssetManager::get()->load<Material>(value["sub_meshes"][i]["material"].GetString());
 
         _sub_meshes.push_back(sub_mesh);
      }

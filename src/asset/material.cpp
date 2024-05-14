@@ -21,6 +21,9 @@ void Material::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& write
         writer.Key("base_color_texture");
         writer.String(_base_color_texture->get_asset_path().c_str());
     }
+
+    writer.Key("alpha_mode");
+    writer.Int((int)_alpha_mode);
     writer.EndObject();
 }
 
@@ -31,6 +34,7 @@ void Material::deserialize(const rapidjson::Value& value, Serialization::BinaryS
     {
         _base_color_texture = AssetManager::get()->load<Texture2D>(value["base_color_texture"].GetString());
     }
+    _alpha_mode = (MaterialAlphaMode)value["alpha_mode"].GetInt();
 }
 
 void Material::set_base_color(glm::vec4 base_color) {
@@ -47,4 +51,12 @@ void Material::set_base_color_texture(Texture2D* base_color_texture) {
 
 Texture2D* Material::get_base_color_texture() {
     return _base_color_texture;
+}
+
+void Material::set_alpha_mode(MaterialAlphaMode alpha_mode) {
+    _alpha_mode = alpha_mode;
+}
+
+MaterialAlphaMode Material::get_alpha_mode() {
+    return _alpha_mode;
 }

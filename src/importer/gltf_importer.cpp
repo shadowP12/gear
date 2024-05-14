@@ -10,6 +10,7 @@
 #include <map>
 #include <string>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -35,6 +36,7 @@ struct GltfSubMesh
     uint32_t index_offset;
     bool using_16u_index;
     BoundingBox bounding_box;
+    std::string material_path;
 };
 
 glm::mat4 get_local_matrix(cgltf_node* node)
@@ -159,7 +161,63 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
     std::map<cgltf_material*, std::string> material_helper;
     for (int i = 0; i < data->materials_count; ++i)
     {
-        //TODO
+        cgltf_material* cmaterial = &data->materials[i];
+        std::string asset_path = output_path + "/materials/" + cmaterial->name;
+
+        if (!AssetManager::get()->exist_asset(asset_path))
+        {
+            rapidjson::Document doc;
+            rapidjson::StringBuffer str_buffer;
+            rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
+            writer.StartObject();
+
+            writer.Key("alpha_mode");
+            if (cmaterial->alpha_mode == cgltf_alpha_mode_opaque) {
+                writer.Int(0);
+            } else if (cmaterial->alpha_mode == cgltf_alpha_mode_mask) {
+                writer.Int(1);
+            } else {
+                writer.Int(2);
+            }
+
+            if (cmaterial->has_pbr_metallic_roughness)
+            {
+                glm::vec4 base_color = glm::make_vec4(cmaterial->pbr_metallic_roughness.base_color_factor);
+                writer.Key("base_color");
+                Serialization::w_vec4(writer, base_color);
+
+                if(cmaterial->pbr_metallic_roughness.base_color_texture.texture)
+                {
+                    cgltf_image* cimage = cmaterial->pbr_metallic_roughness.base_color_texture.texture->image;
+                    cgltf_sampler* csampler = cmaterial->pbr_metallic_roughness.base_color_texture.texture->sampler;
+                    writer.Key("base_color_texture");
+                    writer.String(image_helper[cimage].c_str());
+                }
+            }
+            else
+            {
+                glm::vec4 base_color = glm::make_vec4(cmaterial->pbr_specular_glossiness.diffuse_factor);
+                writer.Key("base_color");
+                Serialization::w_vec4(writer, base_color);
+
+                if(cmaterial->pbr_specular_glossiness.diffuse_texture.texture)
+                {
+                    cgltf_image* cimage = cmaterial->pbr_specular_glossiness.diffuse_texture.texture->image;
+                    cgltf_sampler* csampler = cmaterial->pbr_specular_glossiness.diffuse_texture.texture->sampler;
+                    writer.Key("base_color_texture");
+                    writer.String(image_helper[cimage].c_str());
+                }
+            }
+
+            writer.EndObject();
+            doc.Parse(str_buffer.GetString());
+
+            Serialization::BinaryStream bin;
+            Material* mat = AssetManager::get()->create<Material>(asset_path);
+            mat->deserialize(doc.GetObject(), bin);
+            AssetManager::get()->save(mat);
+        }
+        material_helper[cmaterial] = asset_path;
     }
 
     // Load gltf mesh
@@ -174,7 +232,9 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
         for (int i = 0; i < cmesh->primitives_count; i++)
         {
             cgltf_primitive* cprimitive = &cmesh->primitives[i];
+            cgltf_material* cmaterial = cprimitive->material;
             GltfSubMesh gltf_sub_mesh;
+            gltf_sub_mesh.material_path = material_helper[cmaterial];
             gltf_sub_mesh.total_size = 0;
             gltf_sub_mesh.total_offset = bin.get_size();
 
@@ -303,6 +363,8 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             Serialization::w_vec3(writer, gltf_sub_mesh.bounding_box.bb_max);
             writer.Key("minp");
             Serialization::w_vec3(writer, gltf_sub_mesh.bounding_box.bb_min);
+            writer.Key("material");
+            writer.String(gltf_sub_mesh.material_path.c_str());
             writer.EndObject();
         }
         writer.EndArray();

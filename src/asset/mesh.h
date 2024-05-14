@@ -4,6 +4,8 @@
 #include <rhi/ez_vulkan.h>
 #include <math/bounding_box.h>
 
+class Material;
+
 struct SubMesh
 {
     uint32_t total_size;
@@ -23,6 +25,7 @@ struct SubMesh
     uint32_t index_offset;
     VkIndexType index_type;
     BoundingBox bounding_box;
+    Material* material = nullptr;
 };
 
 class Mesh : public Asset
