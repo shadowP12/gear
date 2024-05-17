@@ -1,3 +1,6 @@
 [submodule "extern/spark"]
 	path = extern/spark
 	url = https://github.com/shadowP12/spark.git
+[submodule "content/gear_asset"]
+	path = content/gear_asset
+	url = https://github.com/shadowP12/gear_asset.git
