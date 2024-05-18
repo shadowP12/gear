@@ -125,8 +125,8 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
     {
         cgltf_image* cimage = &data->images[i];
         std::string input_image_path = Path::parent_path(file_path) + "/" + cimage->uri;
-        std::string output_image_path = output_path + "/textures/" + Path::filename(cimage->uri);
-        std::string asset_path = output_image_path;
+        std::string asset_path = "asset://" + output_path + "/textures/" + Path::filename(cimage->uri);
+        std::string output_image_path = Path::fix_path(asset_path);
 
         if (!AssetManager::get()->exist_asset(asset_path))
         {
@@ -162,7 +162,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
     for (int i = 0; i < data->materials_count; ++i)
     {
         cgltf_material* cmaterial = &data->materials[i];
-        std::string asset_path = output_path + "/materials/" + cmaterial->name;
+        std::string asset_path = "asset://" + output_path + "/materials/" + cmaterial->name;
 
         if (!AssetManager::get()->exist_asset(asset_path))
         {
@@ -225,7 +225,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
     for (int i = 0; i < data->meshes_count; ++i)
     {
         cgltf_mesh* cmesh = &data->meshes[i];
-        std::string asset_path = output_path + "/meshes/" + cmesh->name;
+        std::string asset_path = "asset://" + output_path + "/meshes/" + cmesh->name;
 
         Serialization::BinaryStream bin;
         std::vector<GltfSubMesh> gltf_sub_meshes;

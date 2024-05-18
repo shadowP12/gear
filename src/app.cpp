@@ -56,6 +56,7 @@ static void mouse_scroll_callback(GLFWwindow* window, double offset_x, double of
 void Application::setup(const ApplicationSetting& setting)
 {
     Path::register_protocol("content", std::string(PROJECT_DIR) + "/content/");
+    Path::register_protocol("asset", std::string(PROJECT_DIR) + "/content/gear_asset/");
     Path::register_protocol("shader", std::string(PROJECT_DIR) + "/content/shader/");
 
     glfwInit();

@@ -21,7 +21,7 @@ void AssetManager::save(Asset* asset)
     asset->serialize(writer, bin);
 
     {
-        std::string json_path = asset->get_asset_path() + ".json";
+        std::string json_path = Path::fix_path(asset->get_asset_path() + ".json");
         if (!DirAccess::dir_exists(Path::parent_path(json_path))) {
             DirAccess::make_dir_recursive(Path::parent_path(json_path));
         }
@@ -32,7 +32,7 @@ void AssetManager::save(Asset* asset)
 
     if (bin.get_size() > 0)
     {
-        std::string bin_path = asset->get_asset_path() + ".bin";
+        std::string bin_path = Path::fix_path(asset->get_asset_path() + ".bin");
         if (!DirAccess::dir_exists(Path::parent_path(bin_path))) {
             DirAccess::make_dir_recursive(Path::parent_path(bin_path));
         }

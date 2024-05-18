@@ -37,8 +37,8 @@ public:
         if (has_asset(asset_path))
             return (T*)get_asset(asset_path);
 
-        std::string json_path = asset_path + ".json";
-        std::string bin_path = asset_path + ".bin";
+        std::string json_path = Path::fix_path(asset_path + ".json");
+        std::string bin_path = Path::fix_path(asset_path + ".bin");
 
         if (!FileAccess::exist(json_path))
             return nullptr;
