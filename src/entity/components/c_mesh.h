@@ -3,6 +3,7 @@
 #include "entity_component.h"
 
 class Entity;
+class Mesh;
 class CMesh : public EntityComponent
 {
 public:
@@ -16,5 +17,10 @@ public:
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
     virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
+    void set_mesh(Mesh* mesh);
+
+    Mesh* get_mesh();
+
 private:
+    Mesh* _mesh;
 };

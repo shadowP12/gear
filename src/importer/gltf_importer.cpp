@@ -3,6 +3,7 @@
 #include "asset/texture2d.h"
 #include "asset/material.h"
 #include "asset/mesh.h"
+#include "asset/level.h"
 #include "asset/asset_manager.h"
 #include <core/path.h>
 #include <core/io/dir_access.h>
@@ -37,6 +38,18 @@ struct GltfSubMesh
     bool using_16u_index;
     BoundingBox bounding_box;
     std::string material_path;
+};
+
+struct GltfNode
+{
+    std::string name;
+    glm::vec3 translation;
+    glm::vec3 scale;
+    glm::vec3 euler;
+    bool has_parent;
+    cgltf_node* parent_node;
+    bool has_mesh;
+    std::string mesh_path;
 };
 
 glm::mat4 get_local_matrix(cgltf_node* node)
@@ -383,7 +396,117 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
 
     // Load level
     {
-        //TODO
+        std::vector<GltfNode> gltf_nodes;
+        gltf_nodes.resize(data->nodes_count);
+        std::map<cgltf_node*, int> node_helper;
+        for (size_t i = 0; i < data->nodes_count; ++i)
+        {
+            cgltf_node* cnode = &data->nodes[i];
+            node_helper[cnode] = i;
+
+            GltfNode gltf_node;
+            gltf_node.name = cnode->name;
+            gltf_node.has_parent = cnode->parent != nullptr;
+            gltf_node.parent_node = cnode->parent;
+            gltf_node.has_mesh = cnode->mesh != nullptr;
+            if (gltf_node.has_mesh)
+            {
+                gltf_node.mesh_path = mesh_helper[cnode->mesh];
+            }
+
+            glm::vec3 translation = glm::vec3(0.0f);
+            if (cnode->has_translation)
+            {
+                translation.x = cnode->translation[0];
+                translation.y = cnode->translation[1];
+                translation.z = cnode->translation[2];
+            }
+
+            glm::quat rotation = glm::quat(1, 0, 0, 0);
+            if (cnode->has_rotation)
+            {
+                rotation.x = cnode->rotation[0];
+                rotation.y = cnode->rotation[1];
+                rotation.z = cnode->rotation[2];
+                rotation.w = cnode->rotation[3];
+            }
+
+            glm::vec3 scale = glm::vec3(1.0f);
+            if (cnode->has_scale)
+            {
+                scale.x = cnode->scale[0];
+                scale.y = cnode->scale[1];
+                scale.z = cnode->scale[2];
+            }
+            glm::vec3 euler = glm::eulerAngles(rotation) * 3.14159f / 180.f;
+
+            gltf_node.translation = translation;
+            gltf_node.scale = scale;
+            gltf_node.euler = euler;
+            gltf_nodes.push_back(gltf_node);
+        }
+
+        rapidjson::Document doc;
+        rapidjson::StringBuffer str_buffer;
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
+        writer.StartObject();
+        writer.Key("hierarchy");
+        writer.StartArray();
+        for (size_t i = 0; i < gltf_nodes.size(); ++i)
+        {
+            if (gltf_nodes[i].has_parent)
+                writer.Int(node_helper[gltf_nodes[i].parent_node]);
+            else
+                writer.Int(-1);
+        }
+        writer.EndArray();
+
+        writer.Key("entities");
+        writer.StartArray();
+        for (size_t i = 0; i < gltf_nodes.size(); ++i)
+        {
+            GltfNode& gltf_node = gltf_nodes[i];
+            writer.StartObject();
+            writer.Key("name");
+            writer.String(gltf_node.name.c_str());
+            writer.Key("components");
+            writer.StartArray();
+
+            writer.StartObject();
+            writer.Key("class_name");
+            writer.String("CTransform");
+            writer.Key("translation");
+            Serialization::w_vec3(writer, gltf_node.translation);
+            writer.Key("scale");
+            Serialization::w_vec3(writer, gltf_node.scale);
+            writer.Key("euler");
+            Serialization::w_vec3(writer, gltf_node.euler);
+            writer.EndObject();
+
+            if (gltf_node.has_mesh)
+            {
+                writer.StartObject();
+                writer.Key("class_name");
+                writer.String("CMesh");
+                writer.Key("mesh");
+                writer.String(gltf_node.mesh_path.c_str());
+                writer.EndObject();
+            }
+            writer.EndArray();
+            writer.EndObject();
+        }
+        writer.EndArray();
+        writer.EndObject();
+        doc.Parse(str_buffer.GetString());
+
+        std::string asset_path = "asset://" + output_path + "/" + data->scene->name;
+        if (!AssetManager::get()->exist_asset(asset_path))
+        {
+            Serialization::BinaryStream bin;
+            Level* level = AssetManager::get()->create<Level>(asset_path);
+            level->deserialize(doc.GetObject(), bin);
+            AssetManager::get()->save(level);
+        }
     }
 
     cgltf_free(data);
