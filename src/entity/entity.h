@@ -13,6 +13,10 @@ public:
 
     std::string get_name();
 
+    void set_id(int id);
+
+    int get_id();
+
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
     virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
@@ -68,6 +72,7 @@ public:
     std::vector<EntityComponent*>& get_components() { return _components; }
 
 protected:
+    int _id = -1;
     std::string _name;
     std::vector<EntityComponent*> _components;
 };

@@ -4,7 +4,7 @@ void AssetManager::setup()
 {
 }
 
-void AssetManager::clear()
+void AssetManager::finish()
 {
     for (auto& iter : _asset_dict) {
         delete iter.second;

@@ -21,15 +21,10 @@ void Level::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, 
 {
     std::vector<int> hierarchy;
     hierarchy.resize(_entities.size());
-    std::map<Entity*, int> entity_helper;
 
     writer.StartObject();
     writer.Key("entities");
     writer.StartArray();
-    for (int i = 0; i < _entities.size(); ++i)
-    {
-        entity_helper[_entities[i]] = i;
-    }
 
     for (int i = 0; i < _entities.size(); ++i)
     {
@@ -37,9 +32,9 @@ void Level::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, 
         if (_entities[i]->has_component<CTransform>())
         {
             Entity* parent = _entities[i]->get_component<CTransform>()->get_parent();
-            if (parent)
+            if (parent && parent->get_id() >= 0)
             {
-                hierarchy[i] = entity_helper[parent];
+                hierarchy[i] = parent->get_id();
             }
         }
         _entities[i]->serialize(writer, bin);
@@ -61,6 +56,7 @@ void Level::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bi
     {
         rapidjson::Value& entity_value = value["entities"][i];
         Entity* entity = new Entity();
+        entity->set_id(i);
         entity->deserialize(entity_value, bin);
         _entities.push_back(entity);
     }

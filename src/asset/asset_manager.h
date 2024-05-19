@@ -17,7 +17,7 @@ public:
 
     void setup();
 
-    void clear();
+    void finish();
 
     template<class T>
     T* create(const std::string& asset_path)

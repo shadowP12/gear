@@ -50,3 +50,11 @@ void Entity::set_name(const std::string& name) {
 std::string Entity::get_name() {
     return _name;
 }
+
+void Entity::set_id(int id) {
+    _id = id;
+}
+
+int Entity::get_id() {
+    return _id;
+}

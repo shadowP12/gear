@@ -84,11 +84,14 @@ void Application::setup(const ApplicationSetting& setting)
 
     _renderer = new Renderer();
     _renderer->set_camera(_main_camera);
+
+    // Test importer
+    GltfImporter::get()->import_asset("F:/DevelopProjects/GearEngine/Editor/BuiltinResources/GltfFiles/mech_drone/scene.gltf", "1");
 }
 
 void Application::exit()
 {
-    AssetManager::get()->clear();
+    AssetManager::get()->finish();
 
     delete _renderer;
     delete _main_camera;
