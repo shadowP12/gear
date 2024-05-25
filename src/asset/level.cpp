@@ -109,7 +109,7 @@ void Level::tick(float dt)
     {
         if (!_entities[i])
         {
-
+            _entities[i]->dirty_notify();
         }
     }
     _dirty_list.clear();
