@@ -1,7 +1,4 @@
 #include "app.h"
-#include "camera.h"
-#include "camera_controller.h"
-#include "renderer.h"
 #include "asset/asset_manager.h"
 #include "importer/gltf_importer.h"
 #include <core/path.h>
@@ -74,19 +71,6 @@ void Application::setup(const ApplicationSetting& setting)
     ez_create_query_pool(16, VK_QUERY_TYPE_TIMESTAMP, _timestamp_query_pool);
 
     AssetManager::get()->setup();
-
-    _main_camera = new Camera();
-    _main_camera->set_aspect((float)setting.window_width / (float)setting.window_height);
-    _main_camera->set_translation(glm::vec3(0.0f, -2.0f, 18.0f));
-    _main_camera->set_euler(glm::vec3(0.0f, 0.0f, 0.0f));
-    _camera_controller = new CameraController();
-    _camera_controller->set_camera(_main_camera);
-
-    _renderer = new Renderer();
-    _renderer->set_camera(_main_camera);
-
-    // Test importer
-    GltfImporter::get()->import_asset("F:/DevelopProjects/GearEngine/Editor/BuiltinResources/GltfFiles/mech_drone/scene.gltf", "1");
 }
 
 void Application::exit()
@@ -130,16 +114,16 @@ void Application::tick(float dt)
     if (swapchain_status == EzSwapchainStatus::NotReady)
         return;
 
-    if (swapchain_status == EzSwapchainStatus::Resized) {
-        _main_camera->set_aspect(_swapchain->width / _swapchain->height);
+    if (swapchain_status == EzSwapchainStatus::Resized)
+    {
+        // Resize
+        // _swapchain->width / _swapchain->height
     }
 
     ez_acquire_next_image(_swapchain);
 
     ez_reset_query_pool(_timestamp_query_pool, 0, 16);
     ez_write_timestamp(_timestamp_query_pool, 0);
-
-    _renderer->render(_swapchain, dt);
 
     VkImageMemoryBarrier2 present_barrier[] = { ez_image_barrier(_swapchain, EZ_RESOURCE_STATE_PRESENT) };
     ez_pipeline_barrier(0, 0, nullptr, 1, present_barrier);

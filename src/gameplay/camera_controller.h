@@ -4,8 +4,8 @@
 #include <input/input_events.h>
 #include <glm/glm.hpp>
 
-class Camera;
-
+class Entity;
+class CTransform;
 class CameraController
 {
 public:
@@ -13,7 +13,7 @@ public:
 
     ~CameraController();
 
-    void set_camera(Camera* camera);
+    void set_camera(Entity* camera);
 
 private:
     void begin(float x, float y)
@@ -29,7 +29,7 @@ private:
 
     void on_mouse_event_received(MouseEvent mouse_event);
 
-    Camera* _camera = nullptr;
+    CTransform* _camera_transform = nullptr;
     bool _grabbing = false;
     glm::vec2 _start_point;
     EventHandle _mouse_event_handle;

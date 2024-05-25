@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/entity_component.h"
+#include <core/event.h>
 
 class Entity : public Serializable
 {
@@ -70,6 +71,11 @@ public:
     }
 
     std::vector<EntityComponent*>& get_components() { return _components; }
+
+    void dirty_notify();
+
+public:
+    Event<int, int> notify;
 
 protected:
     int _id = -1;

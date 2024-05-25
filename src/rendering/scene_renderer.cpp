@@ -16,3 +16,8 @@ void SceneRenderer::set_level(Level* level)
 {
     scene->set_level(level);
 }
+
+void SceneRenderer::render(RenderContext* ctx)
+{
+    scene->prepare(ctx);
+}

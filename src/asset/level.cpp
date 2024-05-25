@@ -1,6 +1,8 @@
 #include "level.h"
 #include "entity/entity.h"
+#include "entity/components/c_camera.h"
 #include "entity/components/c_transform.h"
+#include "entity/entity_notifications.h"
 
 Level::Level(const std::string& asset_path)
     : Asset(asset_path)
@@ -58,7 +60,12 @@ void Level::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bi
         Entity* entity = new Entity();
         entity->set_id(i);
         entity->deserialize(entity_value, bin);
+        entity->notify.bind(EVENT_CB(Level::notify_received));
         _entities.push_back(entity);
+
+        // Categories
+        if (entity->has_component<CCamera>())
+            _camera_entity_indices.push_back(entity->get_id());
     }
 
     for(int i = 0; i < value["hierarchy"].Size(); i++)
@@ -74,4 +81,36 @@ void Level::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bi
             }
         }
     }
+}
+
+void Level::notify_received(int what, int id)
+{
+    if (NOTIFY_ENTITY_DIRTIED)
+    {
+        _dirty_list.push_back(id);
+    }
+
+    notify.broadcast(what, id);
+}
+
+std::vector<Entity*>& Level::get_camera_entities()
+{
+    std::vector<Entity*> cameras;
+    for (int i = 0; i < _camera_entity_indices.size(); ++i)
+    {
+        cameras.push_back(_entities[_camera_entity_indices[i]]);
+    }
+    return cameras;
+}
+
+void Level::tick(float dt)
+{
+    for (int i = 0; i < _dirty_list.size(); ++i)
+    {
+        if (!_entities[i])
+        {
+
+        }
+    }
+    _dirty_list.clear();
 }

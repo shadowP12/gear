@@ -58,3 +58,12 @@ void Entity::set_id(int id) {
 int Entity::get_id() {
     return _id;
 }
+
+void Entity::dirty_notify()
+{
+    for (auto component : _components)
+    {
+        if (component->is_dirty())
+            component->dirty_notify();
+    }
+}

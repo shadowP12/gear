@@ -1,5 +1,7 @@
 #include "camera_controller.h"
-#include "camera.h"
+#include "entity/entity.h"
+#include "entity/components/c_camera.h"
+#include "entity/components/c_transform.h"
 #include <input/input_events.h>
 
 CameraController::CameraController()
@@ -12,11 +14,12 @@ CameraController::~CameraController()
     Input::mouse_event.unbind(_mouse_event_handle);
 }
 
-void CameraController::set_camera(Camera* camera)
+void CameraController::set_camera(Entity* camera)
 {
-    if (_camera == camera)
+    if (!camera->has_component<CCamera>())
         return;
-    _camera = camera;
+
+    _camera_transform = camera->get_component<CTransform>();
 }
 
 void CameraController::on_mouse_event_received(MouseEvent mouse_event)
@@ -29,11 +32,12 @@ void CameraController::on_mouse_event_received(MouseEvent mouse_event)
             glm::vec2 offset = _start_point - mouse_position;
             _start_point = mouse_position;
 
+
             const float turn_rate = 0.001f;
-            glm::vec3 euler = _camera->get_euler();
+            glm::vec3 euler = _camera_transform->get_euler();
             euler.x += offset.y * turn_rate;
             euler.y += offset.x * turn_rate;
-            _camera->set_euler(euler);
+            _camera_transform->set_euler(euler);
         }
     }
     else if (mouse_event.type == MouseEvent::Type::UP)
@@ -52,12 +56,11 @@ void CameraController::on_mouse_event_received(MouseEvent mouse_event)
     }
     else if (mouse_event.type == MouseEvent::Type::WHEEL)
     {
-        glm::vec3 camera_pos = _camera->get_translation();
-        glm::mat4 camera_transform = _camera->get_transform();
-        glm::vec3 camera_front = glm::vec3(camera_transform[2][0], camera_transform[2][1], camera_transform[2][2]);
+        glm::vec3 camera_pos = _camera_transform->get_position();
+        glm::vec3 camera_front = _camera_transform->get_front_vector();
 
         const float speed = 0.2f;
         camera_pos -= camera_front * mouse_event.offset_y * speed;
-        _camera->set_translation(camera_pos);
+        _camera_transform->set_position(camera_pos);
     }
 }

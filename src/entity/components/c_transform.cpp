@@ -1,5 +1,6 @@
 #include "c_transform.h"
 #include "entity/entity.h"
+#include "entity/entity_notifications.h"
 
 CTransform::CTransform(Entity* entity)
     : EntityComponent(entity)
@@ -146,6 +147,8 @@ void CTransform::update_transform()
     for (int i = 0; i < _children.size(); ++i) {
         _children[i]->get_component<CTransform>()->update_transform();
     }
+
+    make_dirty();
 }
 
 void CTransform::update_local_transform()
@@ -155,6 +158,11 @@ void CTransform::update_local_transform()
     t = glm::translate(glm::mat4(1.0), _translation);
     s = glm::scale(glm::mat4(1.0), _scale);
     _local = t * r * s;
+}
+
+void CTransform::dirty_notify_imp()
+{
+    _entity->notify.broadcast(NOTIFY_TRANSFORM_CHANGED, _entity->get_id());
 }
 
 REGISTER_ENTITY_COMPONENT(CTransform)

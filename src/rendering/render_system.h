@@ -13,6 +13,7 @@ public:
 
     void setup();
     void finish();
+    void execute(float dt);
 
 private:
     RenderContext* _ctx;

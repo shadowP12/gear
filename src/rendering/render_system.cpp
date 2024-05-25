@@ -14,3 +14,9 @@ void RenderSystem::finish()
     delete _ctx;
     delete _scene_renderer;
 }
+
+void RenderSystem::execute(float dt)
+{
+    _ctx->update(dt);
+    _scene_renderer->render(_ctx);
+}

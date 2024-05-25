@@ -52,6 +52,8 @@ public:
     glm::vec3 get_front_vector();
 
 private:
+    void dirty_notify_imp() override;
+
     void update_transform();
 
     void update_local_transform();

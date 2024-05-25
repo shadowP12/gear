@@ -8,3 +8,8 @@ DeferredShadingRenderer::DeferredShadingRenderer()
 DeferredShadingRenderer::~DeferredShadingRenderer()
 {
 }
+
+void DeferredShadingRenderer::render(RenderContext* ctx)
+{
+    SceneRenderer::render(ctx);
+}
