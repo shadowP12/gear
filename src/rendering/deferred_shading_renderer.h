@@ -9,4 +9,6 @@ public:
     virtual ~DeferredShadingRenderer();
 
     void render(RenderContext* ctx) override;
+
+protected:
 };

@@ -66,6 +66,7 @@ void RenderScene::init_scene()
             CCamera* c_camera = entity->get_component<CCamera>();
             CTransform* c_transform = entity->get_component<CTransform>();
 
+            mapping.view = 0;
             auto init_view_func = [&](int view_id) {
                 view[view_id].model = c_transform->get_world_transform();
                 view[view_id].view = glm::inverse(view[view_id].model);
@@ -79,13 +80,11 @@ void RenderScene::init_scene()
             };
             if (c_camera->get_usage() & CameraUsage::MAIN)
             {
-                mapping.view = 0;
-                init_view_func(mapping.view);
+                init_view_func(0);
             }
             if (c_camera->get_usage() & CameraUsage::DISPLAY)
             {
-                mapping.view = 1;
-                init_view_func(mapping.view);
+                init_view_func(1);
             }
         }
 
@@ -119,13 +118,23 @@ void RenderScene::transform_changed(int id)
     }
     else if (_level_mappings[id].view >= 0)
     {
-        int view_id = _level_mappings[id].view;
         CCamera* c_camera = _level->get_entity(id)->get_component<CCamera>();
         CTransform* c_transform = _level->get_entity(id)->get_component<CTransform>();
-        view[view_id].model = c_transform->get_world_transform();
-        view[view_id].view = glm::inverse(view[view_id].model);
-        view[view_id].position = c_transform->get_position();
-        view[view_id].view_direction = c_transform->get_front_vector();
+
+        auto change_view_func = [&](int view_id) {
+            view[view_id].model = c_transform->get_world_transform();
+            view[view_id].view = glm::inverse(view[view_id].model);
+            view[view_id].position = c_transform->get_position();
+            view[view_id].view_direction = c_transform->get_front_vector();
+        };
+        if (c_camera->get_usage() & CameraUsage::MAIN)
+        {
+            change_view_func(0);
+        }
+        if (c_camera->get_usage() & CameraUsage::DISPLAY)
+        {
+            change_view_func(1);
+        }
     }
 }
 
@@ -133,16 +142,41 @@ void RenderScene::camera_changed(int id)
 {
     if (_level_mappings[id].view >= 0)
     {
-        int view_id = _level_mappings[id].view;
         CCamera* c_camera = _level->get_entity(id)->get_component<CCamera>();
-        view[view_id].zn = c_camera->get_near();
-        view[view_id].zf = c_camera->get_far();
-        view[view_id].projection = c_camera->get_proj_matrix();
-        view[view_id].ev100 = std::log2((c_camera->get_aperture() * c_camera->get_aperture()) / c_camera->get_shutter_speed() * 100.0f / c_camera->get_sensitivity());
-        view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, view[view_id].ev100));
+
+        auto change_view_func = [&](int view_id) {
+            view[view_id].zn = c_camera->get_near();
+            view[view_id].zf = c_camera->get_far();
+            view[view_id].projection = c_camera->get_proj_matrix();
+            view[view_id].ev100 = std::log2((c_camera->get_aperture() * c_camera->get_aperture()) / c_camera->get_shutter_speed() * 100.0f / c_camera->get_sensitivity());
+            view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, view[view_id].ev100));
+        };
+        if (c_camera->get_usage() & CameraUsage::MAIN)
+        {
+            change_view_func(0);
+        }
+        if (c_camera->get_usage() & CameraUsage::DISPLAY)
+        {
+            change_view_func(1);
+        }
     }
 }
 
 void RenderScene::prepare(RenderContext* ctx)
 {
+    bool is_new;
+    UniformBuffer* scene_ub = ctx->find_ub(SCENE_TRANSFORMS_NAME, scene_transforms.size() * sizeof(SceneTransform), is_new);
+    if (is_new)
+    {
+        scene_ub->write((uint8_t*)scene_transforms.data(), scene_transforms.size() * sizeof(SceneTransform));
+    }
+    else
+    {
+        for (int i = 0; i < _upload_transform_indices.size(); ++i)
+        {
+            int upload_idx = _upload_transform_indices[i];
+            scene_ub->write((uint8_t*)&scene_transforms[upload_idx], sizeof(SceneTransform), upload_idx * sizeof(SceneTransform));
+        }
+    }
+    _upload_transform_indices.clear();
 }

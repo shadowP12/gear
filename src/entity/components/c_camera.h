@@ -11,6 +11,7 @@ enum class ProjectionMode
 
 enum CameraUsage
 {
+    NONE = 0,
     MAIN = 0x1,
     DISPLAY = 0x2,
     MAIN_DISPLAY = MAIN | DISPLAY,
