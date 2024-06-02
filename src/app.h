@@ -26,9 +26,8 @@ protected:
 
 protected:
     struct GLFWwindow* _window_ptr = nullptr;
-    class Camera* _main_camera = nullptr;
     class CameraController* _camera_controller = nullptr;
-    class Renderer* _renderer = nullptr;
+    class Level* _level = nullptr;
 
     EzSwapchain _swapchain = VK_NULL_HANDLE;
     EzQueryPool _timestamp_query_pool = VK_NULL_HANDLE;

@@ -1,6 +1,7 @@
 #include "texture2d.h"
 #include "image.h"
 #include "image_utilities.h"
+#include <core/path.h>
 
 Texture2D::Texture2D(const std::string& asset_path)
     : Asset(asset_path)
@@ -33,7 +34,8 @@ void Texture2D::deserialize(const rapidjson::Value& value, Serialization::Binary
 
 void Texture2D::generate_texture()
 {
-    _image = ImageUtilities::load_image(_uri);
+    std::string dir = Path::parent_path(Path::fix_path(_asset_path));
+    _image = ImageUtilities::load_image(Path::join(dir, _uri));
 
     if (_image)
     {
@@ -53,6 +55,7 @@ void Texture2D::generate_texture()
         range.imageSubresource.layerCount = 1;
         range.imageExtent.width = _image->width;
         range.imageExtent.height = _image->height;
+        range.imageExtent.depth = _image->depth;
         ez_update_image(_texture, range, _image->data.data());
 
         barrier = ez_image_barrier(_texture, EZ_RESOURCE_STATE_SHADER_RESOURCE | EZ_RESOURCE_STATE_UNORDERED_ACCESS);

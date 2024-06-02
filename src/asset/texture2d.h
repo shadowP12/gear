@@ -23,6 +23,6 @@ private:
 
 private:
     std::string _uri;
-    Image* _image;
-    EzTexture _texture;
+    Image* _image = nullptr;
+    EzTexture _texture = VK_NULL_HANDLE;
 };

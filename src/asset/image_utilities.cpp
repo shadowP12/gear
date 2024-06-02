@@ -16,6 +16,7 @@ Image* load_image(const std::string& file)
         Image* image = new Image;
         image->width = width;
         image->height = height;
+        image->data.resize(width * height * 4);
         memcpy(image->data.data(), pixels, width * height * 4);
         image->format = VK_FORMAT_R8G8B8A8_UNORM;
         stbi_image_free(pixels);
