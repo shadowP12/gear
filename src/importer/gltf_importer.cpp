@@ -24,6 +24,7 @@ struct GltfSubMesh
     uint32_t total_offset;
     uint32_t vertex_count;
     uint32_t vertex_size;
+    uint32_t vertex_offset;
     uint32_t position_size;
     uint32_t position_offset;
     uint32_t normal_size;
@@ -257,6 +258,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             uint32_t vertex_count = (uint32_t)position_accessor->count;
             gltf_sub_mesh.vertex_count = vertex_count;
             gltf_sub_mesh.vertex_size = 0;
+            gltf_sub_mesh.vertex_offset = bin.get_size();
 
             const float* minp = &position_accessor->min[0];
             const float* maxp = &position_accessor->max[0];
@@ -348,6 +350,8 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             writer.Int(gltf_sub_mesh.vertex_count);
             writer.Key("vertex_size");
             writer.Int(gltf_sub_mesh.vertex_size);
+            writer.Key("vertex_offset");
+            writer.Int(gltf_sub_mesh.vertex_offset);
             writer.Key("position_size");
             writer.Int(gltf_sub_mesh.position_size);
             writer.Key("position_offset");

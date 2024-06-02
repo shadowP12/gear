@@ -12,6 +12,7 @@ struct SubMesh
     uint32_t total_offset;
     uint32_t vertex_count;
     uint32_t vertex_size;
+    uint32_t vertex_offset;
     uint32_t position_size;
     uint32_t position_offset;
     uint32_t normal_size;
@@ -26,6 +27,9 @@ struct SubMesh
     VkIndexType index_type;
     BoundingBox bounding_box;
     Material* material = nullptr;
+    EzBuffer vertex_buffer = VK_NULL_HANDLE;
+    EzBuffer index_buffer = VK_NULL_HANDLE;
+    EzVertexBinding vertex_buffer_layout = {};
 };
 
 class Mesh : public Asset
