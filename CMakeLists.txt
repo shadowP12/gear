@@ -18,3 +18,12 @@ target_link_libraries(gear PUBLIC cgltf)
 # spark
 add_subdirectory(extern/spark EXCLUDE_FROM_ALL spark.out)
 target_link_libraries(gear PUBLIC spark)
+
+# stb
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE extern/stb)
+target_link_libraries(gear PUBLIC stb)
+
+# astcenc
+add_subdirectory(extern/astcenc EXCLUDE_FROM_ALL astcenc.out)
+target_link_libraries(gear PUBLIC astcenc)

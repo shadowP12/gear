@@ -6,12 +6,12 @@
 
 CameraController::CameraController()
 {
-    _mouse_event_handle = Input::mouse_event.bind(EVENT_CB(CameraController::on_mouse_event_received));
+    _mouse_event_handle = Input::get_mouse_event().bind(EVENT_CB(CameraController::on_mouse_event_received));
 }
 
 CameraController::~CameraController()
 {
-    Input::mouse_event.unbind(_mouse_event_handle);
+    Input::get_mouse_event().unbind(_mouse_event_handle);
 }
 
 void CameraController::set_camera(Entity* camera)

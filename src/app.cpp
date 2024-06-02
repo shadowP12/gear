@@ -15,7 +15,7 @@ static void cursor_position_callback(GLFWwindow* window, double pos_x, double po
     mouse_event.type = MouseEvent::Type::MOVE;
     mouse_event.x = (float)pos_x;
     mouse_event.y = (float)pos_y;
-    Input::mouse_event.broadcast(mouse_event);
+    Input::get_mouse_event().broadcast(mouse_event);
 }
 
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -29,7 +29,8 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
         mouse_event.type = MouseEvent::Type::UP;
         mouse_event.x = (float)pos_x;
         mouse_event.y = (float)pos_y;
-        Input::mouse_event.broadcast(mouse_event);
+        mouse_event.button = button;
+        Input::get_mouse_event().broadcast(mouse_event);
     }
     else if (action == 1)
     {
@@ -37,7 +38,8 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
         mouse_event.type = MouseEvent::Type::DOWN;
         mouse_event.x = (float)pos_x;
         mouse_event.y = (float)pos_y;
-        Input::mouse_event.broadcast(mouse_event);
+        mouse_event.button = button;
+        Input::get_mouse_event().broadcast(mouse_event);
     }
 }
 
@@ -45,9 +47,9 @@ static void mouse_scroll_callback(GLFWwindow* window, double offset_x, double of
 {
     MouseEvent mouse_event;
     mouse_event.type = MouseEvent::Type::WHEEL;
-    mouse_event.x = (float)offset_x;
-    mouse_event.y = (float)offset_y;
-    Input::mouse_event.broadcast(mouse_event);
+    mouse_event.offset_x = (float)offset_x;
+    mouse_event.offset_y = (float)offset_y;
+    Input::get_mouse_event().broadcast(mouse_event);
 }
 
 void Application::setup(const ApplicationSetting& setting)

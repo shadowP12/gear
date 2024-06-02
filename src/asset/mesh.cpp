@@ -127,4 +127,11 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
 
         _sub_meshes.push_back(sub_mesh);
      }
+
+     generate_mesh_buffers();
+}
+
+void Mesh::generate_mesh_buffers()
+{
+
 }

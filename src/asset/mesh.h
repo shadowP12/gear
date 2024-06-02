@@ -42,6 +42,9 @@ public:
 
     std::vector<SubMesh*>& get_sub_meshes() {return _sub_meshes;}
 
+private:
+    void generate_mesh_buffers();
+
 protected:
     friend class SubMesh;
     std::vector<uint8_t> _data;
