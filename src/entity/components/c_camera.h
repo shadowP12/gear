@@ -11,10 +11,10 @@ enum class ProjectionMode
 
 enum CameraUsage
 {
-    NONE = 0,
-    MAIN = 0x1,
-    DISPLAY = 0x2,
-    MAIN_DISPLAY = MAIN | DISPLAY,
+    CAMERA_USAGE_NONE = 0,
+    CAMERA_USAGE_MAIN = 0x1,
+    CAMERA_USAGE_DISPLAY = 0x2,
+    CAMERA_USAGE_MAIN_DISPLAY = CAMERA_USAGE_MAIN | CAMERA_USAGE_DISPLAY,
 };
 SP_MAKE_ENUM_FLAG(uint32_t, CameraUsage)
 

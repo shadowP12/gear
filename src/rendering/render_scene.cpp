@@ -78,11 +78,11 @@ void RenderScene::init_scene()
                 view[view_id].ev100 = std::log2((c_camera->get_aperture() * c_camera->get_aperture()) / c_camera->get_shutter_speed() * 100.0f / c_camera->get_sensitivity());
                 view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, view[view_id].ev100));
             };
-            if (c_camera->get_usage() & CameraUsage::MAIN)
+            if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_MAIN)
             {
                 init_view_func(0);
             }
-            if (c_camera->get_usage() & CameraUsage::DISPLAY)
+            if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_DISPLAY)
             {
                 init_view_func(1);
             }
@@ -127,11 +127,11 @@ void RenderScene::transform_changed(int id)
             view[view_id].position = c_transform->get_position();
             view[view_id].view_direction = c_transform->get_front_vector();
         };
-        if (c_camera->get_usage() & CameraUsage::MAIN)
+        if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_MAIN)
         {
             change_view_func(0);
         }
-        if (c_camera->get_usage() & CameraUsage::DISPLAY)
+        if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_DISPLAY)
         {
             change_view_func(1);
         }
@@ -151,11 +151,11 @@ void RenderScene::camera_changed(int id)
             view[view_id].ev100 = std::log2((c_camera->get_aperture() * c_camera->get_aperture()) / c_camera->get_shutter_speed() * 100.0f / c_camera->get_sensitivity());
             view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, view[view_id].ev100));
         };
-        if (c_camera->get_usage() & CameraUsage::MAIN)
+        if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_MAIN)
         {
             change_view_func(0);
         }
-        if (c_camera->get_usage() & CameraUsage::DISPLAY)
+        if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_DISPLAY)
         {
             change_view_func(1);
         }

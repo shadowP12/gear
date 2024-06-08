@@ -2,6 +2,7 @@
 #include "material.h"
 #include "asset_manager.h"
 #include "mesh_utilities.h"
+#include "rendering/vertex_factory.h"
 
 Mesh::Mesh(const std::string& asset_path)
     : Asset(asset_path)
@@ -139,25 +140,10 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
 
 void Mesh::generate_mesh_buffers()
 {
-     EzVertexBinding vertex_buffer_layout = {};
-     vertex_buffer_layout.vertex_stride = 44;
-     vertex_buffer_layout.vertex_attrib_mask |= 1;
-     vertex_buffer_layout.vertex_attribs[0].offset = 0;
-     vertex_buffer_layout.vertex_attribs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-     vertex_buffer_layout.vertex_attrib_mask |= 1 << 1;
-     vertex_buffer_layout.vertex_attribs[1].offset = 12;
-     vertex_buffer_layout.vertex_attribs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-     vertex_buffer_layout.vertex_attrib_mask |= 1 << 2;
-     vertex_buffer_layout.vertex_attribs[2].offset = 24;
-     vertex_buffer_layout.vertex_attribs[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-     vertex_buffer_layout.vertex_attrib_mask |= 1 << 3;
-     vertex_buffer_layout.vertex_attribs[3].offset = 36;
-     vertex_buffer_layout.vertex_attribs[3].format = VK_FORMAT_R32G32_SFLOAT;
-
      for (auto sub_mesh : _sub_meshes)
      {
         sub_mesh->vertex_buffer = MeshUtilities::create_mesh_buffer(_data.data() + sub_mesh->vertex_offset, sub_mesh->vertex_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
         sub_mesh->index_buffer = MeshUtilities::create_mesh_buffer(_data.data() + sub_mesh->index_offset, sub_mesh->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-        sub_mesh->vertex_buffer_layout = vertex_buffer_layout;
+        sub_mesh->vertex_factory_id = STATIC_MESH_VERTEX_FACTORY;
      }
 }

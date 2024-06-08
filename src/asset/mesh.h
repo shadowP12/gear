@@ -29,7 +29,7 @@ struct SubMesh
     Material* material = nullptr;
     EzBuffer vertex_buffer = VK_NULL_HANDLE;
     EzBuffer index_buffer = VK_NULL_HANDLE;
-    EzVertexBinding vertex_buffer_layout = {};
+    int vertex_factory_id;
 };
 
 class Mesh : public Asset
