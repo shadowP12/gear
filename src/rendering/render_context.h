@@ -11,15 +11,16 @@ public:
     RenderContext();
     ~RenderContext();
 
+    void clear();
     void update(float dt);
 
     UniformBuffer* find_ub(const std::string& name);
-    UniformBuffer* find_ub(const std::string& name, uint32_t size);
-    UniformBuffer* find_ub(const std::string& name, uint32_t size, bool& is_new);
+    UniformBuffer* find_or_create_ub(const std::string& name, uint32_t size);
+    UniformBuffer* find_or_create_ub(const std::string& name, uint32_t size, bool& is_new);
 
     TextureRef* find_t_ref(const std::string& name);
-    TextureRef* find_t_ref(const std::string& name, const EzTextureDesc& desc);
-    TextureRef* find_t_ref(const std::string& name, const EzTextureDesc& desc, bool& is_new);
+    TextureRef* find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc);
+    TextureRef* find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc, bool& is_new);
 
 public:
     float delta_time;

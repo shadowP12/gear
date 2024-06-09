@@ -1,6 +1,7 @@
 #pragma once
 
 #include <core/module.h>
+#include <rhi/ez_vulkan.h>
 #include <memory>
 
 class RenderContext;
@@ -15,7 +16,7 @@ public:
 
     void setup();
     void finish();
-    void execute(float dt);
+    void execute(float dt, EzSwapchain swapchain);
 
     SceneRenderer* get_scene_renderer() { return _scene_renderer.get(); }
     MaterialProxyPool* get_material_proxy_pool() { return _material_proxy_pool.get(); }

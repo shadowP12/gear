@@ -5,6 +5,11 @@ RenderContext::RenderContext()
 
 RenderContext::~RenderContext()
 {
+    clear();
+}
+
+void RenderContext::clear()
+{
     for (auto& iter : _ub_cache)
     {
         delete iter.second;
@@ -33,13 +38,13 @@ UniformBuffer* RenderContext::find_ub(const std::string& name)
     return nullptr;
 }
 
-UniformBuffer* RenderContext::find_ub(const std::string& name, uint32_t size)
+UniformBuffer* RenderContext::find_or_create_ub(const std::string& name, uint32_t size)
 {
     bool is_new;
-    return find_ub(name, size, is_new);
+    return find_or_create_ub(name, size, is_new);
 }
 
-UniformBuffer* RenderContext::find_ub(const std::string& name, uint32_t size, bool& is_new)
+UniformBuffer* RenderContext::find_or_create_ub(const std::string& name, uint32_t size, bool& is_new)
 {
     is_new = false;
     UniformBuffer* ub = find_ub(name);
@@ -63,13 +68,13 @@ TextureRef* RenderContext::find_t_ref(const std::string& name)
     return nullptr;
 }
 
-TextureRef* RenderContext::find_t_ref(const std::string& name, const EzTextureDesc& desc)
+TextureRef* RenderContext::find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc)
 {
     bool is_new;
-    return find_t_ref(name, desc, is_new);
+    return find_or_create_t_ref(name, desc, is_new);
 }
 
-TextureRef* RenderContext::find_t_ref(const std::string& name, const EzTextureDesc& desc, bool& is_new)
+TextureRef* RenderContext::find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc, bool& is_new)
 {
     is_new = false;
     TextureRef* t_ref = find_t_ref(name);

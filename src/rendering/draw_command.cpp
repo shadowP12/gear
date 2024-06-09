@@ -18,6 +18,9 @@ DrawCommand* DrawCommandList::add_element()
 
 void DrawCommandList::sort()
 {
+    if (cmd_count <= 0)
+        return;
+
     std::function<bool(const DrawCommand&, const DrawCommand&)> f = [](const DrawCommand& a, const DrawCommand& b)
     {
         return a.sort.sort_key < b.sort.sort_key;
@@ -27,6 +30,9 @@ void DrawCommandList::sort()
 
 void DrawCommandList::sort_by_depth()
 {
+    if (cmd_count <= 0)
+        return;
+
     std::function<bool(const DrawCommand&, const DrawCommand&)> f = [](const DrawCommand& a, const DrawCommand& b)
     {
         return a.distance < b.distance;

@@ -40,8 +40,9 @@ void RenderScene::clear_scene()
 {
     renderables.clear();
 
+    if (_level)
+        _level->notify.unbind(_notify_handle);
     _level_mappings.clear();
-    _level->notify.unbind(_notify_handle);
 
     _reset_transform = true;
     _upload_transform_indices.clear();
@@ -228,7 +229,7 @@ void RenderScene::fill_draw_list(DrawCommandType type, int renderable_id)
 
 void RenderScene::prepare(RenderContext* ctx)
 {
-    if (_reset_transform || !scene_ub)
+    if (scene_transforms.size() > 0 && (_reset_transform || !scene_ub))
     {
         if (!scene_ub)
         {
@@ -238,7 +239,7 @@ void RenderScene::prepare(RenderContext* ctx)
 
         scene_ub->write((uint8_t*)scene_transforms.data(), scene_transforms.size() * sizeof(SceneTransform));
     }
-    else
+    else if(scene_transforms.size() > 0)
     {
         for (int i = 0; i < _upload_transform_indices.size(); ++i)
         {

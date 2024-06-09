@@ -1,6 +1,7 @@
 #include "app.h"
 #include "asset/level.h"
 #include "asset/asset_manager.h"
+#include "rendering/render_system.h"
 #include "importer/gltf_importer.h"
 #include <core/path.h>
 #include <input/input_events.h>
@@ -73,12 +74,14 @@ void Application::setup(const ApplicationSetting& setting)
     ez_create_swapchain(glfwGetWin32Window(_window_ptr), _swapchain);
     ez_create_query_pool(16, VK_QUERY_TYPE_TIMESTAMP, _timestamp_query_pool);
 
+    RenderSystem::get()->setup();
     AssetManager::get()->setup();
 }
 
 void Application::exit()
 {
     AssetManager::get()->finish();
+    RenderSystem::get()->finish();
 
     ez_destroy_swapchain(_swapchain);
     ez_destroy_query_pool(_timestamp_query_pool);
@@ -123,6 +126,8 @@ void Application::tick(float dt)
 
     ez_reset_query_pool(_timestamp_query_pool, 0, 16);
     ez_write_timestamp(_timestamp_query_pool, 0);
+
+    RenderSystem::get()->execute(dt, _swapchain);
 
     VkImageMemoryBarrier2 present_barrier[] = { ez_image_barrier(_swapchain, EZ_RESOURCE_STATE_PRESENT) };
     ez_pipeline_barrier(0, 0, nullptr, 1, present_barrier);
