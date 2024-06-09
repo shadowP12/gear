@@ -2,9 +2,6 @@
 
 #include <glm/glm.hpp>
 
-#define SCENE_TRANSFORMS_NAME "SceneTransforms"
-#define FRAME_CONSTANTS_NAME "FrameConstants"
-
 struct FrameConstants
 {
     glm::mat4 view_matrix;

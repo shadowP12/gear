@@ -1,4 +1,5 @@
 #include "app.h"
+#include "asset/level.h"
 #include "asset/asset_manager.h"
 #include "importer/gltf_importer.h"
 #include <core/path.h>
@@ -78,10 +79,6 @@ void Application::setup(const ApplicationSetting& setting)
 void Application::exit()
 {
     AssetManager::get()->finish();
-
-    delete _renderer;
-    delete _main_camera;
-    delete _camera_controller;
 
     ez_destroy_swapchain(_swapchain);
     ez_destroy_query_pool(_timestamp_query_pool);

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "render_constants.h"
+#include "render_resources.h"
+#include <memory>
 
 class Level;
 class RenderScene;
@@ -19,6 +21,7 @@ protected:
     void update_frame_constants(RenderContext* ctx);
 
 protected:
-    RenderScene* scene;
-    FrameConstants _frame_constants;
+    std::shared_ptr<RenderScene> scene;
+    FrameConstants frame_constants;
+    std::shared_ptr<UniformBuffer> frame_ub;
 };

@@ -1,15 +1,9 @@
 #pragma once
 
 #include "asset.h"
+#include "rendering/material_proxy.h"
 
 class Texture2D;
-
-enum class MaterialAlphaMode
-{
-    Opaque = 0,
-    Mask = 1,
-    Blend = 2,
-};
 
 class Material : public Asset
 {
@@ -33,7 +27,11 @@ public:
 
     MaterialAlphaMode get_alpha_mode();
 
+    int get_material_id() { return _material_id; };
+
 private:
+    int _material_id;
+    MaterialProxy* _proxy;
     glm::vec4 _base_color;
     Texture2D* _base_color_texture = nullptr;
     MaterialAlphaMode _alpha_mode;

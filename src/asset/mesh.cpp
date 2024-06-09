@@ -11,13 +11,13 @@ Mesh::Mesh(const std::string& asset_path)
 
 Mesh::~Mesh()
 {
-    for (auto sub_mesh : _sub_meshes)
+    for (auto primitive : _primitives)
     {
-        ez_destroy_buffer(sub_mesh->vertex_buffer);
-        ez_destroy_buffer(sub_mesh->index_buffer);
-        delete sub_mesh;
+        ez_destroy_buffer(primitive->vertex_buffer);
+        ez_destroy_buffer(primitive->index_buffer);
+        delete primitive;
     }
-    _sub_meshes.clear();
+    _primitives.clear();
 }
 
 void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
@@ -28,44 +28,48 @@ void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, S
 
     writer.Key("sub_meshes");
     writer.StartArray();
-    for (int i = 0; i < _sub_meshes.size(); ++i)
+    for (int i = 0; i < _primitives.size(); ++i)
     {
-        SubMesh* sub_mesh = _sub_meshes[i];
+        MeshPrimitive* primitive = _primitives[i];
         writer.StartObject();
         writer.Key("total_size");
-        writer.Int(sub_mesh->total_size);
+        writer.Int(primitive->total_size);
         writer.Key("total_offset");
-        writer.Int(sub_mesh->total_offset);
+        writer.Int(primitive->total_offset);
         writer.Key("vertex_count");
-        writer.Int(sub_mesh->vertex_count);
+        writer.Int(primitive->vertex_count);
         writer.Key("vertex_offset");
-        writer.Int(sub_mesh->vertex_offset);
+        writer.Int(primitive->vertex_offset);
         writer.Key("vertex_size");
-        writer.Int(sub_mesh->vertex_size);
+        writer.Int(primitive->vertex_size);
         writer.Key("position_size");
-        writer.Int(sub_mesh->position_size);
+        writer.Int(primitive->position_size);
         writer.Key("position_offset");
-        writer.Int(sub_mesh->position_offset);
+        writer.Int(primitive->position_offset);
         writer.Key("normal_size");
-        writer.Int(sub_mesh->normal_size);
+        writer.Int(primitive->normal_size);
         writer.Key("normal_offset");
-        writer.Int(sub_mesh->normal_offset);
+        writer.Int(primitive->normal_offset);
         writer.Key("tangent_size");
-        writer.Int(sub_mesh->tangent_size);
+        writer.Int(primitive->tangent_size);
         writer.Key("tangent_offset");
-        writer.Int(sub_mesh->tangent_offset);
+        writer.Int(primitive->tangent_offset);
         writer.Key("uv_size");
-        writer.Int(sub_mesh->uv_size);
+        writer.Int(primitive->uv_size);
         writer.Key("uv_offset");
-        writer.Int(sub_mesh->uv_offset);
+        writer.Int(primitive->uv_offset);
         writer.Key("index_count");
-        writer.Int(sub_mesh->index_count);
+        writer.Int(primitive->index_count);
         writer.Key("index_size");
-        writer.Int(sub_mesh->index_size);
+        writer.Int(primitive->index_size);
         writer.Key("index_offset");
-        writer.Int(sub_mesh->index_offset);
+        writer.Int(primitive->index_offset);
+        writer.Key("primitive_topology");
+        writer.Int(primitive->primitive_topology);
+        writer.Key("vertex_factory");
+        writer.Int(primitive->vertex_factory);
 
-        if (sub_mesh->index_type == VK_INDEX_TYPE_UINT16)
+        if (primitive->index_type == VK_INDEX_TYPE_UINT16)
         {
             writer.Key("using_16u");
             writer.Bool(true);
@@ -77,13 +81,13 @@ void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, S
         }
 
         writer.Key("maxp");
-        Serialization::w_vec3(writer, sub_mesh->bounding_box.bb_max);
+        Serialization::w_vec3(writer, primitive->bounding_box.bb_max);
 
         writer.Key("minp");
-        Serialization::w_vec3(writer, sub_mesh->bounding_box.bb_min);
+        Serialization::w_vec3(writer, primitive->bounding_box.bb_min);
 
         writer.Key("material");
-        writer.String(sub_mesh->material->get_asset_path().c_str());
+        writer.String(primitive->material->get_asset_path().c_str());
 
         writer.EndObject();
     }
@@ -101,38 +105,44 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
 
      for(int i = 0; i < value["sub_meshes"].Size(); i++)
      {
-        SubMesh* sub_mesh = new SubMesh();
-        sub_mesh->total_size = value["sub_meshes"][i]["total_size"].GetInt();
-        sub_mesh->total_offset = value["sub_meshes"][i]["total_offset"].GetInt();
-        sub_mesh->vertex_count = value["sub_meshes"][i]["vertex_count"].GetInt();
-        sub_mesh->vertex_size = value["sub_meshes"][i]["vertex_size"].GetInt();
-        sub_mesh->vertex_offset = value["sub_meshes"][i]["vertex_offset"].GetInt();
-        sub_mesh->position_size = value["sub_meshes"][i]["position_size"].GetInt();
-        sub_mesh->position_offset = value["sub_meshes"][i]["position_offset"].GetInt();
-        sub_mesh->normal_size = value["sub_meshes"][i]["normal_size"].GetInt();
-        sub_mesh->normal_offset = value["sub_meshes"][i]["normal_offset"].GetInt();
-        sub_mesh->tangent_size = value["sub_meshes"][i]["tangent_size"].GetInt();
-        sub_mesh->tangent_offset = value["sub_meshes"][i]["tangent_offset"].GetInt();
-        sub_mesh->uv_size = value["sub_meshes"][i]["uv_size"].GetInt();
-        sub_mesh->uv_offset = value["sub_meshes"][i]["uv_offset"].GetInt();
-        sub_mesh->index_count = value["sub_meshes"][i]["index_count"].GetInt();
-        sub_mesh->index_size = value["sub_meshes"][i]["index_size"].GetInt();
-        sub_mesh->index_offset = value["sub_meshes"][i]["index_offset"].GetInt();
+        rapidjson::Value& primitive_value = value["primitives"][i];
+        MeshPrimitive* primitive = new MeshPrimitive();
+        primitive->total_size = primitive_value["total_size"].GetInt();
+        primitive->total_offset = primitive_value["total_offset"].GetInt();
+        primitive->vertex_count = primitive_value["vertex_count"].GetInt();
+        primitive->vertex_size = primitive_value["vertex_size"].GetInt();
+        primitive->vertex_offset = primitive_value["vertex_offset"].GetInt();
+        primitive->position_size = primitive_value["position_size"].GetInt();
+        primitive->position_offset = primitive_value["position_offset"].GetInt();
+        primitive->normal_size = primitive_value["normal_size"].GetInt();
+        primitive->normal_offset = primitive_value["normal_offset"].GetInt();
+        primitive->tangent_size = primitive_value["tangent_size"].GetInt();
+        primitive->tangent_offset = primitive_value["tangent_offset"].GetInt();
+        primitive->uv_size = primitive_value["uv_size"].GetInt();
+        primitive->uv_offset = primitive_value["uv_offset"].GetInt();
+        primitive->index_count = primitive_value["index_count"].GetInt();
+        primitive->index_size = primitive_value["index_size"].GetInt();
+        primitive->index_offset = primitive_value["index_offset"].GetInt();
+        primitive->vertex_factory = primitive_value["vertex_factory"].GetInt();
+        primitive->primitive_topology = (VkPrimitiveTopology)primitive_value["primitive_topology"].GetInt();
 
-        if (value["sub_meshes"][i]["using_16u"].GetBool()) {
-            sub_mesh->index_type = VK_INDEX_TYPE_UINT16;
-        } else {
-            sub_mesh->index_type = VK_INDEX_TYPE_UINT32;
+        if (primitive_value["using_16u"].GetBool())
+        {
+            primitive->index_type = VK_INDEX_TYPE_UINT16;
+        }
+        else
+        {
+            primitive->index_type = VK_INDEX_TYPE_UINT32;
         }
 
-        glm::vec3 maxp = Serialization::r_vec3(value["sub_meshes"][i]["maxp"]);
-        glm::vec3 minp = Serialization::r_vec3(value["sub_meshes"][i]["minp"]);
-        sub_mesh->bounding_box.merge(maxp);
-        sub_mesh->bounding_box.merge(minp);
+        glm::vec3 maxp = Serialization::r_vec3(primitive_value["maxp"]);
+        glm::vec3 minp = Serialization::r_vec3(primitive_value["minp"]);
+        primitive->bounding_box.merge(maxp);
+        primitive->bounding_box.merge(minp);
 
-        sub_mesh->material = AssetManager::get()->load<Material>(value["sub_meshes"][i]["material"].GetString());
+        primitive->material = AssetManager::get()->load<Material>(primitive_value["material"].GetString());
 
-        _sub_meshes.push_back(sub_mesh);
+        _primitives.push_back(primitive);
      }
 
      generate_mesh_buffers();
@@ -140,10 +150,9 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
 
 void Mesh::generate_mesh_buffers()
 {
-     for (auto sub_mesh : _sub_meshes)
+     for (auto primitive : _primitives)
      {
-        sub_mesh->vertex_buffer = MeshUtilities::create_mesh_buffer(_data.data() + sub_mesh->vertex_offset, sub_mesh->vertex_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        sub_mesh->index_buffer = MeshUtilities::create_mesh_buffer(_data.data() + sub_mesh->index_offset, sub_mesh->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-        sub_mesh->vertex_factory_id = STATIC_MESH_VERTEX_FACTORY;
+        primitive->vertex_buffer = MeshUtilities::create_mesh_buffer(_data.data() + primitive->vertex_offset, primitive->vertex_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        primitive->index_buffer = MeshUtilities::create_mesh_buffer(_data.data() + primitive->index_offset, primitive->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
      }
 }

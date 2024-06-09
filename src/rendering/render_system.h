@@ -1,9 +1,11 @@
 #pragma once
 
 #include <core/module.h>
+#include <memory>
 
 class RenderContext;
 class SceneRenderer;
+class MaterialProxyPool;
 
 class RenderSystem : public Module<RenderSystem>
 {
@@ -15,7 +17,11 @@ public:
     void finish();
     void execute(float dt);
 
+    SceneRenderer* get_scene_renderer() { return _scene_renderer.get(); }
+    MaterialProxyPool* get_material_proxy_pool() { return _material_proxy_pool.get(); }
+
 private:
-    RenderContext* _ctx;
-    SceneRenderer* _scene_renderer;
+    std::shared_ptr<SceneRenderer> _scene_renderer;
+    std::shared_ptr<MaterialProxyPool> _material_proxy_pool;
+    std::shared_ptr<RenderContext> _ctx;
 };

@@ -11,4 +11,6 @@ public:
     void render(RenderContext* ctx) override;
 
 protected:
+    void fill_gbuffer(RenderContext* ctx);
+
 };

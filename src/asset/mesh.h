@@ -6,7 +6,7 @@
 
 class Material;
 
-struct SubMesh
+struct MeshPrimitive
 {
     uint32_t total_size;
     uint32_t total_offset;
@@ -29,7 +29,8 @@ struct SubMesh
     Material* material = nullptr;
     EzBuffer vertex_buffer = VK_NULL_HANDLE;
     EzBuffer index_buffer = VK_NULL_HANDLE;
-    int vertex_factory_id;
+    int vertex_factory;
+    VkPrimitiveTopology primitive_topology;
 };
 
 class Mesh : public Asset
@@ -44,13 +45,13 @@ public:
 
     std::vector<uint8_t>& get_data() {return _data;}
 
-    std::vector<SubMesh*>& get_sub_meshes() {return _sub_meshes;}
+    std::vector<MeshPrimitive*>& get_primitives() {return _primitives;}
 
 private:
     void generate_mesh_buffers();
 
 protected:
-    friend class SubMesh;
+    friend class MeshPrimitive;
     std::vector<uint8_t> _data;
-    std::vector<SubMesh*> _sub_meshes;
+    std::vector<MeshPrimitive*> _primitives;
 };

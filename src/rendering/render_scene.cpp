@@ -1,6 +1,11 @@
 #include "render_scene.h"
 #include "render_context.h"
+#include "render_system.h"
+#include "material_proxy.h"
 #include "asset/level.h"
+#include "asset/mesh.h"
+#include "asset/material.h"
+#include "asset/texture2d.h"
 #include "entity/entity.h"
 #include "entity/entity_notifications.h"
 #include "entity/components/c_mesh.h"
@@ -9,10 +14,14 @@
 #include "entity/components/c_transform.h"
 
 RenderScene::RenderScene()
-{}
+{
+    clear_scene();
+}
 
 RenderScene::~RenderScene()
-{}
+{
+    clear_scene();
+}
 
 void RenderScene::set_level(Level* level)
 {
@@ -29,11 +38,14 @@ void RenderScene::set_level(Level* level)
 
 void RenderScene::clear_scene()
 {
-    _level->notify.unbind(_notify_handle);
     renderables.clear();
-    scene_transforms.clear();
-    _upload_transform_indices.clear();
+
     _level_mappings.clear();
+    _level->notify.unbind(_notify_handle);
+
+    _reset_transform = true;
+    _upload_transform_indices.clear();
+    scene_transforms.clear();
 }
 
 void RenderScene::init_scene()
@@ -48,16 +60,35 @@ void RenderScene::init_scene()
         {
             int rb_id = renderables.size();
             mapping.rb = rb_id;
+            renderables.emplace_back();
+            auto& renderable = renderables.back();
+
             CMesh* c_mesh = entity->get_component<CMesh>();
             CTransform* c_transform = entity->get_component<CTransform>();
+            Mesh* mesh = c_mesh->get_mesh();
+            auto& primitives = mesh->get_primitives();
 
+            int scene_index = scene_transforms.size();
             SceneTransform scene_transform;
             scene_transform.transform = c_transform->get_world_transform();
             scene_transforms.push_back(scene_transform);
 
-            Renderable renderable;
-            renderable.scene_index = rb_id;
-            renderables.push_back(renderable);
+            renderable.scene_index = scene_index;
+            renderable.primitives.clear();
+            for (auto& primitive : primitives)
+            {
+                renderable.primitives.emplace_back();
+                auto& render_primitive = renderable.primitives.back();
+                render_primitive.primitive_topology = primitive->primitive_topology;
+                render_primitive.vertex_factory = primitive->vertex_factory;
+                render_primitive.vertex_count = primitive->vertex_count;
+                render_primitive.index_count = primitive->index_count;
+                render_primitive.index_type = primitive->index_type;
+                render_primitive.vertex_buffer = primitive->vertex_buffer;
+                render_primitive.index_buffer = primitive->index_buffer;
+                render_primitive.bounding_box = primitive->bounding_box;
+                render_primitive.material_id = primitive->material->get_material_id();
+            }
         }
 
         // RenderView
@@ -162,12 +193,49 @@ void RenderScene::camera_changed(int id)
     }
 }
 
+void RenderScene::fill_draw_list(DrawCommandType type, int renderable_id)
+{
+    Renderable& renderable = renderables[renderable_id];
+    glm::mat4& renderable_transform = scene_transforms[renderable.scene_index].transform;
+    glm::vec3 renderable_pos = glm::vec3(renderable_transform[3][0], renderable_transform[3][1], renderable_transform[3][2]);
+    MaterialProxyPool* material_proxy_pool = RenderSystem::get()->get_material_proxy_pool();
+    for (int i = 0; i < renderable.primitives.size(); ++i)
+    {
+        auto& primitive = renderable.primitives[i];
+        MaterialProxy* material_proxy = material_proxy_pool->get_proxy(primitive.material_id);
+
+        DrawCommand* draw_cmd = nullptr;
+        if (type == DRAW_CMD_OPAQUE && material_proxy->alpha_mode == MaterialAlphaMode::Opaque)
+        {
+            draw_cmd = draw_list[type].add_element();
+        }
+        else if (type == DRAW_CMD_ALPHA && material_proxy->alpha_mode != MaterialAlphaMode::Opaque)
+        {
+            draw_cmd = draw_list[type].add_element();
+        }
+
+        if (!draw_cmd)
+            continue;
+
+        draw_cmd->renderable = renderable_id;
+        draw_cmd->primitive = i;
+        draw_cmd->distance = glm::distance(view[1].position, renderable_pos);
+        draw_cmd->sort.sort_key = 0;
+        draw_cmd->sort.vertex_factory_id = primitive.vertex_factory;
+        draw_cmd->sort.material_id = primitive.material_id;
+    }
+}
+
 void RenderScene::prepare(RenderContext* ctx)
 {
-    bool is_new;
-    UniformBuffer* scene_ub = ctx->find_ub(SCENE_TRANSFORMS_NAME, scene_transforms.size() * sizeof(SceneTransform), is_new);
-    if (is_new)
+    if (_reset_transform || !scene_ub)
     {
+        if (!scene_ub)
+        {
+            uint32_t buffer_size = glm::min(64 * sizeof(SceneTransform), scene_transforms.size() * sizeof(SceneTransform));
+            scene_ub = std::make_shared<UniformBuffer>(buffer_size);
+        }
+
         scene_ub->write((uint8_t*)scene_transforms.data(), scene_transforms.size() * sizeof(SceneTransform));
     }
     else
@@ -178,5 +246,25 @@ void RenderScene::prepare(RenderContext* ctx)
             scene_ub->write((uint8_t*)&scene_transforms[upload_idx], sizeof(SceneTransform), upload_idx * sizeof(SceneTransform));
         }
     }
+    _reset_transform = false;
     _upload_transform_indices.clear();
+
+    for (int i = 0; i < DRAW_CMD_MAX; ++i)
+    {
+        draw_list[i].clear();
+    }
+
+    for (int i = 0; i < renderables.size(); ++i)
+    {
+        auto& renderable = renderables[i];
+        if (renderable.scene_index < 0)
+            continue;
+
+        for (int j = 0; j < DRAW_CMD_MAX; ++j)
+        {
+            fill_draw_list((DrawCommandType)j, i);
+        }
+    }
+    draw_list[DRAW_CMD_OPAQUE].sort();
+    draw_list[DRAW_CMD_ALPHA].sort_by_depth();
 }

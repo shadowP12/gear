@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rhi/ez_vulkan.h>
+#include <memory>
 
 struct ApplicationSetting
 {
@@ -26,8 +27,8 @@ protected:
 
 protected:
     struct GLFWwindow* _window_ptr = nullptr;
-    class CameraController* _camera_controller = nullptr;
     class Level* _level = nullptr;
+    std::shared_ptr<class CameraController> _camera_controller = nullptr;
 
     EzSwapchain _swapchain = VK_NULL_HANDLE;
     EzQueryPool _timestamp_query_pool = VK_NULL_HANDLE;

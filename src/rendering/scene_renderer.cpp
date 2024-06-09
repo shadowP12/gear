@@ -5,12 +5,11 @@
 
 SceneRenderer::SceneRenderer()
 {
-    scene = new RenderScene();
+    scene = std::make_unique<RenderScene>();
 }
 
 SceneRenderer::~SceneRenderer()
 {
-    delete scene;
 }
 
 void SceneRenderer::set_level(Level* level)
@@ -26,9 +25,12 @@ void SceneRenderer::render(RenderContext* ctx)
 
 void SceneRenderer::update_frame_constants(RenderContext* ctx)
 {
-    _frame_constants.view_matrix = scene->view[1].view;
-    _frame_constants.proj_matrix = scene->view[1].projection;
+    frame_constants.view_matrix = scene->view[1].view;
+    frame_constants.proj_matrix = scene->view[1].projection;
 
-    UniformBuffer* frame_ub = ctx->find_ub(FRAME_CONSTANTS_NAME, sizeof(FrameConstants));
-    frame_ub->write((uint8_t*)&_frame_constants, sizeof(FrameConstants));
+    if (!frame_ub)
+    {
+        frame_ub = std::make_shared<UniformBuffer>(sizeof(FrameConstants));
+    }
+    frame_ub->write((uint8_t*)&frame_constants, sizeof(FrameConstants));
 }

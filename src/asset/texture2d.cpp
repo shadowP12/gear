@@ -34,8 +34,7 @@ void Texture2D::deserialize(const rapidjson::Value& value, Serialization::Binary
 
 void Texture2D::generate_texture()
 {
-    std::string dir = Path::parent_path(Path::fix_path(_asset_path));
-    _image = ImageUtilities::load_image(Path::join(dir, _uri));
+    _image = ImageUtilities::load_image(Path::fix_path(_uri));
 
     if (_image)
     {
