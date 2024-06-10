@@ -26,7 +26,7 @@ void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, S
     writer.Key("data_size");
     writer.Int(_data.size());
 
-    writer.Key("sub_meshes");
+    writer.Key("primitives");
     writer.StartArray();
     for (int i = 0; i < _primitives.size(); ++i)
     {
@@ -103,7 +103,7 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
      uint8_t* data = bin.read(data_size);
      _data.insert(_data.end(), data, data + data_size);
 
-     for(int i = 0; i < value["sub_meshes"].Size(); i++)
+     for(int i = 0; i < value["primitives"].Size(); i++)
      {
         rapidjson::Value& primitive_value = value["primitives"][i];
         MeshPrimitive* primitive = new MeshPrimitive();

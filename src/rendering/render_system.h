@@ -16,7 +16,7 @@ public:
 
     void setup();
     void finish();
-    void execute(float dt, EzSwapchain swapchain);
+    void execute(EzSwapchain swapchain);
 
     SceneRenderer* get_scene_renderer() { return _scene_renderer.get(); }
     MaterialProxyPool* get_material_proxy_pool() { return _material_proxy_pool.get(); }

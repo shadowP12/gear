@@ -32,8 +32,11 @@ void RenderScene::set_level(Level* level)
         clear_scene();
 
     _level = level;
-    init_scene();
-    _notify_handle = _level->notify.bind(EVENT_CB(RenderScene::notify_received));
+    if (_level)
+    {
+        init_scene();
+        _notify_handle = _level->notify.bind(EVENT_CB(RenderScene::notify_received));
+    }
 }
 
 void RenderScene::clear_scene()

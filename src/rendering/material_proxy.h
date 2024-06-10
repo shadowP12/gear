@@ -22,7 +22,7 @@ class MaterialProxy
 public:
     void make_dirty();
     void clear_dirty();
-    void modify_compilation_environment(std::vector<std::string>& macros);
+    void compilation_environment(std::vector<std::string>& macros);
 
 public:
     bool dirty = false;

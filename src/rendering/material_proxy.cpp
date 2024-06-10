@@ -11,7 +11,7 @@ void MaterialProxy::clear_dirty()
     dirty = false;
 }
 
-void MaterialProxy::modify_compilation_environment(std::vector<std::string>& macros)
+void MaterialProxy::compilation_environment(std::vector<std::string>& macros)
 {
     if (base_color_texture)
     {

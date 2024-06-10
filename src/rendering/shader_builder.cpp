@@ -8,11 +8,12 @@ void ShaderBuilder::set_source(const std::string& src)
 
 void ShaderBuilder::set_vertex_factory(int vertex_factory_id)
 {
+    vertex_factory_compilation_environment(vertex_factory_id, _macros);
 }
 
 void ShaderBuilder::set_material_proxy(MaterialProxy* material_proxy)
 {
-    material_proxy->modify_compilation_environment(_macros);
+    material_proxy->compilation_environment(_macros);
 }
 
 EzShader ShaderBuilder::build()

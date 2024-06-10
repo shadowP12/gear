@@ -18,10 +18,9 @@ void RenderSystem::finish()
     _material_proxy_pool.reset();
 }
 
-void RenderSystem::execute(float dt, EzSwapchain swapchain)
+void RenderSystem::execute(EzSwapchain swapchain)
 {
-    _ctx->update(dt);
-
+    _ctx->update();
     {
         bool is_new;
         EzTextureDesc texture_desc{};

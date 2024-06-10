@@ -6,3 +6,5 @@
 #define STATIC_MESH_VERTEX_FACTORY 0
 
 EzVertexBinding& get_vertex_factory_layout(int id);
+
+void vertex_factory_compilation_environment(int id, std::vector<std::string>& macros);

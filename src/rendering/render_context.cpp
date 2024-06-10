@@ -23,9 +23,8 @@ void RenderContext::clear()
     _t_ref_cache.clear();
 }
 
-void RenderContext::update(float dt)
+void RenderContext::update()
 {
-    delta_time = dt;
 }
 
 UniformBuffer* RenderContext::find_ub(const std::string& name)

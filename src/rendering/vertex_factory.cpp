@@ -30,3 +30,11 @@ EzVertexBinding& get_vertex_factory_layout(int id)
 {
     return vf_pool[id];
 }
+
+void vertex_factory_compilation_environment(int id, std::vector<std::string>& macros)
+{
+    if (id == STATIC_MESH_VERTEX_FACTORY)
+    {
+        macros.push_back("STATIC_MESH_VERTEX_FACTORY");
+    }
+}

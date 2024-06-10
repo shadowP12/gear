@@ -12,7 +12,7 @@ public:
     ~RenderContext();
 
     void clear();
-    void update(float dt);
+    void update();
 
     UniformBuffer* find_ub(const std::string& name);
     UniformBuffer* find_or_create_ub(const std::string& name, uint32_t size);
@@ -21,9 +21,6 @@ public:
     TextureRef* find_t_ref(const std::string& name);
     TextureRef* find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc);
     TextureRef* find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc, bool& is_new);
-
-public:
-    float delta_time;
 
 private:
     std::unordered_map<std::string, UniformBuffer*> _ub_cache;

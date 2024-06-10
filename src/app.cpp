@@ -2,6 +2,7 @@
 #include "asset/level.h"
 #include "asset/asset_manager.h"
 #include "rendering/render_system.h"
+#include "rendering/scene_renderer.h"
 #include "importer/gltf_importer.h"
 #include <core/path.h>
 #include <input/input_events.h>
@@ -80,6 +81,7 @@ void Application::setup(const ApplicationSetting& setting)
 
 void Application::exit()
 {
+    RenderSystem::get()->get_scene_renderer()->set_level(nullptr);
     AssetManager::get()->finish();
     RenderSystem::get()->finish();
 
@@ -127,7 +129,7 @@ void Application::tick(float dt)
     ez_reset_query_pool(_timestamp_query_pool, 0, 16);
     ez_write_timestamp(_timestamp_query_pool, 0);
 
-    RenderSystem::get()->execute(dt, _swapchain);
+    RenderSystem::get()->execute(_swapchain);
 
     VkImageMemoryBarrier2 present_barrier[] = { ez_image_barrier(_swapchain, EZ_RESOURCE_STATE_PRESENT) };
     ez_pipeline_barrier(0, 0, nullptr, 1, present_barrier);
