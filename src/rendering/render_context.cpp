@@ -1,15 +1,39 @@
 #include "render_context.h"
 
 RenderContext::RenderContext()
-{}
+{
+    builtin();
+}
 
 RenderContext::~RenderContext()
 {
     clear();
 }
 
+void RenderContext::builtin()
+{
+    EzSampler sampler;
+    EzSamplerDesc sampler_desc{};
+    sampler_desc.address_u = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_desc.address_v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_desc.address_w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    ez_create_sampler(sampler_desc, sampler);
+    _sampler_cache["linear"] = sampler;
+
+    sampler_desc.mag_filter = VK_FILTER_NEAREST;
+    sampler_desc.min_filter = VK_FILTER_NEAREST;
+    ez_create_sampler(sampler_desc, sampler);
+    _sampler_cache["nearest"] = sampler;
+}
+
 void RenderContext::clear()
 {
+    for (auto& iter : _sampler_cache)
+    {
+        ez_destroy_sampler(iter.second);
+    }
+    _sampler_cache.clear();
+
     for (auto& iter : _ub_cache)
     {
         delete iter.second;
@@ -25,6 +49,16 @@ void RenderContext::clear()
 
 void RenderContext::update()
 {
+}
+
+EzSampler RenderContext::find_samper(const std::string& name)
+{
+    auto iter = _sampler_cache.find(name);
+    if (iter != _sampler_cache.end())
+    {
+        return iter->second;
+    }
+    return VK_NULL_HANDLE;
 }
 
 UniformBuffer* RenderContext::find_ub(const std::string& name)
