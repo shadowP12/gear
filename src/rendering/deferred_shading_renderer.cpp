@@ -18,10 +18,13 @@ void DeferredShadingRenderer::render(RenderContext* ctx)
 {
     SceneRenderer::render(ctx);
     fill_gbuffer(ctx);
+    copy_to_screen(ctx);
 }
 
 void DeferredShadingRenderer::fill_gbuffer(RenderContext* ctx)
 {
+    ScopedDrawLabel draw_label("Fill gbuffer", ScopedDrawLabel::WHITE);
+
     TextureRef* out_color_ref = ctx->find_t_ref("out_color");
     uint32_t rt_width = out_color_ref->get_desc().width;
     uint32_t rt_height = out_color_ref->get_desc().height;
@@ -101,4 +104,25 @@ void DeferredShadingRenderer::fill_gbuffer(RenderContext* ctx)
     }
 
     ez_end_rendering();
+}
+
+void DeferredShadingRenderer::copy_to_screen(RenderContext* ctx)
+{
+    ScopedDrawLabel draw_label("Copy to screen", ScopedDrawLabel::WHITE);
+
+    TextureRef* out_color_ref = ctx->find_t_ref("out_color");
+    TextureRef* scene_color_ref = ctx->find_t_ref("scene_color");
+    VkImageMemoryBarrier2 copy_barriers[] = {
+        ez_image_barrier(scene_color_ref->get_texture(), EZ_RESOURCE_STATE_COPY_SOURCE),
+        ez_image_barrier(out_color_ref->get_texture(), EZ_RESOURCE_STATE_COPY_DEST),
+    };
+    ez_pipeline_barrier(0, 0, nullptr, 2, copy_barriers);
+
+    VkImageCopy copy_region = {};
+    copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    copy_region.srcSubresource.layerCount = 1;
+    copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    copy_region.dstSubresource.layerCount = 1;
+    copy_region.extent = { out_color_ref->get_desc().width, out_color_ref->get_desc().height, 1 };
+    ez_copy_image(scene_color_ref->get_texture(), out_color_ref->get_texture(), copy_region);
 }

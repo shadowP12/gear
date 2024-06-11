@@ -13,4 +13,5 @@ public:
 protected:
     void fill_gbuffer(RenderContext* ctx);
 
+    void copy_to_screen(RenderContext* ctx);
 };
