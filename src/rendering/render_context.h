@@ -15,15 +15,19 @@ public:
     void clear();
     void update();
 
+    enum class CreateStatus
+    {
+        Keep,
+        Recreated,
+    };
+
     EzSampler find_samper(const std::string& name);
 
     UniformBuffer* find_ub(const std::string& name);
-    UniformBuffer* find_or_create_ub(const std::string& name, uint32_t size);
-    UniformBuffer* find_or_create_ub(const std::string& name, uint32_t size, bool& is_new);
+    UniformBuffer* create_ub(const std::string& name, uint32_t size, CreateStatus& status);
 
-    TextureRef* find_t_ref(const std::string& name);
-    TextureRef* find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc);
-    TextureRef* find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc, bool& is_new);
+    TextureRef* find_texture_ref(const std::string& name);
+    TextureRef* create_texture_ref(const std::string& name, const EzTextureDesc& desc, CreateStatus& status);
 
 private:
     std::unordered_map<std::string, EzSampler> _sampler_cache;

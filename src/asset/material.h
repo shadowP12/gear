@@ -1,9 +1,10 @@
 #pragma once
 
 #include "asset.h"
-#include "rendering/material_proxy.h"
+#include "rendering/material_constants.h"
 
 class Texture2D;
+class MaterialProxy;
 
 class Material : public Asset
 {

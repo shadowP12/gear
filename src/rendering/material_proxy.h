@@ -1,16 +1,10 @@
 #pragma once
 
 #include "render_resources.h"
+#include "material_constants.h"
 #include <rhi/ez_vulkan.h>
 #include <glm/glm.hpp>
 #include <memory>
-
-enum class MaterialAlphaMode
-{
-    Opaque = 0,
-    Mask = 1,
-    Blend = 2,
-};
 
 struct MaterialParams
 {

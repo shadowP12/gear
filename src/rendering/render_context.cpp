@@ -71,27 +71,21 @@ UniformBuffer* RenderContext::find_ub(const std::string& name)
     return nullptr;
 }
 
-UniformBuffer* RenderContext::find_or_create_ub(const std::string& name, uint32_t size)
+UniformBuffer* RenderContext::create_ub(const std::string& name, uint32_t size, CreateStatus& status)
 {
-    bool is_new;
-    return find_or_create_ub(name, size, is_new);
-}
-
-UniformBuffer* RenderContext::find_or_create_ub(const std::string& name, uint32_t size, bool& is_new)
-{
-    is_new = false;
+    status = CreateStatus::Keep;
     UniformBuffer* ub = find_ub(name);
     if (ub == nullptr || ub->get_buffer()->size != size)
     {
         delete ub;
         ub = new UniformBuffer(size);
         _ub_cache[name] = ub;
-        is_new = true;
+        status = CreateStatus::Recreated;
     }
     return ub;
 }
 
-TextureRef* RenderContext::find_t_ref(const std::string& name)
+TextureRef* RenderContext::find_texture_ref(const std::string& name)
 {
     auto iter = _t_ref_cache.find(name);
     if (iter != _t_ref_cache.end())
@@ -101,22 +95,16 @@ TextureRef* RenderContext::find_t_ref(const std::string& name)
     return nullptr;
 }
 
-TextureRef* RenderContext::find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc)
+TextureRef* RenderContext::create_texture_ref(const std::string& name, const EzTextureDesc& desc, CreateStatus& status)
 {
-    bool is_new;
-    return find_or_create_t_ref(name, desc, is_new);
-}
-
-TextureRef* RenderContext::find_or_create_t_ref(const std::string& name, const EzTextureDesc& desc, bool& is_new)
-{
-    is_new = false;
-    TextureRef* t_ref = find_t_ref(name);
+    status = CreateStatus::Keep;
+    TextureRef* t_ref = find_texture_ref(name);
     if (t_ref == nullptr || compute_texture_ref_hash(t_ref->get_desc()) != compute_texture_ref_hash(desc))
     {
         delete t_ref;
         t_ref = new TextureRef(desc);
         _t_ref_cache[name] = t_ref;
-        is_new = true;
+        status = CreateStatus::Recreated;
     }
     return t_ref;
 }

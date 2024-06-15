@@ -1,16 +1,6 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <rhi/ez_vulkan.h>
-
-struct ScopedDrawLabel
-{
-    static float WHITE[4];
-    static float RED[4];
-
-    ScopedDrawLabel(const char* label_name, const float color[4]);
-    ~ScopedDrawLabel();
-};
 
 struct FrameConstants
 {

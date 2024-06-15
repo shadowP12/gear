@@ -2,6 +2,7 @@
 #include "texture2d.h"
 #include "asset_manager.h"
 #include "rendering/render_system.h"
+#include "rendering/material_proxy.h"
 
 Material::Material(const std::string& asset_path)
     : Asset(asset_path)

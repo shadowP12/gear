@@ -2,6 +2,19 @@
 #include <algorithm>
 #include <functional>
 
+float DrawLabel::WHITE[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+float DrawLabel::RED[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+
+DrawLabel::DrawLabel(const char* label_name, const float color[4])
+{
+    ez_begin_debug_label(label_name, color);
+}
+
+DrawLabel::~DrawLabel()
+{
+    ez_end_debug_label();
+}
+
 void DrawCommandList::clear()
 {
     cmd_count = 0;
@@ -39,3 +52,4 @@ void DrawCommandList::sort_by_depth()
     };
     std::sort(&cmds[0], &cmds[0] + cmd_count, f);
 }
+
