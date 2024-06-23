@@ -29,7 +29,8 @@ private:
 
     void on_mouse_event_received(MouseEvent mouse_event);
 
-    CTransform* _camera_transform = nullptr;
+private:
+    Entity* _camera;
     bool _grabbing = false;
     glm::vec2 _start_point;
     EventHandle _mouse_event_handle;

@@ -1,4 +1,20 @@
 #include "material_proxy.h"
+#include <core/memory.h>
+
+static int g_material_id = 0;
+
+MaterialProxy::MaterialProxy()
+{
+    material_id = g_material_id++;
+}
+
+MaterialProxy::~MaterialProxy()
+{
+    if (material_ub)
+    {
+        SAFE_DELETE(material_ub);
+    }
+}
 
 void MaterialProxy::make_dirty()
 {
@@ -8,6 +24,14 @@ void MaterialProxy::make_dirty()
 
 void MaterialProxy::clear_dirty()
 {
+    if (dirty || !material_ub)
+    {
+        if (!material_ub)
+        {
+            material_ub = new UniformBuffer(sizeof(MaterialParams));
+        }
+        material_ub->write((uint8_t*)&params, sizeof(MaterialParams));
+    }
     dirty = false;
 }
 
@@ -19,49 +43,12 @@ void MaterialProxy::compilation_environment(std::vector<std::string>& macros)
     }
 }
 
-MaterialProxyPool::MaterialProxyPool()
+void MaterialProxy::bind()
 {
-    _proxys.clear();
-}
+    ez_bind_buffer(2, material_ub->get_buffer());
 
-MaterialProxyPool::~MaterialProxyPool()
-{
-    _proxys.clear();
-}
-
-int MaterialProxyPool::register_proxy()
-{
-    int material_id = _proxys.size();
-    _proxys.emplace_back();
-    return material_id;
-}
-
-void MaterialProxyPool::unregister_proxy(int material_id)
-{
-    MaterialProxy* proxy = get_proxy(material_id);
-    proxy->clear_dirty();
-    proxy->material_ub.reset();
-}
-
-MaterialProxy* MaterialProxyPool::get_proxy(int material_id)
-{
-    return &_proxys[material_id];
-}
-
-void MaterialProxyPool::update_dirty_proxys()
-{
-    for (int i = 0; i < _proxys.size(); ++i)
+    if (base_color_texture)
     {
-        MaterialProxy* proxy = &_proxys[i];
-        if (proxy->dirty || !proxy->material_ub)
-        {
-            proxy->clear_dirty();
-
-            if (!proxy->material_ub)
-            {
-                proxy->material_ub = std::make_shared<UniformBuffer>(sizeof(MaterialParams));
-            }
-            proxy->material_ub->write((uint8_t*)&proxy->params, sizeof(MaterialParams));
-        }
+        ez_bind_texture(10, base_color_texture, 0);
     }
 }

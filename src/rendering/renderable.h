@@ -6,8 +6,9 @@
 #include <memory>
 
 class MaterialProxy;
-struct RenderPrimitive
+struct Renderable
 {
+    int scene_index = -1;
     int vertex_factory;
     int vertex_count;
     int index_count;
@@ -15,12 +16,6 @@ struct RenderPrimitive
     EzBuffer vertex_buffer = VK_NULL_HANDLE;
     EzBuffer index_buffer = VK_NULL_HANDLE;
     VkPrimitiveTopology primitive_topology;
-    int material_id;
+    MaterialProxy* material_proxy;
     BoundingBox bounding_box;
-};
-
-struct Renderable
-{
-    int scene_index = -1;
-    std::vector<RenderPrimitive> primitives;
 };

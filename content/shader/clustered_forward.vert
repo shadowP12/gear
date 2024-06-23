@@ -13,15 +13,15 @@ layout(std140, binding = 0) uniform FrameConstants
     mat4 proj_matrix;
 } frame_constants;
 
-layout(std140, binding = 1) uniform SceneTransform
+layout(std140, binding = 1) uniform InstanceData
 {
     mat4 transform;
-} scene_transform;
+} instance_data;
 
 void main()
 {
     vertex_uv = in_texcoord;
     vertex_normal = in_normal;
-    vertex_world_position = scene_buffer.transform * vec4(in_position, 1.0);
+    vertex_world_position = instance_data.transform * vec4(in_position, 1.0);
     gl_Position = frame_constants.proj_matrix * frame_constants.view_matrix * vertex_world_position;
 }

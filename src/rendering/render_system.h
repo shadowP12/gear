@@ -4,9 +4,10 @@
 #include <rhi/ez_vulkan.h>
 #include <memory>
 
+class Window;
 class RenderContext;
 class SceneRenderer;
-class MaterialProxyPool;
+class SamplerPool;
 
 class RenderSystem : public Module<RenderSystem>
 {
@@ -16,13 +17,13 @@ public:
 
     void setup();
     void finish();
-    void execute(EzSwapchain swapchain);
+    void render(Window* window);
 
-    SceneRenderer* get_scene_renderer() { return _scene_renderer.get(); }
-    MaterialProxyPool* get_material_proxy_pool() { return _material_proxy_pool.get(); }
+    SamplerPool* get_sampler_pool() { return _sampler_pool; }
+    SceneRenderer* get_scene_renderer() { return _scene_renderer; }
 
 private:
-    std::shared_ptr<SceneRenderer> _scene_renderer;
-    std::shared_ptr<MaterialProxyPool> _material_proxy_pool;
-    std::shared_ptr<RenderContext> _ctx;
+    SamplerPool* _sampler_pool;
+    SceneRenderer* _scene_renderer;
+    RenderContext* _ctx;
 };

@@ -36,9 +36,6 @@ public:
     glm::vec3 get_color() { return _color; }
 
 private:
-    void dirty_notify_imp() override;
-
-private:
     LightType _type;
     glm::vec3 _color;
     /*

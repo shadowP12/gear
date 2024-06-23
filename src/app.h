@@ -2,6 +2,7 @@
 
 #include <rhi/ez_vulkan.h>
 #include <memory>
+#include <string>
 
 struct ApplicationSetting
 {
@@ -10,6 +11,10 @@ struct ApplicationSetting
     int window_pos_x = 0;
     int window_pos_y = 0;
 };
+
+class World;
+class Window;
+class CameraController;
 
 class Application
 {
@@ -22,15 +27,16 @@ public:
     bool should_close();
     void run();
 
+    World* get_world() { return _world; }
+
 protected:
     void tick(float dt);
 
 protected:
-    struct GLFWwindow* _window_ptr = nullptr;
-    class Level* _level = nullptr;
-    std::shared_ptr<class CameraController> _camera_controller = nullptr;
+    World* _world = nullptr;
+    Window* _window = nullptr;
+    CameraController* _camera_controller = nullptr;
 
-    EzSwapchain _swapchain = VK_NULL_HANDLE;
     EzQueryPool _timestamp_query_pool = VK_NULL_HANDLE;
 
     double _time = 0.0;

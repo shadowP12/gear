@@ -1,59 +1,18 @@
 #include "app.h"
+#include "world.h"
+#include "window.h"
 #include "asset/level.h"
 #include "asset/asset_manager.h"
+#include "entity/entity.h"
+#include "entity/components/c_camera.h"
 #include "rendering/render_system.h"
 #include "rendering/scene_renderer.h"
 #include "importer/gltf_importer.h"
+#include "gameplay/camera_controller.h"
 #include <core/path.h>
 #include <input/input_events.h>
 #include <rhi/ez_vulkan.h>
 #include <rhi/rhi_shader_mgr.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
-
-static void cursor_position_callback(GLFWwindow* window, double pos_x, double pos_y)
-{
-    MouseEvent mouse_event;
-    mouse_event.type = MouseEvent::Type::MOVE;
-    mouse_event.x = (float)pos_x;
-    mouse_event.y = (float)pos_y;
-    Input::get_mouse_event().broadcast(mouse_event);
-}
-
-static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
-    double pos_x, pos_y;
-    glfwGetCursorPos(window, &pos_x, &pos_y);
-
-    if (action == 0)
-    {
-        MouseEvent mouse_event;
-        mouse_event.type = MouseEvent::Type::UP;
-        mouse_event.x = (float)pos_x;
-        mouse_event.y = (float)pos_y;
-        mouse_event.button = button;
-        Input::get_mouse_event().broadcast(mouse_event);
-    }
-    else if (action == 1)
-    {
-        MouseEvent mouse_event;
-        mouse_event.type = MouseEvent::Type::DOWN;
-        mouse_event.x = (float)pos_x;
-        mouse_event.y = (float)pos_y;
-        mouse_event.button = button;
-        Input::get_mouse_event().broadcast(mouse_event);
-    }
-}
-
-static void mouse_scroll_callback(GLFWwindow* window, double offset_x, double offset_y)
-{
-    MouseEvent mouse_event;
-    mouse_event.type = MouseEvent::Type::WHEEL;
-    mouse_event.offset_x = (float)offset_x;
-    mouse_event.offset_y = (float)offset_y;
-    Input::get_mouse_event().broadcast(mouse_event);
-}
 
 void Application::setup(const ApplicationSetting& setting)
 {
@@ -61,35 +20,43 @@ void Application::setup(const ApplicationSetting& setting)
     Path::register_protocol("asset", std::string(PROJECT_DIR) + "/content/gear_asset/");
     Path::register_protocol("shader", std::string(PROJECT_DIR) + "/content/shader/");
 
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    _window_ptr = glfwCreateWindow(setting.window_width, setting.window_height, "app", nullptr, nullptr);
-    glfwSetWindowPos(_window_ptr, setting.window_pos_x, setting.window_pos_y);
-    glfwSetCursorPosCallback(_window_ptr, cursor_position_callback);
-    glfwSetMouseButtonCallback(_window_ptr, mouse_button_callback);
-    glfwSetScrollCallback(_window_ptr, mouse_scroll_callback);
-
     ez_init();
     rhi_shader_mgr_init();
-
-    ez_create_swapchain(glfwGetWin32Window(_window_ptr), _swapchain);
     ez_create_query_pool(16, VK_QUERY_TYPE_TIMESTAMP, _timestamp_query_pool);
 
     RenderSystem::get()->setup();
     AssetManager::get()->setup();
+
+    Window::glfw_init();
+    _window = new Window(setting.window_width, setting.window_height);
+
+    _world = new World();
+    _world->set_viewport(_window);
+
+    _camera_controller = new CameraController();
+    auto& camera_entities = _world->get_camera_entities();
+    if (!camera_entities.empty())
+    {
+        _camera_controller->set_camera(camera_entities[0]);
+    }
+
+    RenderSystem::get()->get_scene_renderer()->set_world(_world);
 }
 
 void Application::exit()
 {
-    RenderSystem::get()->get_scene_renderer()->set_level(nullptr);
+    delete _camera_controller;
+
+    RenderSystem::get()->get_scene_renderer()->set_world(nullptr);
+    delete _world;
+
     AssetManager::get()->finish();
     RenderSystem::get()->finish();
 
-    ez_destroy_swapchain(_swapchain);
     ez_destroy_query_pool(_timestamp_query_pool);
 
-    glfwDestroyWindow(_window_ptr);
-    glfwTerminate();
+    delete _window;
+    Window::glfw_terminate();
 
     rhi_shader_mgr_terminate();
     ez_flush();
@@ -98,14 +65,13 @@ void Application::exit()
 
 bool Application::should_close()
 {
-    return glfwWindowShouldClose(_window_ptr);
+    return _window->should_close();
 }
 
 void Application::run()
 {
-    glfwPollEvents();
-
-    double current_time = glfwGetTime();
+    Window::glfw_poll_events();
+    double current_time = Window::glfw_get_time();
     float dt = _time > 0.0 ? (float)(current_time - _time) : (float)(1.0f / 60.0f);
     _time = current_time;
     tick(dt);
@@ -113,28 +79,12 @@ void Application::run()
 
 void Application::tick(float dt)
 {
-    EzSwapchainStatus swapchain_status = ez_update_swapchain(_swapchain);
-
-    if (swapchain_status == EzSwapchainStatus::NotReady)
-        return;
-
-    if (swapchain_status == EzSwapchainStatus::Resized)
-    {
-        // Resize
-        // _swapchain->width / _swapchain->height
-    }
-
-    ez_acquire_next_image(_swapchain);
+    _world->tick(dt);
 
     ez_reset_query_pool(_timestamp_query_pool, 0, 16);
     ez_write_timestamp(_timestamp_query_pool, 0);
 
-    RenderSystem::get()->execute(_swapchain);
-
-    VkImageMemoryBarrier2 present_barrier[] = { ez_image_barrier(_swapchain, EZ_RESOURCE_STATE_PRESENT) };
-    ez_pipeline_barrier(0, 0, nullptr, 1, present_barrier);
-
-    ez_present(_swapchain);
+    RenderSystem::get()->render(_window);
 
     ez_write_timestamp(_timestamp_query_pool, 1);
     ez_submit();
@@ -148,5 +98,5 @@ void Application::tick(float dt)
 
     char title[256];
     snprintf(title, sizeof(title), "gpu: %.2f ms", _frame_gpu_avg);
-    glfwSetWindowTitle(_window_ptr, title);
+    _window->set_title(title);
 }

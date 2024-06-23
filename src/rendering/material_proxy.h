@@ -6,38 +6,22 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-struct MaterialParams
-{
-    glm::vec4 base_color;
-};
-
 class MaterialProxy
 {
 public:
+    MaterialProxy();
+    ~MaterialProxy();
+
     void make_dirty();
     void clear_dirty();
     void compilation_environment(std::vector<std::string>& macros);
+    void bind();
 
 public:
     bool dirty = false;
+    int material_id = 0;
     MaterialParams params;
     EzTexture base_color_texture = VK_NULL_HANDLE;
     MaterialAlphaMode alpha_mode;
-    std::shared_ptr<UniformBuffer> material_ub;
-};
-
-class MaterialProxyPool
-{
-public:
-    MaterialProxyPool();
-    ~MaterialProxyPool();
-
-    int register_proxy();
-    void unregister_proxy(int material_id);
-
-    MaterialProxy* get_proxy(int material_id);
-    void update_dirty_proxys();
-
-private:
-    std::vector<MaterialProxy> _proxys;
+    UniformBuffer* material_ub = nullptr;
 };

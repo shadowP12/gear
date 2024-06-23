@@ -1,20 +1,24 @@
 #include "scene_renderer.h"
 #include "render_scene.h"
 #include "render_context.h"
-#include "asset/level.h"
+#include "world.h"
+#include <core/memory.h>
 
 SceneRenderer::SceneRenderer()
 {
-    scene = std::make_unique<RenderScene>();
+    scene = new RenderScene();
 }
 
 SceneRenderer::~SceneRenderer()
 {
+    if (frame_ub)
+        SAFE_DELETE(frame_ub);
+    SAFE_DELETE(scene);
 }
 
-void SceneRenderer::set_level(Level* level)
+void SceneRenderer::set_world(World* world)
 {
-    scene->set_level(level);
+    scene->set_world(world);
 }
 
 void SceneRenderer::render(RenderContext* ctx)
@@ -30,7 +34,7 @@ void SceneRenderer::update_frame_constants(RenderContext* ctx)
 
     if (!frame_ub)
     {
-        frame_ub = std::make_shared<UniformBuffer>(sizeof(FrameConstants));
+        frame_ub = new UniformBuffer(sizeof(FrameConstants));
     }
     frame_ub->write((uint8_t*)&frame_constants, sizeof(FrameConstants));
 }

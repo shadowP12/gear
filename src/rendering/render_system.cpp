@@ -3,24 +3,34 @@
 #include "render_scene.h"
 #include "clustered_forward_renderer.h"
 #include "material_proxy.h"
+#include "sampler_pool.h"
+#include "window.h"
+#include <core/memory.h>
 
 void RenderSystem::setup()
 {
-    _ctx = std::make_shared<RenderContext>();
-    _scene_renderer = std::make_shared<ClusteredForwardRenderer>();
-    _material_proxy_pool = std::make_shared<MaterialProxyPool>();
+    _ctx = new RenderContext();
+    _scene_renderer = new ClusteredForwardRenderer();
+    _sampler_pool = new SamplerPool();
 }
 
 void RenderSystem::finish()
 {
-    _ctx.reset();
-    _scene_renderer.reset();
-    _material_proxy_pool.reset();
+    SAFE_DELETE(_ctx);
+    SAFE_DELETE(_scene_renderer);
+    SAFE_DELETE(_sampler_pool);
 }
 
-void RenderSystem::execute(EzSwapchain swapchain)
+void RenderSystem::render(Window* window)
 {
-    _ctx->update();
+    EzSwapchain swapchain = window->get_swapchain();
+    if (!swapchain)
+        return;
+
+    ez_acquire_next_image(swapchain);
+
+    _ctx->collect_viewport_info(window);
+
     {
         RenderContext::CreateStatus create_status;
         EzTextureDesc texture_desc{};
@@ -35,8 +45,7 @@ void RenderSystem::execute(EzSwapchain swapchain)
         }
     }
 
-    _material_proxy_pool->update_dirty_proxys();
-    _scene_renderer->render(_ctx.get());
+    _scene_renderer->render(_ctx);
 
     // Copy to swapchain
     {
@@ -55,4 +64,9 @@ void RenderSystem::execute(EzSwapchain swapchain)
         copy_region.extent = { swapchain->width, swapchain->height, 1 };
         ez_copy_image(t_ref->get_texture(), swapchain, copy_region);
     }
+
+    // Present
+    VkImageMemoryBarrier2 present_barrier[] = { ez_image_barrier(swapchain, EZ_RESOURCE_STATE_PRESENT) };
+    ez_pipeline_barrier(0, 0, nullptr, 1, present_barrier);
+    ez_present(swapchain);
 }

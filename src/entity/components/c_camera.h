@@ -46,14 +46,6 @@ public:
 
     float get_far() { return _far; }
 
-    void set_aspect(float aspect);
-
-    float get_aspect() { return _aspect; }
-
-    void set_rect(glm::vec4 rect);
-
-    glm::vec4 get_rect() { return _rect; }
-
     void set_uasge(CameraUsage usage);
 
     CameraUsage get_usage() { return _usage; }
@@ -71,17 +63,12 @@ public:
     float get_sensitivity() { return _sensitivity; }
 
 private:
-    void dirty_notify_imp() override;
-
-private:
     float _aperture = 16.0f;
     float _shutter_speed = 1.0f / 125.0f;
     float _sensitivity = 100.0f;
     float _near = 0.0f;
     float _far = 100.0f;
     float _fov = 45.0f;
-    float _aspect = 1.0f;
-    glm::vec4 _rect = glm::vec4(-1.0f, 1.0f, 1.0f, -1.0f); // Left, Right, Top, Bottom
     CameraUsage _usage;
     ProjectionMode _mode;
 };

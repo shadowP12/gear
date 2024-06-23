@@ -22,7 +22,6 @@ enum DrawCommandType
 struct DrawCommand
 {
     int renderable = -1;
-    int primitive = -1;
     float distance = 0.0f;
     union
     {

@@ -30,31 +30,21 @@ void CLight::deserialize(rapidjson::Value& value, Serialization::BinaryStream& b
     _type = LightType(value["type"].GetInt());
     _intensity = value["intensity"].GetDouble();
     _color = Serialization::r_vec3(value["color"]);
-
-    make_dirty();
 }
 
 void CLight::set_light_type(LightType type)
 {
     _type = type;
-    make_dirty();
 }
 
 void CLight::set_intensity(float intensity)
 {
     _intensity = intensity;
-    make_dirty();
 }
 
 void CLight::set_color(glm::vec3 color)
 {
     _color = color;
-    make_dirty();
-}
-
-void CLight::dirty_notify_imp()
-{
-    _entity->notify.broadcast(NOTIFY_LIGHT_CHANGED, _entity->get_id());
 }
 
 REGISTER_ENTITY_COMPONENT(CLight)

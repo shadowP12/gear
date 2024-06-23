@@ -4,6 +4,8 @@
 #include "render_system.h"
 #include "vertex_factory.h"
 #include "material_proxy.h"
+#include "shader_builder.h"
+#include "sampler_pool.h"
 
 ClusteredForwardRenderer::ClusteredForwardRenderer()
     : SceneRenderer()
@@ -18,7 +20,51 @@ void ClusteredForwardRenderer::render(RenderContext* ctx)
 {
     SceneRenderer::render(ctx);
     prepare(ctx);
+    render_opaque_pass(ctx);
     copy_to_screen(ctx);
+}
+
+void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
+{
+    SamplerPool* sampler_pool = RenderSystem::get()->get_sampler_pool();
+    DrawCommandList& draw_list = scene->draw_list[draw_type];
+    for (int i = 0; i < draw_list.cmd_count; ++i)
+    {
+        DrawCommand& draw_cmd = draw_list.cmds[i];
+        Renderable& renderable = scene->renderables[draw_cmd.renderable];
+        int vertex_factory = renderable.vertex_factory;
+        MaterialProxy* material_proxy = renderable.material_proxy;
+
+        ShaderBuilder vs_builder;
+        vs_builder.set_source("shader://clustered_forward.vert");
+        vs_builder.set_vertex_factory(vertex_factory);
+        vs_builder.set_material_proxy(material_proxy);
+
+        ShaderBuilder fs_builder;
+        fs_builder.set_source("shader://clustered_forward.frag");
+        fs_builder.set_vertex_factory(vertex_factory);
+        fs_builder.set_material_proxy(material_proxy);
+
+        ez_set_vertex_shader(vs_builder.build());
+        ez_set_fragment_shader(fs_builder.build());
+
+        sampler_pool->bind();
+        material_proxy->bind();
+        scene->bind(renderable.scene_index);
+        ez_bind_buffer(0, frame_ub->get_buffer());
+
+        ez_set_primitive_topology(renderable.primitive_topology);
+
+        EzVertexLayout vertex_layout{};
+        vertex_layout.set_binding(0, get_vertex_factory_layout(vertex_factory));
+        ez_set_vertex_layout(vertex_layout);
+
+        ez_bind_vertex_buffer(renderable.vertex_buffer);
+
+        ez_bind_index_buffer(renderable.index_buffer, renderable.index_type);
+
+        ez_draw_indexed(renderable.index_count, 0, 0);
+    }
 }
 
 void ClusteredForwardRenderer::prepare(RenderContext* ctx)
@@ -46,6 +92,46 @@ void ClusteredForwardRenderer::prepare(RenderContext* ctx)
     {
         ez_create_texture_view(scene_depth_ref->get_texture(), VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1);
     }
+}
+
+void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
+{
+    DrawLabel draw_label("Render opaque pass", DrawLabel::WHITE);
+
+    TextureRef* scene_color_ref = ctx->find_texture_ref("scene_color");
+    TextureRef* scene_depth_ref = ctx->find_texture_ref("scene_depth");
+
+    uint32_t rt_width = scene_color_ref->get_desc().width;
+    uint32_t rt_height = scene_color_ref->get_desc().height;
+
+    VkImageMemoryBarrier2 rt_barriers[2];
+    rt_barriers[0] = ez_image_barrier(scene_color_ref->get_texture(), EZ_RESOURCE_STATE_RENDERTARGET);
+    rt_barriers[1] = ez_image_barrier(scene_depth_ref->get_texture(), EZ_RESOURCE_STATE_DEPTH_WRITE);
+    ez_pipeline_barrier(0, 0, nullptr, 2, rt_barriers);
+
+    ez_reset_pipeline_state();
+
+    EzRenderingInfo rendering_info{};
+    EzRenderingAttachmentInfo color_info{};
+    color_info.texture = scene_color_ref->get_texture();
+    color_info.clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+    rendering_info.colors.push_back(color_info);
+
+    EzRenderingAttachmentInfo depth_info{};
+    depth_info.texture = scene_depth_ref->get_texture();
+    depth_info.clear_value.depthStencil = {1.0f, 1};
+    rendering_info.width = rt_width;
+    rendering_info.height = rt_height;
+    rendering_info.depth.push_back(depth_info);
+
+    ez_begin_rendering(rendering_info);
+
+    ez_set_viewport(0, 0, (float)rt_width, (float)rt_height);
+    ez_set_scissor(0, 0, (int32_t)rt_width, (int32_t)rt_height);
+
+    render_list(DRAW_CMD_OPAQUE);
+
+    ez_end_rendering();
 }
 
 void ClusteredForwardRenderer::copy_to_screen(RenderContext* ctx)

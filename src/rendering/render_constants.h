@@ -8,7 +8,7 @@ struct FrameConstants
     glm::mat4 proj_matrix;
 };
 
-struct SceneTransform
+struct SceneInstanceData
 {
     glm::mat4 transform;
     glm::mat4 pad0;

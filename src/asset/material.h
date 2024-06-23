@@ -28,10 +28,9 @@ public:
 
     MaterialAlphaMode get_alpha_mode();
 
-    int get_material_id() { return _material_id; };
+    MaterialProxy* get_proxy();
 
 private:
-    int _material_id;
     MaterialProxy* _proxy;
     glm::vec4 _base_color;
     Texture2D* _base_color_texture = nullptr;

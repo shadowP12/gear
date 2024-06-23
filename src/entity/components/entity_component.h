@@ -16,13 +16,7 @@ public:
     static std::string get_static_class_name() { return "EntityComponent"; }
     virtual std::string get_class_name() { return "EntityComponent"; }
 
-    bool is_dirty() { return _dirty; }
-    void make_dirty();
-    void dirty_notify();
-    virtual void dirty_notify_imp() {}
-
 protected:
-    bool _dirty = false;
     Entity* _entity;
 };
 

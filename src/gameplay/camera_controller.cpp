@@ -1,7 +1,6 @@
 #include "camera_controller.h"
 #include "entity/entity.h"
 #include "entity/components/c_camera.h"
-#include "entity/components/c_transform.h"
 #include <input/input_events.h>
 
 CameraController::CameraController()
@@ -19,7 +18,7 @@ void CameraController::set_camera(Entity* camera)
     if (!camera->has_component<CCamera>())
         return;
 
-    _camera_transform = camera->get_component<CTransform>();
+    _camera = camera;
 }
 
 void CameraController::on_mouse_event_received(MouseEvent mouse_event)
@@ -34,10 +33,10 @@ void CameraController::on_mouse_event_received(MouseEvent mouse_event)
 
 
             const float turn_rate = 0.001f;
-            glm::vec3 euler = _camera_transform->get_euler();
+            glm::vec3 euler = _camera->get_euler();
             euler.x += offset.y * turn_rate;
             euler.y += offset.x * turn_rate;
-            _camera_transform->set_euler(euler);
+            _camera->set_euler(euler);
         }
     }
     else if (mouse_event.type == MouseEvent::Type::UP)
@@ -56,11 +55,11 @@ void CameraController::on_mouse_event_received(MouseEvent mouse_event)
     }
     else if (mouse_event.type == MouseEvent::Type::WHEEL)
     {
-        glm::vec3 camera_pos = _camera_transform->get_position();
-        glm::vec3 camera_front = _camera_transform->get_front_vector();
+        glm::vec3 camera_pos = _camera->get_translation();
+        glm::vec3 camera_front = _camera->get_front_vector();
 
         const float speed = 0.2f;
         camera_pos -= camera_front * mouse_event.offset_y * speed;
-        _camera_transform->set_position(camera_pos);
+        _camera->set_translation(camera_pos);
     }
 }

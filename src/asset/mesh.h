@@ -13,14 +13,6 @@ struct MeshPrimitive
     uint32_t vertex_count;
     uint32_t vertex_size;
     uint32_t vertex_offset;
-    uint32_t position_size;
-    uint32_t position_offset;
-    uint32_t normal_size;
-    uint32_t normal_offset;
-    uint32_t tangent_size;
-    uint32_t tangent_offset;
-    uint32_t uv_size;
-    uint32_t uv_offset;
     uint32_t index_count;
     uint32_t index_size;
     uint32_t index_offset;
