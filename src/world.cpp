@@ -28,6 +28,7 @@ void World::add_level(Level* level)
     for (auto entity : entities)
     {
         entity->set_id((int)_entities.size());
+        entity->set_world(this);
         _entities.push_back(entity);
 
         // Categories
