@@ -32,7 +32,7 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
     {
         DrawCommand& draw_cmd = draw_list.cmds[i];
         Renderable& renderable = scene->renderables[draw_cmd.renderable];
-        int vertex_factory = renderable.vertex_factory;
+        VertexFactory* vertex_factory = renderable.vertex_factory;
         MaterialProxy* material_proxy = renderable.material_proxy;
 
         ShaderBuilder vs_builder;
@@ -48,22 +48,19 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
         ez_set_vertex_shader(vs_builder.build());
         ez_set_fragment_shader(fs_builder.build());
 
-        sampler_pool->bind();
-        material_proxy->bind();
-        scene->bind(renderable.scene_index);
         ez_bind_buffer(0, frame_ub->get_buffer());
+
+        scene->bind(renderable.scene_index);
+
+        sampler_pool->bind();
+
+        material_proxy->bind();
+
+        vertex_factory->bind();
 
         ez_set_primitive_topology(renderable.primitive_topology);
 
-        EzVertexLayout vertex_layout{};
-        vertex_layout.set_binding(0, get_vertex_factory_layout(vertex_factory));
-        ez_set_vertex_layout(vertex_layout);
-
-        ez_bind_vertex_buffer(renderable.vertex_buffer);
-
-        ez_bind_index_buffer(renderable.index_buffer, renderable.index_type);
-
-        ez_draw_indexed(renderable.index_count, 0, 0);
+        ez_draw_indexed(vertex_factory->index_count, 0, 0);
     }
 }
 

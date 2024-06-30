@@ -6,9 +6,9 @@ void ShaderBuilder::set_source(const std::string& src)
     _src = src;
 }
 
-void ShaderBuilder::set_vertex_factory(int vertex_factory_id)
+void ShaderBuilder::set_vertex_factory(VertexFactory* vertex_factory)
 {
-    vertex_factory_compilation_environment(vertex_factory_id, _macros);
+    vertex_factory->compilation_environment(_macros);
 }
 
 void ShaderBuilder::set_material_proxy(MaterialProxy* material_proxy)

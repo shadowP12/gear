@@ -2,6 +2,7 @@
 #include "render_context.h"
 #include "render_system.h"
 #include "material_proxy.h"
+#include "vertex_factory.h"
 #include "world.h"
 #include "asset/level.h"
 #include "asset/mesh.h"
@@ -78,7 +79,7 @@ void RenderScene::fill_draw_list(DrawCommandType type, int renderable_id)
     draw_cmd->renderable = renderable_id;
     draw_cmd->distance = glm::distance(view[1].position, renderable_position);
     draw_cmd->sort.sort_key = 0;
-    draw_cmd->sort.vertex_factory_id = renderable.vertex_factory;
+    draw_cmd->sort.vertex_factory_id = renderable.vertex_factory->get_type_id();
     draw_cmd->sort.material_id = material_proxy->material_id;
 }
 
@@ -122,8 +123,8 @@ void RenderScene::prepare(RenderContext* ctx)
     {
         CMesh* c_mesh = entity->get_component<CMesh>();
         Mesh* mesh = c_mesh->get_mesh();
-        auto& primitives = mesh->get_primitives();
-        for (auto& primitive : primitives)
+        auto& surfaces = mesh->get_surfaces();
+        for (auto& surface : surfaces)
         {
             if (renderable_count >= renderables.size())
             {
@@ -136,15 +137,10 @@ void RenderScene::prepare(RenderContext* ctx)
 
             Renderable* renderable = &renderables[renderable_count];
             renderable->scene_index = renderable_count;
-            renderable->primitive_topology = primitive->primitive_topology;
-            renderable->vertex_factory = primitive->vertex_factory;
-            renderable->vertex_count = primitive->vertex_count;
-            renderable->index_count = primitive->index_count;
-            renderable->index_type = primitive->index_type;
-            renderable->vertex_buffer = primitive->vertex_buffer;
-            renderable->index_buffer = primitive->index_buffer;
-            renderable->bounding_box = primitive->bounding_box;
-            renderable->material_proxy = primitive->material->get_proxy();
+            renderable->primitive_topology = surface->primitive_topology;
+            renderable->vertex_factory = surface->vertex_factory;
+            renderable->bounding_box = surface->bounding_box;
+            renderable->material_proxy = surface->material->get_proxy();
 
             renderable_count++;
         }

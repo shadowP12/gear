@@ -10,9 +10,9 @@
 #include "importer/gltf_importer.h"
 #include "gameplay/camera_controller.h"
 #include <core/path.h>
-#include <input/input_events.h>
 #include <rhi/ez_vulkan.h>
 #include <rhi/rhi_shader_mgr.h>
+#include <core/memory.h>
 
 void Application::setup(const ApplicationSetting& setting)
 {
@@ -45,17 +45,17 @@ void Application::setup(const ApplicationSetting& setting)
 
 void Application::exit()
 {
-    delete _camera_controller;
+    SAFE_DELETE(_camera_controller);
 
     RenderSystem::get()->get_scene_renderer()->set_world(nullptr);
-    delete _world;
+    SAFE_DELETE(_world);
 
     AssetManager::get()->finish();
     RenderSystem::get()->finish();
 
     ez_destroy_query_pool(_timestamp_query_pool);
 
-    delete _window;
+    SAFE_DELETE(_window);
     Window::glfw_terminate();
 
     rhi_shader_mgr_terminate();

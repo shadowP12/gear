@@ -13,7 +13,7 @@ public:
 
     void set_source(const std::string& src);
 
-    void set_vertex_factory(int vertex_factory_id);
+    void set_vertex_factory(VertexFactory* vertex_factory);
 
     void set_material_proxy(MaterialProxy* material_proxy);
 

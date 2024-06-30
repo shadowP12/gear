@@ -1,40 +1,41 @@
 #include "vertex_factory.h"
 
-static std::unordered_map<int, EzVertexBinding> vf_pool;
-
-void add_vertex_attrib(EzVertexBinding& layout, uint32_t location, VkFormat format, uint32_t& offset)
+VertexFactory::~VertexFactory()
 {
-    layout.vertex_stride += ez_get_format_stride(format);
-    layout.vertex_attribs[location].format = format;
-    layout.vertex_attribs[location].offset = offset;
-    layout.vertex_attrib_mask |= 1 << location;
-    offset = layout.vertex_stride;
+    for (int i = 0; i < vertex_buffer_count; ++i)
+    {
+        ez_destroy_buffer(vertex_buffers[i]);
+    }
+    if (index_buffer)
+    {
+        ez_destroy_buffer(index_buffer);
+    }
 }
 
-struct StaticMeshVertexFactoryRegister
+StaticMeshVertexFactory::~StaticMeshVertexFactory()
 {
-    StaticMeshVertexFactoryRegister()
-    {
-        uint32_t offset = 0;
-        EzVertexBinding layout{};
-        add_vertex_attrib(layout, 0, VK_FORMAT_R32G32B32_SFLOAT, offset);
-        add_vertex_attrib(layout, 1, VK_FORMAT_R32G32B32_SFLOAT, offset);
-        add_vertex_attrib(layout, 2, VK_FORMAT_R32G32B32_SFLOAT, offset);
-        add_vertex_attrib(layout, 3, VK_FORMAT_R32G32_SFLOAT, offset);
-        vf_pool[STATIC_MESH_VERTEX_FACTORY] = layout;
-    }
-};
-StaticMeshVertexFactoryRegister static_mesh_vf_register;
-
-EzVertexBinding& get_vertex_factory_layout(int id)
-{
-    return vf_pool[id];
 }
 
-void vertex_factory_compilation_environment(int id, std::vector<std::string>& macros)
+void StaticMeshVertexFactory::compilation_environment(std::vector<std::string>& macros)
 {
-    if (id == STATIC_MESH_VERTEX_FACTORY)
-    {
-        macros.push_back("STATIC_MESH_VERTEX_FACTORY");
-    }
+    macros.push_back("STATIC_MESH_VERTEX_FACTORY");
+}
+
+void StaticMeshVertexFactory::bind()
+{
+    ez_set_vertex_binding(0, 12);
+    ez_set_vertex_attrib(0, 0, VK_FORMAT_R32G32B32_SFLOAT);
+
+    ez_set_vertex_binding(1, 12);
+    ez_set_vertex_attrib(1, 1, VK_FORMAT_R32G32B32_SFLOAT);
+
+    ez_set_vertex_binding(2, 12);
+    ez_set_vertex_attrib(2, 2, VK_FORMAT_R32G32B32_SFLOAT);
+
+    ez_set_vertex_binding(3, 8);
+    ez_set_vertex_attrib(3, 3, VK_FORMAT_R32G32_SFLOAT);
+
+    ez_bind_vertex_buffers(0, vertex_buffer_count, vertex_buffers);
+
+    ez_bind_index_buffer(index_buffer, index_type);
 }

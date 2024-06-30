@@ -15,6 +15,7 @@ class RenderScene
 {
 public:
     RenderScene();
+
     ~RenderScene();
 
     void set_world(World* world);

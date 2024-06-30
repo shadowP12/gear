@@ -10,11 +10,15 @@ class MaterialProxy
 {
 public:
     MaterialProxy();
+
     ~MaterialProxy();
 
     void make_dirty();
+
     void clear_dirty();
+
     void compilation_environment(std::vector<std::string>& macros);
+
     void bind();
 
 public:

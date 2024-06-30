@@ -4,26 +4,8 @@
 #include <rhi/ez_vulkan.h>
 #include <math/bounding_box.h>
 
+class VertexFactory;
 class Material;
-
-struct MeshPrimitive
-{
-    uint32_t total_size;
-    uint32_t total_offset;
-    uint32_t vertex_count;
-    uint32_t vertex_size;
-    uint32_t vertex_offset;
-    uint32_t index_count;
-    uint32_t index_size;
-    uint32_t index_offset;
-    VkIndexType index_type;
-    BoundingBox bounding_box;
-    Material* material = nullptr;
-    EzBuffer vertex_buffer = VK_NULL_HANDLE;
-    EzBuffer index_buffer = VK_NULL_HANDLE;
-    int vertex_factory;
-    VkPrimitiveTopology primitive_topology;
-};
 
 class Mesh : public Asset
 {
@@ -37,13 +19,39 @@ public:
 
     std::vector<uint8_t>& get_data() {return _data;}
 
-    std::vector<MeshPrimitive*>& get_primitives() {return _primitives;}
+    struct Surface
+    {
+        uint32_t total_size;
+        uint32_t total_offset;
+        uint32_t vertex_count;
+        uint32_t vertex_size;
+        uint32_t vertex_offset;
+        uint32_t position_size;
+        uint32_t position_offset;
+        uint32_t normal_size;
+        uint32_t normal_offset;
+        uint32_t tangent_size;
+        uint32_t tangent_offset;
+        uint32_t uv0_size;
+        uint32_t uv0_offset;
+        uint32_t uv1_size;
+        uint32_t uv1_offset;
+        uint32_t index_count;
+        uint32_t index_size;
+        uint32_t index_offset;
+        bool using_16u;
+        BoundingBox bounding_box;
+        Material* material = nullptr;
+        VertexFactory* vertex_factory = nullptr;
+        VkPrimitiveTopology primitive_topology;
+    };
+
+    std::vector<Surface*>& get_surfaces() {return _surfaces;}
 
 private:
-    void generate_mesh_buffers();
+    void generate_surfaces_vertex_factory();
 
 protected:
-    friend class MeshPrimitive;
     std::vector<uint8_t> _data;
-    std::vector<MeshPrimitive*> _primitives;
+    std::vector<Surface*> _surfaces;
 };

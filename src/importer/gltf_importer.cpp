@@ -26,6 +26,16 @@ struct GltfPrimitive
     uint32_t vertex_count;
     uint32_t vertex_size;
     uint32_t vertex_offset;
+    uint32_t position_size;
+    uint32_t position_offset;
+    uint32_t normal_size;
+    uint32_t normal_offset;
+    uint32_t tangent_size;
+    uint32_t tangent_offset;
+    uint32_t uv0_size;
+    uint32_t uv0_offset;
+    uint32_t uv1_size;
+    uint32_t uv1_offset;
     uint32_t index_count;
     uint32_t index_size;
     uint32_t index_offset;
@@ -123,18 +133,6 @@ VkPrimitiveTopology get_primitive_topology_from_gltf(cgltf_primitive_type gltf_p
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
     }
     return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-}
-
-void combind_vertex_data(void* dst, void* src, uint32_t vertex_count, uint32_t attribute_size, uint32_t vertex_offset, uint32_t vertex_stride)
-{
-    uint8_t* dst_data = (uint8_t*)dst + vertex_offset;
-    uint8_t* src_data = (uint8_t*)src;
-    for (uint32_t i = 0; i < vertex_count; i++)
-    {
-        memcpy(dst_data, src_data, attribute_size);
-        dst_data += vertex_stride;
-        src_data += attribute_size;
-    }
 }
 
 void GltfImporter::import_asset(const std::string& file_path, const std::string& output_path)
@@ -282,22 +280,13 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             gltf_primitive.total_size = 0;
             gltf_primitive.total_offset = bin.get_size();
 
-            // Vertices
-            uint32_t vertex_count = 0;
-            uint32_t vertex_stride = 0;
-            uint32_t position_offset = -1;
-            uint32_t position_attribute_size = 0;
-            uint32_t normal_offset = -1;
-            uint32_t normal_attribute_size = 0;
-            uint32_t tangent_offset = -1;
-            uint32_t tangent_attribute_size = 0;
-            uint32_t uv_offset = -1;
-            uint32_t uv_attribute_size = 0;
-
             cgltf_attribute* position_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_position);
             cgltf_accessor* position_accessor = position_attribute->data;
             cgltf_buffer_view* position_view = position_accessor->buffer_view;
-            vertex_count = (uint32_t)position_accessor->count;
+            uint32_t vertex_count = (uint32_t)position_accessor->count;
+            gltf_primitive.vertex_count = vertex_count;
+            gltf_primitive.vertex_size = 0;
+            gltf_primitive.vertex_offset = bin.get_size();
 
             const float* minp = &position_accessor->min[0];
             const float* maxp = &position_accessor->max[0];
@@ -305,47 +294,48 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             gltf_primitive.bounding_box.merge(glm::vec3(maxp[0], maxp[1], maxp[2]));
 
             uint8_t* position_data = (uint8_t*)(position_view->buffer->data) + position_accessor->offset + position_view->offset;
-            position_offset = vertex_stride;
-            position_attribute_size = sizeof(glm::vec3);
-            vertex_stride += position_attribute_size;
+            gltf_primitive.position_size = vertex_count * 3 * sizeof(float);
+            gltf_primitive.position_offset = bin.get_size();
+            gltf_primitive.vertex_size += gltf_primitive.position_size;
+            gltf_primitive.total_size += gltf_primitive.position_size;
+            bin.write(position_data, gltf_primitive.position_size);
 
             cgltf_attribute* normal_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_normal);
             cgltf_accessor* normal_accessor = normal_attribute->data;
             cgltf_buffer_view* normal_view = normal_accessor->buffer_view;
             uint8_t* normal_data = (uint8_t*)(normal_view->buffer->data) + normal_accessor->offset + normal_view->offset;
-            normal_offset = vertex_stride;
-            normal_attribute_size = sizeof(glm::vec3);
-            vertex_stride += normal_attribute_size;
+            gltf_primitive.normal_size = vertex_count * 3 * sizeof(float);
+            gltf_primitive.normal_offset = bin.get_size();
+            gltf_primitive.vertex_size += gltf_primitive.normal_size;
+            gltf_primitive.total_size += gltf_primitive.normal_size;
+            bin.write(normal_data, gltf_primitive.normal_size);
 
             cgltf_attribute* tangent_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_tangent);
             cgltf_accessor* tangent_accessor = tangent_attribute->data;
             cgltf_buffer_view* tangent_view = tangent_accessor->buffer_view;
             uint8_t* tangent_data = (uint8_t*)(tangent_view->buffer->data) + tangent_accessor->offset + tangent_view->offset;
-            tangent_offset = vertex_stride;
-            tangent_attribute_size = sizeof(glm::vec3);
-            vertex_stride += tangent_attribute_size;
+            gltf_primitive.tangent_size = vertex_count * 3 * sizeof(float);
+            gltf_primitive.tangent_offset = bin.get_size();
+            gltf_primitive.vertex_size += gltf_primitive.tangent_size;
+            gltf_primitive.total_size += gltf_primitive.tangent_size;
+            bin.write(tangent_data, gltf_primitive.tangent_size);
 
             cgltf_attribute* texcoord_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_texcoord);
             cgltf_accessor* texcoord_accessor = texcoord_attribute->data;
             cgltf_buffer_view* texcoord_view = texcoord_accessor->buffer_view;
             uint8_t* uv_data = (uint8_t*)(texcoord_view->buffer->data) + texcoord_accessor->offset + texcoord_view->offset;
-            uv_offset = vertex_stride;
-            uv_attribute_size = sizeof(glm::vec2);
-            vertex_stride += uv_attribute_size;
+            gltf_primitive.uv0_size = vertex_count * 2 * sizeof(float);
+            gltf_primitive.uv0_offset = bin.get_size();
+            gltf_primitive.vertex_size += gltf_primitive.uv0_size;
+            gltf_primitive.total_size += gltf_primitive.uv0_size;
+            bin.write(uv_data, gltf_primitive.uv0_size);
 
-            gltf_primitive.vertex_count = vertex_count;
-            gltf_primitive.vertex_size = vertex_count * vertex_stride;
-            gltf_primitive.vertex_offset = bin.get_size();
-            gltf_primitive.total_size += gltf_primitive.vertex_size;
+            gltf_primitive.uv1_size = vertex_count * 2 * sizeof(float);
+            gltf_primitive.uv1_offset = bin.get_size();
+            gltf_primitive.vertex_size += gltf_primitive.uv1_size;
+            gltf_primitive.total_size += gltf_primitive.uv1_size;
+            bin.write(uv_data, gltf_primitive.uv1_size);
 
-            std::vector<uint8_t> vertex_data(vertex_count * vertex_stride);
-            combind_vertex_data(vertex_data.data(), position_data, vertex_count, position_attribute_size, position_offset, vertex_stride);
-            combind_vertex_data(vertex_data.data(), normal_data, vertex_count, normal_attribute_size, normal_offset, vertex_stride);
-            combind_vertex_data(vertex_data.data(), tangent_data, vertex_count, tangent_attribute_size, tangent_offset, vertex_stride);
-            combind_vertex_data(vertex_data.data(), uv_data, vertex_count, uv_attribute_size, uv_offset, vertex_stride);
-            bin.write(vertex_data.data(), vertex_data.size());
-
-            // Indices
             cgltf_accessor* index_accessor = cprimitive->indices;
             cgltf_buffer_view* index_buffer_view = index_accessor->buffer_view;
             cgltf_buffer* index_buffer = index_buffer_view->buffer;
@@ -380,7 +370,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
         writer.Key("data_size");
         writer.Int(bin.get_size());
 
-        writer.Key("primitives");
+        writer.Key("surfaces");
         writer.StartArray();
         for (int j = 0; j < gltf_primitives.size(); ++j)
         {
@@ -396,6 +386,26 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             writer.Int(gltf_primitive.vertex_size);
             writer.Key("vertex_offset");
             writer.Int(gltf_primitive.vertex_offset);
+            writer.Key("position_size");
+            writer.Int(gltf_primitive.position_size);
+            writer.Key("position_offset");
+            writer.Int(gltf_primitive.position_offset);
+            writer.Key("normal_size");
+            writer.Int(gltf_primitive.normal_size);
+            writer.Key("normal_offset");
+            writer.Int(gltf_primitive.normal_offset);
+            writer.Key("tangent_size");
+            writer.Int(gltf_primitive.tangent_size);
+            writer.Key("tangent_offset");
+            writer.Int(gltf_primitive.tangent_offset);
+            writer.Key("uv0_size");
+            writer.Int(gltf_primitive.uv0_size);
+            writer.Key("uv0_offset");
+            writer.Int(gltf_primitive.uv0_offset);
+            writer.Key("uv1_size");
+            writer.Int(gltf_primitive.uv1_size);
+            writer.Key("uv1_offset");
+            writer.Int(gltf_primitive.uv1_offset);
             writer.Key("index_count");
             writer.Int(gltf_primitive.index_count);
             writer.Key("index_size");
@@ -406,8 +416,6 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             writer.Bool(gltf_primitive.using_16u_index);
             writer.Key("primitive_topology");
             writer.Int(get_primitive_topology_from_gltf(gltf_primitive.primitive_type));
-            writer.Key("vertex_factory");
-            writer.Int(STATIC_MESH_VERTEX_FACTORY);
             writer.Key("maxp");
             Serialization::w_vec3(writer, gltf_primitive.bounding_box.bb_max);
             writer.Key("minp");
@@ -515,7 +523,6 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
 
             writer.Key("components");
             writer.StartArray();
-
             if (gltf_node.has_mesh)
             {
                 writer.StartObject();
