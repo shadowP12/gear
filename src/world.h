@@ -29,9 +29,12 @@ public:
 
     std::vector<Entity*>& get_camera_entities() { return _camera_entities; };
 
+    std::vector<Entity*>& get_light_entities() { return _light_entities; };
+
 private:
     Viewport* _vp = nullptr;
     std::vector<Entity*> _entities;
     std::vector<Entity*> _mesh_entities;
     std::vector<Entity*> _camera_entities;
+    std::vector<Entity*> _light_entities;
 };

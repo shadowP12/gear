@@ -1,7 +1,7 @@
 #include "mesh_utilities.h"
 
-namespace MeshUtilities
-{
+namespace MeshUtilities {
+
 EzBuffer create_mesh_buffer(void* data, uint32_t data_size, VkBufferUsageFlags usage)
 {
     EzBuffer buffer;
@@ -31,4 +31,5 @@ EzBuffer create_mesh_buffer(void* data, uint32_t data_size, VkBufferUsageFlags u
 
     return buffer;
 }
-}
+
+} // namespace MeshUtilities

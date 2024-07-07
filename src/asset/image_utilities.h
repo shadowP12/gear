@@ -3,7 +3,8 @@
 #include "image.h"
 #include <string>
 
-namespace ImageUtilities
-{
+namespace ImageUtilities {
+
 Image* load_image(const std::string& file);
-}
+
+} // namespace ImageUtilities

@@ -17,7 +17,7 @@ public:
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
     virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
-    std::vector<uint8_t>& get_data() {return _data;}
+    std::vector<uint8_t>& get_data() { return _data; }
 
     struct Surface
     {
@@ -44,12 +44,16 @@ public:
         Material* material = nullptr;
         VertexFactory* vertex_factory = nullptr;
         VkPrimitiveTopology primitive_topology;
+        int vertex_buffer_count = 0;
+        EzBuffer vertex_buffers[EZ_NUM_VERTEX_BUFFERS];
+        VkIndexType index_type;
+        EzBuffer index_buffer = VK_NULL_HANDLE;
     };
 
     std::vector<Surface*>& get_surfaces() {return _surfaces;}
 
 private:
-    void generate_surfaces_vertex_factory();
+    void generate_surfaces_buffer();
 
 protected:
     std::vector<uint8_t> _data;

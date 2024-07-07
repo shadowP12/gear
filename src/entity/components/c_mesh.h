@@ -4,6 +4,7 @@
 
 class Entity;
 class Mesh;
+class RenderableCollector;
 class CMesh : public EntityComponent
 {
 public:
@@ -20,6 +21,8 @@ public:
     void set_mesh(Mesh* mesh);
 
     Mesh* get_mesh();
+
+    void fill_renderables(RenderableCollector* collector);
 
 private:
     Mesh* _mesh;

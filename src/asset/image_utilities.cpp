@@ -4,8 +4,8 @@
 #define STBIR_FLAG_ALPHA_PREMULTIPLIED
 #include <stb_image.h>
 
-namespace ImageUtilities
-{
+namespace ImageUtilities {
+
 Image* load_image(const std::string& file)
 {
     if (Path::extension(file) == "png")
@@ -25,4 +25,5 @@ Image* load_image(const std::string& file)
     }
     return nullptr;
 }
-}
+
+} // namespace ImageUtilities

@@ -34,9 +34,7 @@ protected:
 
 public:
     RenderView view[2]; // Main / Display
-    int renderable_count = 0;
-    std::vector<Renderable> renderables;
-    std::vector<SceneInstanceData> instance_datas;
+    RenderableCollector collector;
     DrawCommandList draw_list[DRAW_CMD_MAX];
     UniformBuffer* scene_ub = nullptr;
 

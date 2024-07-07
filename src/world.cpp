@@ -3,6 +3,7 @@
 #include "entity/entity.h"
 #include "entity/components/c_mesh.h"
 #include "entity/components/c_camera.h"
+#include "entity/components/c_light.h"
 
 World::World()
 {
@@ -40,6 +41,11 @@ void World::add_level(Level* level)
         if (entity->has_component<CCamera>())
         {
             _camera_entities.push_back(entity);
+        }
+
+        if (entity->has_component<CLight>())
+        {
+            _light_entities.push_back(entity);
         }
     }
 }

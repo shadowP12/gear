@@ -4,9 +4,9 @@
 
 enum class LightType
 {
-    POINT,
-    SPOT,
-    DIRECTION,
+    Omni,
+    Spot,
+    Direction,
 };
 
 class Entity;
@@ -39,6 +39,7 @@ private:
     LightType _type;
     glm::vec3 _color;
     /*
+     * Omni/Spot: candela
      * Direction: lux
      */
     float _intensity = 0.0f;

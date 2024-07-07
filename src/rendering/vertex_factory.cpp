@@ -2,14 +2,6 @@
 
 VertexFactory::~VertexFactory()
 {
-    for (int i = 0; i < vertex_buffer_count; ++i)
-    {
-        ez_destroy_buffer(vertex_buffers[i]);
-    }
-    if (index_buffer)
-    {
-        ez_destroy_buffer(index_buffer);
-    }
 }
 
 StaticMeshVertexFactory::~StaticMeshVertexFactory()

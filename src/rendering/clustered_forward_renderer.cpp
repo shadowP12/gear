@@ -31,9 +31,9 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
     for (int i = 0; i < draw_list.cmd_count; ++i)
     {
         DrawCommand& draw_cmd = draw_list.cmds[i];
-        Renderable& renderable = scene->renderables[draw_cmd.renderable];
-        VertexFactory* vertex_factory = renderable.vertex_factory;
-        MaterialProxy* material_proxy = renderable.material_proxy;
+        Renderable* renderable = scene->collector.get_renderable(draw_cmd.renderable);
+        VertexFactory* vertex_factory = renderable->vertex_factory;
+        MaterialProxy* material_proxy = renderable->material_proxy;
 
         ShaderBuilder vs_builder;
         vs_builder.set_source("shader://clustered_forward.vert");
@@ -50,7 +50,7 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
 
         ez_bind_buffer(0, frame_ub->get_buffer());
 
-        scene->bind(renderable.scene_index);
+        scene->bind(renderable->scene_index);
 
         sampler_pool->bind();
 
@@ -58,7 +58,7 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
 
         vertex_factory->bind();
 
-        ez_set_primitive_topology(renderable.primitive_topology);
+        ez_set_primitive_topology(renderable->primitive_topology);
 
         ez_draw_indexed(vertex_factory->index_count, 0, 0);
     }

@@ -18,6 +18,16 @@ Mesh::~Mesh()
         {
             SAFE_DELETE(surface->vertex_factory);
         }
+
+        for (int i = 0; i < surface->vertex_buffer_count; ++i)
+        {
+            ez_destroy_buffer(surface->vertex_buffers[i]);
+        }
+        if (surface->index_buffer)
+        {
+            ez_destroy_buffer(surface->index_buffer);
+        }
+
         SAFE_DELETE(surface);
     }
     _surfaces.clear();
@@ -134,23 +144,32 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
         _surfaces.push_back(surface);
      }
 
-     generate_surfaces_vertex_factory();
+     generate_surfaces_buffer();
 }
 
-void Mesh::generate_surfaces_vertex_factory()
+void Mesh::generate_surfaces_buffer()
 {
      for (auto surface : _surfaces)
      {
+        surface->vertex_buffer_count = 4;
+        surface->vertex_buffers[0] = MeshUtilities::create_mesh_buffer(_data.data() + surface->position_offset, surface->position_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        surface->vertex_buffers[1] = MeshUtilities::create_mesh_buffer(_data.data() + surface->normal_offset, surface->normal_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        surface->vertex_buffers[2] = MeshUtilities::create_mesh_buffer(_data.data() + surface->tangent_offset, surface->tangent_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        surface->vertex_buffers[3] = MeshUtilities::create_mesh_buffer(_data.data() + surface->uv0_offset, surface->uv0_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        surface->index_count = surface->index_count;
+        surface->index_type = surface->using_16u ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+        surface->index_buffer = MeshUtilities::create_mesh_buffer(_data.data() + surface->index_offset, surface->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
         StaticMeshVertexFactory* vertex_factory = new StaticMeshVertexFactory();
         vertex_factory->vertex_count = surface->vertex_count;
-        vertex_factory->vertex_buffer_count = 4;
-        vertex_factory->vertex_buffers[0] = MeshUtilities::create_mesh_buffer(_data.data() + surface->position_offset, surface->position_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        vertex_factory->vertex_buffers[1] = MeshUtilities::create_mesh_buffer(_data.data() + surface->normal_offset, surface->normal_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        vertex_factory->vertex_buffers[2] = MeshUtilities::create_mesh_buffer(_data.data() + surface->tangent_offset, surface->tangent_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        vertex_factory->vertex_buffers[3] = MeshUtilities::create_mesh_buffer(_data.data() + surface->uv0_offset, surface->uv0_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        vertex_factory->vertex_buffer_count = surface->vertex_buffer_count;
+        for (int i = 0; i < surface->vertex_buffer_count; ++i)
+        {
+            vertex_factory->vertex_buffers[i] = surface->vertex_buffers[i];
+        }
         vertex_factory->index_count = surface->index_count;
-        vertex_factory->index_type = surface->using_16u ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
-        vertex_factory->index_buffer = MeshUtilities::create_mesh_buffer(_data.data() + surface->index_offset, surface->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+        vertex_factory->index_type = surface->index_type;
+        vertex_factory->index_buffer = surface->index_buffer;
         surface->vertex_factory = vertex_factory;
      }
 }
