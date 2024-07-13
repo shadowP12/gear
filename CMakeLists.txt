@@ -27,3 +27,8 @@ target_link_libraries(gear PUBLIC stb)
 # astcenc
 add_subdirectory(extern/astcenc EXCLUDE_FROM_ALL astcenc.out)
 target_link_libraries(gear PUBLIC astcenc)
+
+# imgui
+add_subdirectory(extern/imgui EXCLUDE_FROM_ALL imgui.out)
+target_include_directories(gear PUBLIC extern/imgui)
+target_link_libraries(gear PRIVATE imgui)

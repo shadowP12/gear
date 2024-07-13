@@ -14,6 +14,7 @@ struct ApplicationSetting
 
 class World;
 class Window;
+class MainWindow;
 class CameraController;
 
 class Application
@@ -34,7 +35,7 @@ protected:
 
 protected:
     World* _world = nullptr;
-    Window* _window = nullptr;
+    MainWindow* _window = nullptr;
     CameraController* _camera_controller = nullptr;
 
     EzQueryPool _timestamp_query_pool = VK_NULL_HANDLE;

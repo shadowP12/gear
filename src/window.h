@@ -2,6 +2,8 @@
 
 #include "viewport.h"
 #include <rhi/ez_vulkan.h>
+#include <imgui.h>
+#include <imgui_internal.h>
 
 class GLFWwindow;
 
@@ -10,7 +12,7 @@ class Window : public Viewport
 public:
     Window(uint32_t width, uint32_t height);
 
-    ~Window();
+    virtual ~Window();
 
     uint32_t get_width() { return _width; }
 
@@ -20,9 +22,15 @@ public:
 
     bool should_close();
 
-    static void glfw_init();
+    void new_frame(float dt);
 
-    static void glfw_terminate();
+    EzSwapchain get_swapchain();
+
+    ImGuiContext* get_imgui_ctx() { return _imgui_ctx; }
+
+    static void glfw_imgui_init();
+
+    static void glfw_imgui_terminate();
 
     static void glfw_poll_events();
 
@@ -36,7 +44,8 @@ public:
 
     static void mouse_scroll_callback(GLFWwindow* window, double offset_x, double offset_y);
 
-    EzSwapchain get_swapchain();
+protected:
+    virtual void draw_ui() {}
 
 private:
     void internal_window_size_callback(int w, int h);
@@ -51,6 +60,7 @@ protected:
     int _window_id = 0;
     void* _window_ptr = nullptr;
     GLFWwindow* _glfw_window = nullptr;
+    ImGuiContext* _imgui_ctx = nullptr;
     uint32_t _width = 0;
     uint32_t _height = 0;
     EzSwapchain _swapchain = VK_NULL_HANDLE;

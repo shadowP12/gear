@@ -17,6 +17,7 @@ public:
     virtual void bind() = 0;
 
 public:
+    int instance_count = 1;
     int vertex_count = 0;
     int vertex_buffer_count = 0;
     EzBuffer vertex_buffers[EZ_NUM_VERTEX_BUFFERS];

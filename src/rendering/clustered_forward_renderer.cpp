@@ -60,7 +60,7 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
 
         ez_set_primitive_topology(renderable->primitive_topology);
 
-        ez_draw_indexed(vertex_factory->index_count, 0, 0);
+        ez_draw_indexed(vertex_factory->index_count, vertex_factory->instance_count, 0, 0, 0);
     }
 }
 

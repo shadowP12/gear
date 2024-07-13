@@ -1,6 +1,7 @@
 #include "app.h"
 #include "world.h"
 #include "window.h"
+#include "main_window.h"
 #include "asset/level.h"
 #include "asset/asset_manager.h"
 #include "entity/entity.h"
@@ -13,6 +14,7 @@
 #include <rhi/ez_vulkan.h>
 #include <rhi/rhi_shader_mgr.h>
 #include <core/memory.h>
+#include <imgui.h>
 
 void Application::setup(const ApplicationSetting& setting)
 {
@@ -27,11 +29,13 @@ void Application::setup(const ApplicationSetting& setting)
     RenderSystem::get()->setup();
     AssetManager::get()->setup();
 
-    Window::glfw_init();
-    _window = new Window(setting.window_width, setting.window_height);
+    Window::glfw_imgui_init();
+    _window = new MainWindow(setting.window_width, setting.window_height);
 
     _world = new World();
     _world->set_viewport(_window);
+
+    _window->set_current_world(_world);
 
     _camera_controller = new CameraController();
     auto& camera_entities = _world->get_camera_entities();
@@ -56,7 +60,7 @@ void Application::exit()
     ez_destroy_query_pool(_timestamp_query_pool);
 
     SAFE_DELETE(_window);
-    Window::glfw_terminate();
+    Window::glfw_imgui_terminate();
 
     rhi_shader_mgr_terminate();
     ez_flush();
@@ -80,6 +84,8 @@ void Application::run()
 void Application::tick(float dt)
 {
     _world->tick(dt);
+
+    _window->new_frame(dt);
 
     ez_reset_query_pool(_timestamp_query_pool, 0, 16);
     ez_write_timestamp(_timestamp_query_pool, 0);
