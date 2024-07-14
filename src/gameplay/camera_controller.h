@@ -15,6 +15,8 @@ public:
 
     void set_camera(Entity* camera);
 
+    Entity* get_camera() { return _camera; };
+
 private:
     void begin(float x, float y)
     {

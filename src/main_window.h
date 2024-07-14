@@ -2,7 +2,7 @@
 
 #include "window.h"
 
-class World;
+class Application;
 
 class MainWindow : public Window
 {
@@ -11,11 +11,11 @@ public:
 
     virtual ~MainWindow();
 
-    void set_current_world(World* world);
+    void set_current_app(Application* app);
 
 protected:
     virtual void draw_ui();
 
 private:
-    World* _world = nullptr;
+    Application* _app = nullptr;
 };

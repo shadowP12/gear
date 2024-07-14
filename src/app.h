@@ -30,6 +30,8 @@ public:
 
     World* get_world() { return _world; }
 
+    CameraController* get_camera_controller() { return _camera_controller; }
+
 protected:
     void tick(float dt);
 

@@ -31,11 +31,10 @@ void Application::setup(const ApplicationSetting& setting)
 
     Window::glfw_imgui_init();
     _window = new MainWindow(setting.window_width, setting.window_height);
+    _window->set_current_app(this);
 
     _world = new World();
     _world->set_viewport(_window);
-
-    _window->set_current_world(_world);
 
     _camera_controller = new CameraController();
     auto& camera_entities = _world->get_camera_entities();
