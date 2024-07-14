@@ -28,6 +28,8 @@ public:
 
     ImGuiContext* get_imgui_ctx() { return _imgui_ctx; }
 
+    EzTexture get_font_texture() { return _font_texture; }
+
     static void glfw_imgui_init();
 
     static void glfw_imgui_terminate();
@@ -60,8 +62,9 @@ protected:
     int _window_id = 0;
     void* _window_ptr = nullptr;
     GLFWwindow* _glfw_window = nullptr;
-    ImGuiContext* _imgui_ctx = nullptr;
     uint32_t _width = 0;
     uint32_t _height = 0;
     EzSwapchain _swapchain = VK_NULL_HANDLE;
+    ImGuiContext* _imgui_ctx = nullptr;
+    EzTexture _font_texture = VK_NULL_HANDLE;
 };

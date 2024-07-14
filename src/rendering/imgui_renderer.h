@@ -5,6 +5,8 @@
 
 class Window;
 class RenderContext;
+class VertexBuffer;
+class IndexBuffer;
 
 class ImGuiRenderer
 {
@@ -16,5 +18,6 @@ public:
     void render(RenderContext* ctx, Window* window);
 
 private:
-    std::map<int, EzTexture> _font_textures;
+    VertexBuffer* _vertex_buffer = nullptr;
+    IndexBuffer* _index_buffer = nullptr;
 };

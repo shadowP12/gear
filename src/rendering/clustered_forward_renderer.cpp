@@ -123,8 +123,9 @@ void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
 
     ez_begin_rendering(rendering_info);
 
-    ez_set_viewport(0, 0, (float)rt_width, (float)rt_height);
-    ez_set_scissor(0, 0, (int32_t)rt_width, (int32_t)rt_height);
+    glm::vec4 vp = ctx->viewport_size;
+    ez_set_viewport(vp.x, vp.y, vp.z, vp.w);
+    ez_set_scissor((int32_t)vp.x, (int32_t)vp.y, (int32_t)vp.z, (int32_t)vp.w);
 
     render_list(DRAW_CMD_OPAQUE);
 

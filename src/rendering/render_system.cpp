@@ -2,7 +2,7 @@
 #include "render_context.h"
 #include "render_scene.h"
 #include "clustered_forward_renderer.h"
-#include "material_proxy.h"
+#include "imgui_renderer.h"
 #include "sampler_pool.h"
 #include "window.h"
 #include <core/memory.h>
@@ -12,6 +12,7 @@ void RenderSystem::setup()
     _ctx = new RenderContext();
     _scene_renderer = new ClusteredForwardRenderer();
     _sampler_pool = new SamplerPool();
+    _imgui_renderer = new ImGuiRenderer();
 }
 
 void RenderSystem::finish()
@@ -19,6 +20,7 @@ void RenderSystem::finish()
     SAFE_DELETE(_ctx);
     SAFE_DELETE(_scene_renderer);
     SAFE_DELETE(_sampler_pool);
+    SAFE_DELETE(_imgui_renderer);
 }
 
 void RenderSystem::render(Window* window)
@@ -46,6 +48,8 @@ void RenderSystem::render(Window* window)
     }
 
     _scene_renderer->render(_ctx);
+
+    _imgui_renderer->render(_ctx, window);
 
     // Copy to swapchain
     {

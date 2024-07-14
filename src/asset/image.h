@@ -5,7 +5,8 @@
 
 struct Image
 {
-    std::vector<uint8_t> data;
+    uint8_t* data = nullptr;
+    uint32_t data_size = 0;
     uint32_t width = 1;
     uint32_t height = 1;
     uint32_t depth = 1;

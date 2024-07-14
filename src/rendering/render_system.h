@@ -7,6 +7,7 @@
 class Window;
 class RenderContext;
 class SceneRenderer;
+class ImGuiRenderer;
 class SamplerPool;
 
 class RenderSystem : public Module<RenderSystem>
@@ -25,5 +26,6 @@ public:
 private:
     SamplerPool* _sampler_pool;
     SceneRenderer* _scene_renderer;
+    ImGuiRenderer* _imgui_renderer;
     RenderContext* _ctx;
 };

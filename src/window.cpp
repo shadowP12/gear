@@ -1,4 +1,6 @@
 #include "window.h"
+#include "asset/image.h"
+#include "asset/image_utilities.h"
 #include <core/path.h>
 #include <input/input_events.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -54,12 +56,26 @@ Window::Window(uint32_t width, uint32_t height)
     io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
     io.Fonts->AddFontFromFileTTF(Path::fix_path("content://fonts/Roboto-Medium.ttf").c_str(), 16.0f);
     io.Fonts->Build();
+
+    int tex_width, tex_height;
+    unsigned char* pixels = nullptr;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &tex_width, &tex_height);
+
+    Image font_image;
+    font_image.data = pixels;
+    font_image.data_size = tex_width * tex_height * 4;
+    font_image.width = tex_width;
+    font_image.height = tex_height;
+    font_image.format = VK_FORMAT_R8G8B8A8_UNORM;
+    _font_texture = ImageUtilities::create_texture(&font_image);
+    ez_create_texture_view(_font_texture, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
 }
 
 Window::~Window()
 {
     ImGui::DestroyContext(_imgui_ctx);
 
+    ez_destroy_texture(_font_texture);
     ez_destroy_swapchain(_swapchain);
     glfwDestroyWindow(_glfw_window);
 }
@@ -182,9 +198,7 @@ EzSwapchain Window::get_swapchain()
 void Window::new_frame(float dt)
 {
     int w, h;
-    int display_w, display_h;
     glfwGetWindowSize(_glfw_window, &w, &h);
-    glfwGetFramebufferSize(_glfw_window, &display_w, &display_h);
     if (w <= 0 || h <= 0)
         return;
 
@@ -193,7 +207,6 @@ void Window::new_frame(float dt)
     ImGuiIO& io = ImGui::GetIO();
     io.DeltaTime = dt;
     io.DisplaySize = ImVec2((float)w, (float)h);
-    io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
 
     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++)
     {

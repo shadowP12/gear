@@ -127,7 +127,7 @@ void RenderScene::prepare(RenderContext* ctx)
     {
         if (scene_ub && scene_ub->get_buffer()->size < collector.instance_datas.size() * sizeof(SceneInstanceData))
         {
-            delete scene_ub;
+            SAFE_DELETE(scene_ub);
         }
 
         if (!scene_ub)
