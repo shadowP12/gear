@@ -12,9 +12,9 @@ class RenderContext
 {
 public:
     RenderContext();
+
     ~RenderContext();
 
-    void clear();
     void collect_viewport_info(Window* window);
 
     enum class CreateStatus
@@ -29,8 +29,24 @@ public:
     TextureRef* find_texture_ref(const std::string& name);
     TextureRef* create_texture_ref(const std::string& name, const EzTextureDesc& desc, CreateStatus& status);
 
+protected:
+    void build_builtin_resources();
+
+    void clear();
+
 public:
     glm::vec4 viewport_size;
+
+    VertexBuffer* sphere_vertex_buffer = nullptr;
+    IndexBuffer* sphere_index_buffer = nullptr;
+    float sphere_overfit = 0.0;
+
+    VertexBuffer* cone_vertex_buffer = nullptr;
+    IndexBuffer* cone_index_buffer = nullptr;
+    float cone_overfit = 0.0;
+
+    VertexBuffer* box_vertex_buffer = nullptr;
+    IndexBuffer* box_index_buffer = nullptr;
 
 private:
     std::unordered_map<std::string, UniformBuffer*> _ub_cache;

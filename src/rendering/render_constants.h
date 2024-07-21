@@ -28,3 +28,10 @@ struct RenderView
     glm::mat4 view;
     glm::mat4 projection;
 };
+
+enum class LightType
+{
+    Omni,
+    Spot,
+    Direction,
+};

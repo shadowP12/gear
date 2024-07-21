@@ -7,6 +7,7 @@ class ClusteredForwardRenderer : public SceneRenderer
 {
 public:
     ClusteredForwardRenderer();
+
     virtual ~ClusteredForwardRenderer();
 
     void render(RenderContext* ctx) override;

@@ -1,13 +1,7 @@
 #pragma once
 
 #include "entity_component.h"
-
-enum class LightType
-{
-    Omni,
-    Spot,
-    Direction,
-};
+#include "rendering/render_constants.h"
 
 class Entity;
 class CLight : public EntityComponent
