@@ -4,6 +4,7 @@
 #include "asset/material.h"
 #include "asset/asset_manager.h"
 #include "rendering/renderable.h"
+#include "rendering/collector/renderable_collector.h"
 
 CMesh::CMesh(Entity* entity)
     : EntityComponent(entity)
@@ -37,7 +38,7 @@ Mesh* CMesh::get_mesh() {
     return _mesh;
 }
 
-void CMesh::fill_renderables(RenderableCollector* collector)
+void CMesh::fill_renderables(RenderableCollector* collector, SceneInstanceCollector* scene_collector)
 {
     if (!_mesh)
     {
@@ -47,12 +48,13 @@ void CMesh::fill_renderables(RenderableCollector* collector)
     auto& surfaces = _mesh->get_surfaces();
     for (auto& surface : surfaces)
     {
-        int idx = collector->add_renderable();
-        Renderable* renderable = collector->get_renderable(idx);
-        SceneInstanceData* instance_data = collector->get_scene_instance_data(idx);
-
+        int scene_idx = scene_collector->add_item();
+        SceneInstanceData* instance_data = scene_collector->get_item(scene_idx);
         instance_data->transform = _entity->get_world_transform();
 
+        int idx = collector->add_item();
+        Renderable* renderable = collector->get_item(idx);
+        renderable->scene_index = scene_idx;
         renderable->primitive_topology = surface->primitive_topology;
         renderable->vertex_factory = surface->vertex_factory;
         renderable->bounding_box = surface->bounding_box;

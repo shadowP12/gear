@@ -31,6 +31,24 @@ RenderBuffer::~RenderBuffer()
     ez_destroy_buffer(_buffer);
 }
 
+void RenderBuffer::clear(uint32_t size, uint32_t offset)
+{
+    if (_persistent)
+    {
+        memset(_mapdata + offset, 0, size);
+    }
+    else
+    {
+        VkBufferMemoryBarrier2 barrier = ez_buffer_barrier(_buffer, EZ_RESOURCE_STATE_COPY_DEST);
+        ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
+
+        ez_clear_buffer(_buffer, size, offset);
+
+        barrier = ez_buffer_barrier(_buffer, _dst_state);
+        ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
+    }
+}
+
 void RenderBuffer::write(uint8_t* data, uint32_t size, uint32_t offset)
 {
     if (_persistent)

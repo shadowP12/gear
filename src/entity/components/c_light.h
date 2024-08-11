@@ -29,6 +29,22 @@ public:
 
     glm::vec3 get_color() { return _color; }
 
+    void set_range(float range);
+
+    float get_range() { return _range; }
+
+    void set_attenuation(float attenuation);
+
+    float get_attenuation() { return _attenuation; }
+
+    void set_spot_angle(float spot_angle);
+
+    float get_spot_angle() { return _spot_angle; }
+
+    void set_spot_attenuation(float spot_attenuation);
+
+    float get_spot_attenuation() { return _spot_attenuation; }
+
 private:
     LightType _type;
     glm::vec3 _color;
@@ -37,4 +53,8 @@ private:
      * Direction: lux
      */
     float _intensity = 0.0f;
+    float _range = 5.0f;
+    float _attenuation = 1.0f;
+    float _spot_angle = 45.0f;
+    float _spot_attenuation = 1.0f;
 };

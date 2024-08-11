@@ -38,6 +38,8 @@ public:
 
     void set_perspective();
 
+    ProjectionMode get_proj_mode() { return _mode; }
+
     void set_near(float near);
 
     float get_near() { return _near; }

@@ -31,7 +31,7 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
     for (int i = 0; i < draw_list.cmd_count; ++i)
     {
         DrawCommand& draw_cmd = draw_list.cmds[i];
-        Renderable* renderable = scene->collector.get_renderable(draw_cmd.renderable);
+        Renderable* renderable = scene->renderable_collector.get_item(draw_cmd.renderable);
         VertexFactory* vertex_factory = renderable->vertex_factory;
         MaterialProxy* material_proxy = renderable->material_proxy;
 

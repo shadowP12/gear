@@ -12,6 +12,8 @@ public:
 
     EzBuffer get_buffer() { return _buffer; }
 
+    void clear(uint32_t size, uint32_t offset = 0);
+
     void write(uint8_t* data, uint32_t size, uint32_t offset = 0);
 
 protected:

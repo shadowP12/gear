@@ -175,7 +175,7 @@ void Entity::set_transform(const glm::mat4& local_transform)
 {
     glm::vec3 skew;
     glm::vec4 perspective;
-    glm::decompose(local_transform, _scale, _rot, _translation, skew,perspective);
+    glm::decompose(local_transform, _scale, _rot, _translation, skew, perspective);
     _euler = glm::eulerAngles(_rot) * 3.14159f / 180.f;
 
     _local_transform = local_transform;
@@ -205,6 +205,11 @@ glm::vec3 Entity::get_up_vector()
 glm::vec3 Entity::get_front_vector()
 {
     return glm::vec3(_world_transform[2][0], _world_transform[2][1], _world_transform[2][2]);
+}
+
+glm::vec3 Entity::get_world_translation()
+{
+    return glm::vec3(_world_transform[3][0], _world_transform[3][1], _world_transform[3][2]);
 }
 
 void Entity::update_transform()

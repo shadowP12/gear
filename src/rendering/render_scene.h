@@ -4,6 +4,8 @@
 #include "render_constants.h"
 #include "render_resources.h"
 #include "draw_command.h"
+#include "collector/light_collector.h"
+#include "collector/renderable_collector.h"
 #include <core/event.h>
 #include <core/memory.h>
 #include <vector>
@@ -11,6 +13,8 @@
 class World;
 class Entity;
 class RenderContext;
+class ClusterBuilder;
+
 class RenderScene
 {
 public:
@@ -34,9 +38,17 @@ protected:
 
 public:
     RenderView view[2]; // Main / Display
-    RenderableCollector collector;
+
+    // Collector begin
+    RenderableCollector renderable_collector;
+    SceneInstanceCollector scene_collector;
+    OmniLightCollector point_light_collector;
+    OmniLightCollector spot_light_collector;
+    DirectionLightCollector dir_light_collector;
+    // Collector end
+
     DrawCommandList draw_list[DRAW_CMD_MAX];
-    UniformBuffer* scene_ub = nullptr;
+    ClusterBuilder* cluster_builder = nullptr;
 
 private:
     World* _world = nullptr;

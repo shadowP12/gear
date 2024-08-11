@@ -5,6 +5,7 @@
 class Entity;
 class Mesh;
 class RenderableCollector;
+class SceneInstanceCollector;
 class CMesh : public EntityComponent
 {
 public:
@@ -22,7 +23,7 @@ public:
 
     Mesh* get_mesh();
 
-    void fill_renderables(RenderableCollector* collector);
+    void fill_renderables(RenderableCollector* collector, SceneInstanceCollector* scene_collector);
 
 private:
     Mesh* _mesh;

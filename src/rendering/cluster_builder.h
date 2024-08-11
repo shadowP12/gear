@@ -8,7 +8,9 @@
 #include <rhi/ez_vulkan.h>
 #include <rhi/rhi_shader_mgr.h>
 
-#define MAX_CLUSTER_ELEMENT_BY_TYPE = 32
+#define MAX_CLUSTER_SIZE 32
+#define MAX_CLUSTER_ELEMENT 32
+#define WIDE_SPOT_ANGLE_THRESHOLD_DEG 60.0f
 
 struct ClusterElement
 {
@@ -18,7 +20,7 @@ struct ClusterElement
     uint32_t touches_far;
     glm::mat4 transform;
     glm::vec3 scale;
-    uint32_t pad0;
+    uint32_t has_wide_spot_angle;
 };
 
 struct ClusterBuilderState
@@ -37,11 +39,9 @@ struct ClusterBuilderState
 class ClusterBuilder
 {
 public:
-    static constexpr float WIDE_SPOT_ANGLE_THRESHOLD_DEG = 60.0f;
-
     enum ElementType
     {
-        ELEMENT_TYPE_OMNI_LIGHT,
+        ELEMENT_TYPE_POINT_LIGHT,
         ELEMENT_TYPE_SPOT_LIGHT,
         ELEMENT_TYPE_MAX,
     };
@@ -53,9 +53,9 @@ public:
 
     void begin(RenderContext* ctx, RenderView* view);
 
-    void add_light(LightType type, const glm::mat4& transform, float radius, float spot_aperture);
+    void add_light(RenderContext* ctx, LightType type, int index, const glm::mat4& transform, float radius, float spot_aperture);
 
-    void render(RenderContext* ctx);
+    void bake(RenderContext* ctx);
 
     void debug(RenderContext* ctx);
 
@@ -66,8 +66,13 @@ private:
     glm::mat4 _projection_mat;
     glm::ivec2 _screen_size;
     glm::ivec2 _cluster_screen_size;
-    uint32_t _cluster_size = 32;
     ClusterBuilderState _state;
     int _element_count = 0;
     std::vector<ClusterElement> _elements;
+    int _cluster_buffer_size = 0;
+    int _cluster_render_buffer_size = 0;
+    UniformBuffer* _state_buffer = nullptr;
+    UniformBuffer* _elements_buffer = nullptr;
+    UniformBuffer* _cluster_render_buffer = nullptr;
+    UniformBuffer* _cluster_buffer = nullptr;
 };

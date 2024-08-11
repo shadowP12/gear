@@ -3,6 +3,7 @@
 #include "render_system.h"
 #include "material_proxy.h"
 #include "vertex_factory.h"
+#include "cluster_builder.h"
 #include "world.h"
 #include "asset/level.h"
 #include "asset/mesh.h"
@@ -13,15 +14,17 @@
 #include "entity/components/c_mesh.h"
 #include "entity/components/c_camera.h"
 #include "entity/components/c_light.h"
+#include <math/transform_util.h>
 
 RenderScene::RenderScene()
 {
-    clear_world();
+    cluster_builder = new ClusterBuilder();
 }
 
 RenderScene::~RenderScene()
 {
     clear_world();
+    SAFE_DELETE(cluster_builder);
 }
 
 void RenderScene::set_world(World* world)
@@ -43,11 +46,6 @@ void RenderScene::set_world(World* world)
 
 void RenderScene::clear_world()
 {
-    if (scene_ub)
-    {
-        SAFE_DELETE(scene_ub);
-    }
-    collector.clear();
 }
 
 void RenderScene::init_world()
@@ -56,8 +54,8 @@ void RenderScene::init_world()
 
 void RenderScene::fill_draw_list(DrawCommandType type, int renderable_id)
 {
-    Renderable* renderable = collector.get_renderable(renderable_id);
-    glm::mat4& renderable_transform = collector.instance_datas[renderable->scene_index].transform;
+    Renderable* renderable = renderable_collector.get_item(renderable_id);
+    glm::mat4& renderable_transform = scene_collector.get_item(renderable->scene_index)->transform;
     glm::vec3 renderable_position = glm::vec3(renderable_transform[3][0], renderable_transform[3][1], renderable_transform[3][2]);
     MaterialProxy* material_proxy = renderable->material_proxy;
 
@@ -93,9 +91,9 @@ void RenderScene::prepare(RenderContext* ctx)
 
         auto change_view_func = [&](int view_id)
         {
-            view[view_id].model = entity->get_world_transform();
+            view[view_id].model = TransformUtil::remove_scale(entity->get_world_transform());
             view[view_id].view = glm::inverse(view[view_id].model);
-            view[view_id].position = entity->get_translation();
+            view[view_id].position = entity->get_world_translation();
             view[view_id].view_direction = entity->get_front_vector();
 
             view[view_id].zn = c_camera->get_near();
@@ -103,6 +101,8 @@ void RenderScene::prepare(RenderContext* ctx)
             view[view_id].projection = c_camera->get_proj_matrix();
             view[view_id].ev100 = std::log2((c_camera->get_aperture() * c_camera->get_aperture()) / c_camera->get_shutter_speed() * 100.0f / c_camera->get_sensitivity());
             view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, view[view_id].ev100));
+
+            view[view_id].is_orthogonal = c_camera->get_proj_mode() == ProjectionMode::ORTHO;
         };
 
         if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_MAIN)
@@ -115,36 +115,74 @@ void RenderScene::prepare(RenderContext* ctx)
         }
     }
 
-    collector.clear();
+    point_light_collector.clear();
+    spot_light_collector.clear();
+    dir_light_collector.clear();
+    cluster_builder->begin(ctx, &view[1]);
+    std::vector<Entity*>& light_entities = _world->get_light_entities();
+    for (auto entity : light_entities)
+    {
+        CLight* c_light = entity->get_component<CLight>();
+        glm::mat4 light_transform = TransformUtil::remove_scale(entity->get_world_transform());
+        glm::vec3 direction = entity->get_front_vector();
+        glm::vec3 pos = entity->get_world_translation();
+
+        if (c_light->get_light_type() == LightType::Direction)
+        {
+            dir_light_collector.add_item();
+        }
+        else if (c_light->get_light_type() == LightType::Point || c_light->get_light_type() == LightType::Spot)
+        {
+            int light_index = -1;
+            OmniLightData* light_data = nullptr;
+            if (c_light->get_light_type() == LightType::Point)
+            {
+                light_index = point_light_collector.add_item();
+                light_data = point_light_collector.get_item(light_index);
+            }
+            else
+            {
+                light_index = spot_light_collector.add_item();
+                light_data = spot_light_collector.get_item(light_index);
+            }
+
+            light_data->color = c_light->get_color();
+            light_data->intensity = c_light->get_intensity();
+
+            float radius = glm::max(0.001f, c_light->get_range());
+            light_data->inv_radius = 1.0f / radius;
+
+            light_data->position = pos;
+            light_data->direction = direction;
+
+            light_data->attenuation = c_light->get_attenuation();
+            light_data->cone_attenuation = c_light->get_spot_attenuation();
+            float spot_angle = c_light->get_spot_angle();
+            light_data->cone_angle = glm::radians(spot_angle);
+
+            cluster_builder->add_light(ctx, c_light->get_light_type(), light_index, light_transform, radius, spot_angle);
+        }
+    }
+    point_light_collector.update_ub();
+    spot_light_collector.update_ub();
+    dir_light_collector.update_ub();
+
+    renderable_collector.clear();
+    scene_collector.clear();
     std::vector<Entity*>& mesh_entities = _world->get_mesh_entities();
     for (auto entity : mesh_entities)
     {
         CMesh* c_mesh = entity->get_component<CMesh>();
-        c_mesh->fill_renderables(&collector);
+        c_mesh->fill_renderables(&renderable_collector, &scene_collector);
     }
-
-    if (collector.renderable_count > 0)
-    {
-        if (scene_ub && scene_ub->get_buffer()->size < collector.instance_datas.size() * sizeof(SceneInstanceData))
-        {
-            SAFE_DELETE(scene_ub);
-        }
-
-        if (!scene_ub)
-        {
-            uint32_t buffer_size = glm::min(64 * sizeof(SceneInstanceData), collector.instance_datas.size() * sizeof(SceneInstanceData));
-            scene_ub = new UniformBuffer(buffer_size);
-        }
-
-        scene_ub->write((uint8_t*)collector.instance_datas.data(), collector.renderable_count * sizeof(SceneInstanceData));
-    }
+    scene_collector.update_ub();
 
     for (int i = 0; i < DRAW_CMD_MAX; ++i)
     {
         draw_list[i].clear();
     }
 
-    for (int i = 0; i < collector.renderable_count; ++i)
+    for (int i = 0; i < renderable_collector.count; ++i)
     {
         for (int j = 0; j < DRAW_CMD_MAX; ++j)
         {
@@ -157,5 +195,5 @@ void RenderScene::prepare(RenderContext* ctx)
 
 void RenderScene::bind(int scene_idx)
 {
-    ez_bind_buffer(1, scene_ub->get_buffer(), sizeof(SceneInstanceData), scene_idx * sizeof(SceneInstanceData));
+    ez_bind_buffer(1, scene_collector.ub->get_buffer(), sizeof(SceneInstanceData), scene_idx * sizeof(SceneInstanceData));
 }

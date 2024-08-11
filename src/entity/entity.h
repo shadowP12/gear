@@ -124,6 +124,8 @@ public:
 
     glm::vec3 get_front_vector();
 
+    glm::vec3 get_world_translation();
+
 protected:
     void update_transform();
 
