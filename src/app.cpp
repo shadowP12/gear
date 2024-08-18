@@ -7,14 +7,12 @@
 #include "entity/entity.h"
 #include "entity/components/c_camera.h"
 #include "rendering/render_system.h"
-#include "rendering/scene_renderer.h"
 #include "importer/gltf_importer.h"
 #include "gameplay/camera_controller.h"
 #include <core/path.h>
 #include <rhi/ez_vulkan.h>
 #include <rhi/rhi_shader_mgr.h>
 #include <core/memory.h>
-#include <imgui.h>
 
 void Application::setup(const ApplicationSetting& setting)
 {
@@ -43,14 +41,14 @@ void Application::setup(const ApplicationSetting& setting)
         _camera_controller->set_camera(camera_entities[0]);
     }
 
-    RenderSystem::get()->get_scene_renderer()->set_world(_world);
+    RenderSystem::get()->set_world(_world);
 }
 
 void Application::exit()
 {
     SAFE_DELETE(_camera_controller);
 
-    RenderSystem::get()->get_scene_renderer()->set_world(nullptr);
+    RenderSystem::get()->set_world(nullptr);
     SAFE_DELETE(_world);
 
     AssetManager::get()->finish();

@@ -26,8 +26,6 @@ public:
 
     void prepare(RenderContext* ctx);
 
-    void bind(int scene_idx);
-
 private:
     void clear_world();
 
@@ -37,7 +35,7 @@ protected:
     void fill_draw_list(DrawCommandType type, int renderable_id);
 
 public:
-    RenderView view[2]; // Main / Display
+    RenderView view[RenderView::VIEW_TYPE_MAX];
 
     // Collector begin
     RenderableCollector renderable_collector;
@@ -48,7 +46,6 @@ public:
     // Collector end
 
     DrawCommandList draw_list[DRAW_CMD_MAX];
-    ClusterBuilder* cluster_builder = nullptr;
 
 private:
     World* _world = nullptr;

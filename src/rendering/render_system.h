@@ -4,11 +4,13 @@
 #include <rhi/ez_vulkan.h>
 #include <memory>
 
+class World;
 class Window;
+class RenderScene;
 class RenderContext;
-class SceneRenderer;
+class RenderSharedData;
 class ImGuiRenderer;
-class SamplerPool;
+class ClusteredForwardRenderer;
 
 class RenderSystem : public Module<RenderSystem>
 {
@@ -20,12 +22,16 @@ public:
     void finish();
     void render(Window* window);
 
-    SamplerPool* get_sampler_pool() { return _sampler_pool; }
-    SceneRenderer* get_scene_renderer() { return _scene_renderer; }
+    void set_world(World* world);
+
+    RenderScene* get_scene() { return _scene; }
+    RenderSharedData* get_shared_data() { return _shared_data; }
+    ClusteredForwardRenderer* get_scene_renderer() { return _scene_renderer; }
 
 private:
-    SamplerPool* _sampler_pool;
-    SceneRenderer* _scene_renderer;
-    ImGuiRenderer* _imgui_renderer;
     RenderContext* _ctx;
+    RenderScene* _scene;
+    RenderSharedData* _shared_data;
+    ClusteredForwardRenderer* _scene_renderer;
+    ImGuiRenderer* _imgui_renderer;
 };

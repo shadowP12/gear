@@ -1,6 +1,6 @@
 #include "imgui_renderer.h"
 #include "render_context.h"
-#include "sampler_pool.h"
+#include "render_shared_data.h"
 #include "render_system.h"
 #include "draw_command.h"
 #include "window.h"
@@ -77,15 +77,15 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
         idx_buffer_offset += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
     }
 
-    SamplerPool* sampler_pool = RenderSystem::get()->get_sampler_pool();
+    RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
     EzTexture font_texture = window->get_font_texture();
-    EzSampler font_sampler = sampler_pool->get_sampler(SamplerType::SAMPLER_LINEAR_CLAMP);
+    EzSampler font_sampler = shared_data->get_sampler(SamplerType::SAMPLER_LINEAR_CLAMP);
 
     glm::vec4 vp = ctx->viewport_size;
     ImGuiConstantBlock constant_block;
     constant_block.proj_matrix = glm::ortho(0.0f, (float)vp.z, 0.0f, (float)vp.w, 0.0f, 10.0f);
 
-    TextureRef* out_color_ref = ctx->find_texture_ref("out_color");
+    TextureRef* out_color_ref = ctx->get_texture_ref("out_color");
     uint32_t rt_width = out_color_ref->get_desc().width;
     uint32_t rt_height = out_color_ref->get_desc().height;
 

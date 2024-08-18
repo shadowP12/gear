@@ -1,5 +1,7 @@
 #include "cluster_builder.h"
+#include "render_system.h"
 #include "render_context.h"
+#include "render_shared_data.h"
 #include "draw_command.h"
 #include <core/bitops.h>
 #include <core/memory.h>
@@ -13,6 +15,25 @@ ClusterBuilder::ClusterBuilder()
 
 ClusterBuilder::~ClusterBuilder()
 {
+    if (_cluster_buffer)
+    {
+        SAFE_DELETE(_cluster_buffer);
+    }
+
+    if (_cluster_render_buffer)
+    {
+        SAFE_DELETE(_cluster_render_buffer);
+    }
+
+    if (_state_buffer)
+    {
+        SAFE_DELETE(_state_buffer);
+    }
+
+    if (_elements_buffer)
+    {
+        SAFE_DELETE(_elements_buffer);
+    }
 }
 
 void ClusterBuilder::begin(RenderContext* ctx, RenderView* view)
@@ -34,15 +55,16 @@ void ClusterBuilder::begin(RenderContext* ctx, RenderView* view)
     _cluster_render_buffer_size = _cluster_screen_size.x * _cluster_screen_size.y * (element_tag_bits_size + element_tag_depth_bits_size) * 4;
 }
 
-void ClusterBuilder::add_light(RenderContext* ctx, LightType type, int index, const glm::mat4& transform, float radius, float spot_aperture)
+void ClusterBuilder::add_light(LightType type, int index, const glm::mat4& transform, float radius, float spot_aperture)
 {
+    RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
     ClusterElement& element = _elements[_element_count];
     glm::mat4 transform_cs = _view_mat * transform;
     glm::vec3 light_origin = TransformUtil::get_translation(transform_cs);
 
     if (type == LightType::Point)
     {
-        radius *= ctx->sphere_overfit;
+        radius *= shared_data->sphere_overfit;
         float depth = -light_origin.z;
 
         element.type = ELEMENT_TYPE_POINT_LIGHT;
@@ -54,7 +76,7 @@ void ClusterBuilder::add_light(RenderContext* ctx, LightType type, int index, co
     }
     else // type == LightType::Spot
     {
-        radius *= ctx->cone_overfit;
+        radius *= shared_data->cone_overfit;
         float len = glm::tan(glm::radians(spot_aperture)) * radius;
         float depth = -light_origin.z;
 
@@ -70,7 +92,7 @@ void ClusterBuilder::add_light(RenderContext* ctx, LightType type, int index, co
         }
         else
         {
-            element.scale = glm::vec3(len * ctx->cone_overfit, len * ctx->cone_overfit, radius);
+            element.scale = glm::vec3(len * shared_data->cone_overfit, len * shared_data->cone_overfit, radius);
             element.has_wide_spot_angle = false;
         }
         element.transform = transform_cs;
@@ -83,7 +105,6 @@ void ClusterBuilder::bake(RenderContext* ctx)
 {
     DrawLabel draw_label("Prepare cluster buffer", DrawLabel::WHITE);
 
-    VkBufferMemoryBarrier2 buffer_barriers[5];
     if (!_cluster_buffer || _cluster_buffer->get_buffer()->size < _cluster_buffer_size)
     {
         if (_cluster_buffer)
@@ -124,6 +145,8 @@ void ClusterBuilder::bake(RenderContext* ctx)
             _elements_buffer = new UniformBuffer(sizeof(ClusterElement) * _element_count);
         }
         _elements_buffer->write((uint8_t*)_elements.data(), sizeof(ClusterElement) * _element_count);
+
+
     }
 }
 

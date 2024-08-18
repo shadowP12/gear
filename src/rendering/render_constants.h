@@ -18,6 +18,13 @@ struct SceneInstanceData
 
 struct RenderView
 {
+    enum Type
+    {
+        VIEW_TYPE_MAIN,
+        VIEW_TYPE_DISPLAY,
+        VIEW_TYPE_MAX,
+    };
+
     float zn;
     float zf;
     float ev100;
@@ -60,4 +67,11 @@ struct DirectionLightData
     float size;
     glm::vec3 color;
     float intensity;
+};
+
+enum SamplerType
+{
+    SAMPLER_NEAREST_CLAMP = 0,
+    SAMPLER_LINEAR_CLAMP = 1,
+    SAMPLER_MAX_COUNT = 2,
 };

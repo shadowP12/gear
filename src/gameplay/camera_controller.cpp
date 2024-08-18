@@ -23,6 +23,9 @@ void CameraController::set_camera(Entity* camera)
 
 void CameraController::on_mouse_event_received(MouseEvent mouse_event)
 {
+    if (!_camera)
+        return;
+
     if (mouse_event.type == MouseEvent::Type::MOVE)
     {
         if (_grabbing)

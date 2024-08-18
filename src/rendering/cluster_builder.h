@@ -53,7 +53,7 @@ public:
 
     void begin(RenderContext* ctx, RenderView* view);
 
-    void add_light(RenderContext* ctx, LightType type, int index, const glm::mat4& transform, float radius, float spot_aperture);
+    void add_light(LightType type, int index, const glm::mat4& transform, float radius, float spot_aperture);
 
     void bake(RenderContext* ctx);
 

@@ -18,13 +18,11 @@
 
 RenderScene::RenderScene()
 {
-    cluster_builder = new ClusterBuilder();
 }
 
 RenderScene::~RenderScene()
 {
     clear_world();
-    SAFE_DELETE(cluster_builder);
 }
 
 void RenderScene::set_world(World* world)
@@ -73,7 +71,7 @@ void RenderScene::fill_draw_list(DrawCommandType type, int renderable_id)
         return;
 
     draw_cmd->renderable = renderable_id;
-    draw_cmd->distance = glm::distance(view[1].position, renderable_position);
+    draw_cmd->distance = glm::distance(view[RenderView::Type::VIEW_TYPE_DISPLAY].position, renderable_position);
     draw_cmd->sort.sort_key = 0;
     draw_cmd->sort.vertex_factory_id = renderable->vertex_factory->get_type_id();
     draw_cmd->sort.material_id = material_proxy->material_id;
@@ -107,18 +105,17 @@ void RenderScene::prepare(RenderContext* ctx)
 
         if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_MAIN)
         {
-            change_view_func(0);
+            change_view_func(RenderView::Type::VIEW_TYPE_MAIN);
         }
         if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_DISPLAY)
         {
-            change_view_func(1);
+            change_view_func(RenderView::Type::VIEW_TYPE_DISPLAY);
         }
     }
 
     point_light_collector.clear();
     spot_light_collector.clear();
     dir_light_collector.clear();
-    cluster_builder->begin(ctx, &view[1]);
     std::vector<Entity*>& light_entities = _world->get_light_entities();
     for (auto entity : light_entities)
     {
@@ -159,13 +156,25 @@ void RenderScene::prepare(RenderContext* ctx)
             light_data->cone_attenuation = c_light->get_spot_attenuation();
             float spot_angle = c_light->get_spot_angle();
             light_data->cone_angle = glm::radians(spot_angle);
-
-            cluster_builder->add_light(ctx, c_light->get_light_type(), light_index, light_transform, radius, spot_angle);
         }
     }
-    point_light_collector.update_ub();
-    spot_light_collector.update_ub();
-    dir_light_collector.update_ub();
+    if (point_light_collector.count > 0)
+    {
+        UniformBuffer* point_light_ub = ctx->create_ub("point_light_ub", point_light_collector.get_size());
+        point_light_ub->write((uint8_t*)point_light_collector.get_data(), point_light_collector.get_size());
+    }
+
+    if (spot_light_collector.count > 0)
+    {
+        UniformBuffer* spot_light_ub = ctx->create_ub("spot_light_ub", spot_light_collector.get_size());
+        spot_light_ub->write((uint8_t*)spot_light_collector.get_data(), spot_light_collector.get_size());
+    }
+
+    if (dir_light_collector.count > 0)
+    {
+        UniformBuffer* dir_light_ub = ctx->create_ub("dir_light_ub", dir_light_collector.get_size());
+        dir_light_ub->write((uint8_t*)dir_light_collector.get_data(), dir_light_collector.get_size());
+    }
 
     renderable_collector.clear();
     scene_collector.clear();
@@ -175,7 +184,11 @@ void RenderScene::prepare(RenderContext* ctx)
         CMesh* c_mesh = entity->get_component<CMesh>();
         c_mesh->fill_renderables(&renderable_collector, &scene_collector);
     }
-    scene_collector.update_ub();
+    if (scene_collector.count > 0)
+    {
+        UniformBuffer* scene_ub = ctx->create_ub("scene_ub", scene_collector.get_size());
+        scene_ub->write((uint8_t*)scene_collector.get_data(), scene_collector.get_size());
+    }
 
     for (int i = 0; i < DRAW_CMD_MAX; ++i)
     {
@@ -191,9 +204,4 @@ void RenderScene::prepare(RenderContext* ctx)
     }
     draw_list[DRAW_CMD_OPAQUE].sort();
     draw_list[DRAW_CMD_ALPHA].sort_by_depth();
-}
-
-void RenderScene::bind(int scene_idx)
-{
-    ez_bind_buffer(1, scene_collector.ub->get_buffer(), sizeof(SceneInstanceData), scene_idx * sizeof(SceneInstanceData));
 }

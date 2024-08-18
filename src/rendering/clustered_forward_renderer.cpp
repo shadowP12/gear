@@ -1,14 +1,13 @@
 #include "clustered_forward_renderer.h"
 #include "render_scene.h"
 #include "render_context.h"
+#include "render_shared_data.h"
 #include "render_system.h"
 #include "vertex_factory.h"
 #include "material_proxy.h"
 #include "shader_builder.h"
-#include "sampler_pool.h"
 
 ClusteredForwardRenderer::ClusteredForwardRenderer()
-    : SceneRenderer()
 {
 }
 
@@ -16,22 +15,28 @@ ClusteredForwardRenderer::~ClusteredForwardRenderer()
 {
 }
 
+void ClusteredForwardRenderer::set_scene(RenderScene* scene)
+{
+    _scene = scene;
+}
+
 void ClusteredForwardRenderer::render(RenderContext* ctx)
 {
-    SceneRenderer::render(ctx);
     prepare(ctx);
     render_opaque_pass(ctx);
     copy_to_screen(ctx);
 }
 
-void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
+void ClusteredForwardRenderer::render_list(RenderContext* ctx, const DrawCommandType& draw_type)
 {
-    SamplerPool* sampler_pool = RenderSystem::get()->get_sampler_pool();
-    DrawCommandList& draw_list = scene->draw_list[draw_type];
+    UniformBuffer* scene_ub = ctx->get_ub("scene_ub");
+    UniformBuffer* frame_ub = ctx->get_ub("frame_ub");
+    RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
+    DrawCommandList& draw_list = _scene->draw_list[draw_type];
     for (int i = 0; i < draw_list.cmd_count; ++i)
     {
         DrawCommand& draw_cmd = draw_list.cmds[i];
-        Renderable* renderable = scene->renderable_collector.get_item(draw_cmd.renderable);
+        Renderable* renderable = _scene->renderable_collector.get_item(draw_cmd.renderable);
         VertexFactory* vertex_factory = renderable->vertex_factory;
         MaterialProxy* material_proxy = renderable->material_proxy;
 
@@ -50,9 +55,9 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
 
         ez_bind_buffer(0, frame_ub->get_buffer());
 
-        scene->bind(renderable->scene_index);
+        ez_bind_buffer(1, scene_ub->get_buffer(), sizeof(SceneInstanceData), renderable->scene_index * sizeof(SceneInstanceData));
 
-        sampler_pool->bind();
+        shared_data->bind_samplers();
 
         material_proxy->bind();
 
@@ -66,7 +71,14 @@ void ClusteredForwardRenderer::render_list(const DrawCommandType& draw_type)
 
 void ClusteredForwardRenderer::prepare(RenderContext* ctx)
 {
-    TextureRef* out_color_ref = ctx->find_texture_ref("out_color");
+    // Prepare FrameConstants
+    _frame_constants.view_matrix = _scene->view[RenderView::Type::VIEW_TYPE_DISPLAY].view;
+    _frame_constants.proj_matrix = _scene->view[RenderView::Type::VIEW_TYPE_DISPLAY].projection;
+    UniformBuffer* frame_ub = ctx->create_ub("frame_ub", sizeof(FrameConstants));
+    frame_ub->write((uint8_t*)&_frame_constants, sizeof(FrameConstants));
+
+    // Prepare RTs
+    TextureRef* out_color_ref = ctx->get_texture_ref("out_color");
     uint32_t rt_width = out_color_ref->get_desc().width;
     uint32_t rt_height = out_color_ref->get_desc().height;
 
@@ -95,8 +107,8 @@ void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
 {
     DrawLabel draw_label("Render opaque pass", DrawLabel::WHITE);
 
-    TextureRef* scene_color_ref = ctx->find_texture_ref("scene_color");
-    TextureRef* scene_depth_ref = ctx->find_texture_ref("scene_depth");
+    TextureRef* scene_color_ref = ctx->get_texture_ref("scene_color");
+    TextureRef* scene_depth_ref = ctx->get_texture_ref("scene_depth");
 
     uint32_t rt_width = scene_color_ref->get_desc().width;
     uint32_t rt_height = scene_color_ref->get_desc().height;
@@ -127,7 +139,7 @@ void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
     ez_set_viewport(vp.x, vp.y, vp.z, vp.w);
     ez_set_scissor((int32_t)vp.x, (int32_t)vp.y, (int32_t)vp.z, (int32_t)vp.w);
 
-    render_list(DRAW_CMD_OPAQUE);
+    render_list(ctx, DRAW_CMD_OPAQUE);
 
     ez_end_rendering();
 }
@@ -136,8 +148,8 @@ void ClusteredForwardRenderer::copy_to_screen(RenderContext* ctx)
 {
     DrawLabel draw_label("Copy to screen", DrawLabel::WHITE);
 
-    TextureRef* out_color_ref = ctx->find_texture_ref("out_color");
-    TextureRef* scene_color_ref = ctx->find_texture_ref("scene_color");
+    TextureRef* out_color_ref = ctx->get_texture_ref("out_color");
+    TextureRef* scene_color_ref = ctx->get_texture_ref("scene_color");
     VkImageMemoryBarrier2 copy_barriers[] = {
         ez_image_barrier(scene_color_ref->get_texture(), EZ_RESOURCE_STATE_COPY_SOURCE),
         ez_image_barrier(out_color_ref->get_texture(), EZ_RESOURCE_STATE_COPY_DEST),

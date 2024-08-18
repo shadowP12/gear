@@ -3,24 +3,33 @@
 #include "render_scene.h"
 #include "clustered_forward_renderer.h"
 #include "imgui_renderer.h"
-#include "sampler_pool.h"
+#include "render_shared_data.h"
 #include "window.h"
 #include <core/memory.h>
 
 void RenderSystem::setup()
 {
     _ctx = new RenderContext();
+    _scene = new RenderScene();
     _scene_renderer = new ClusteredForwardRenderer();
-    _sampler_pool = new SamplerPool();
+    _shared_data = new RenderSharedData();
     _imgui_renderer = new ImGuiRenderer();
+
+    _scene_renderer->set_scene(_scene);
 }
 
 void RenderSystem::finish()
 {
     SAFE_DELETE(_ctx);
     SAFE_DELETE(_scene_renderer);
-    SAFE_DELETE(_sampler_pool);
+    SAFE_DELETE(_scene);
+    SAFE_DELETE(_shared_data);
     SAFE_DELETE(_imgui_renderer);
+}
+
+void RenderSystem::set_world(World* world)
+{
+    _scene->set_world(world);
 }
 
 void RenderSystem::render(Window* window)
@@ -47,13 +56,15 @@ void RenderSystem::render(Window* window)
         }
     }
 
+    _scene->prepare(_ctx);
+
     _scene_renderer->render(_ctx);
 
     _imgui_renderer->render(_ctx, window);
 
     // Copy to swapchain
     {
-        TextureRef* t_ref = _ctx->find_texture_ref("out_color");
+        TextureRef* t_ref = _ctx->get_texture_ref("out_color");
         VkImageMemoryBarrier2 copy_barriers[] = {
             ez_image_barrier(t_ref->get_texture(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT),
             ez_image_barrier(swapchain, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT),
