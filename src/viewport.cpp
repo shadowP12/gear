@@ -19,5 +19,5 @@ glm::vec4 Viewport::get_size()
 
 float Viewport::get_aspect()
 {
-    return _width / _hight;
+    return (float)_width / (float)_hight;
 }
