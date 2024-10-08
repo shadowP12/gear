@@ -13,7 +13,6 @@
 class World;
 class Entity;
 class RenderContext;
-class ClusterBuilder;
 
 class RenderScene
 {

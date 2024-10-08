@@ -1,6 +1,7 @@
 #include "render_system.h"
 #include "render_context.h"
 #include "render_scene.h"
+#include "cluster_builder.h"
 #include "clustered_forward_renderer.h"
 #include "imgui_renderer.h"
 #include "render_shared_data.h"
@@ -11,6 +12,7 @@ void RenderSystem::setup()
 {
     _ctx = new RenderContext();
     _scene = new RenderScene();
+    _cluster_builder = new ClusterBuilder();
     _scene_renderer = new ClusteredForwardRenderer();
     _shared_data = new RenderSharedData();
     _imgui_renderer = new ImGuiRenderer();
@@ -22,6 +24,7 @@ void RenderSystem::finish()
 {
     SAFE_DELETE(_ctx);
     SAFE_DELETE(_scene_renderer);
+    SAFE_DELETE(_cluster_builder);
     SAFE_DELETE(_scene);
     SAFE_DELETE(_shared_data);
     SAFE_DELETE(_imgui_renderer);

@@ -29,5 +29,4 @@ protected:
 private:
     RenderScene* _scene = nullptr;
     FrameConstants _frame_constants;
-    //ClusterBuilder _cluster_builder;
 };

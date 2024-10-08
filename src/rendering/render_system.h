@@ -10,6 +10,7 @@ class RenderScene;
 class RenderContext;
 class RenderSharedData;
 class ImGuiRenderer;
+class ClusterBuilder;
 class ClusteredForwardRenderer;
 
 class RenderSystem : public Module<RenderSystem>
@@ -26,12 +27,14 @@ public:
 
     RenderScene* get_scene() { return _scene; }
     RenderSharedData* get_shared_data() { return _shared_data; }
+    ClusterBuilder* get_cluster_builder() { return _cluster_builder; }
     ClusteredForwardRenderer* get_scene_renderer() { return _scene_renderer; }
 
 private:
     RenderContext* _ctx;
     RenderScene* _scene;
     RenderSharedData* _shared_data;
+    ClusterBuilder* _cluster_builder;
     ClusteredForwardRenderer* _scene_renderer;
     ImGuiRenderer* _imgui_renderer;
 };

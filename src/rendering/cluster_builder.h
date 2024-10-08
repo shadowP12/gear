@@ -16,8 +16,8 @@ struct ClusterElement
 {
     uint32_t type;
     uint32_t index;
-    uint32_t touches_near;
-    uint32_t touches_far;
+    uint32_t pad0;
+    uint32_t pad1;
     glm::mat4 transform;
     glm::vec3 scale;
     uint32_t has_wide_spot_angle;
@@ -31,9 +31,9 @@ struct ClusterBuilderState
     uint32_t cluster_screen_width;
     uint32_t cluster_data_size;
     uint32_t cluster_depth_offset;
+    uint32_t cluster_helper_offset;
     uint32_t pad0;
     uint32_t pad1;
-    uint32_t pad2;
 };
 
 class ClusterBuilder
@@ -62,6 +62,7 @@ public:
 private:
     float _zn;
     float _zf;
+    bool _orthogonal;
     glm::mat4 _view_mat;
     glm::mat4 _projection_mat;
     glm::ivec2 _screen_size;
@@ -69,10 +70,7 @@ private:
     ClusterBuilderState _state;
     int _element_count = 0;
     std::vector<ClusterElement> _elements;
+    int _max_element_count = 0;
     int _cluster_buffer_size = 0;
     int _cluster_render_buffer_size = 0;
-    UniformBuffer* _state_buffer = nullptr;
-    UniformBuffer* _elements_buffer = nullptr;
-    UniformBuffer* _cluster_render_buffer = nullptr;
-    UniformBuffer* _cluster_buffer = nullptr;
 };

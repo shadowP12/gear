@@ -68,7 +68,7 @@ void RenderBuffer::write(uint8_t* data, uint32_t size, uint32_t offset)
 }
 
 UniformBuffer::UniformBuffer(uint32_t size, bool persistent)
-    : RenderBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+    : RenderBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                    EZ_RESOURCE_STATE_SHADER_RESOURCE | EZ_RESOURCE_STATE_UNORDERED_ACCESS,
                    size,
                    persistent)

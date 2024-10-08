@@ -1,9 +1,9 @@
 #include "render_scene.h"
 #include "render_context.h"
 #include "render_system.h"
+#include "cluster_builder.h"
 #include "material_proxy.h"
 #include "vertex_factory.h"
-#include "cluster_builder.h"
 #include "world.h"
 #include "asset/level.h"
 #include "asset/mesh.h"
@@ -116,6 +116,10 @@ void RenderScene::prepare(RenderContext* ctx)
     point_light_collector.clear();
     spot_light_collector.clear();
     dir_light_collector.clear();
+
+    ClusterBuilder* cluster_builder = RenderSystem::get()->get_cluster_builder();
+    cluster_builder->begin(ctx, &view[RenderView::Type::VIEW_TYPE_DISPLAY]);
+
     std::vector<Entity*>& light_entities = _world->get_light_entities();
     for (auto entity : light_entities)
     {
@@ -156,6 +160,8 @@ void RenderScene::prepare(RenderContext* ctx)
             light_data->cone_attenuation = c_light->get_spot_attenuation();
             float spot_angle = c_light->get_spot_angle();
             light_data->cone_angle = glm::radians(spot_angle);
+
+            cluster_builder->add_light(c_light->get_light_type(), light_index, light_transform, radius, spot_angle);
         }
     }
     if (point_light_collector.count > 0)

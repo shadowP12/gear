@@ -101,6 +101,10 @@ void ClusteredForwardRenderer::prepare(RenderContext* ctx)
     {
         ez_create_texture_view(scene_depth_ref->get_texture(), VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1);
     }
+
+    // Build cluster
+    ClusterBuilder* cluster_builder = RenderSystem::get()->get_cluster_builder();
+    cluster_builder->bake(ctx);
 }
 
 void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
@@ -129,9 +133,10 @@ void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
     EzRenderingAttachmentInfo depth_info{};
     depth_info.texture = scene_depth_ref->get_texture();
     depth_info.clear_value.depthStencil = {1.0f, 1};
+    rendering_info.depth.push_back(depth_info);
+
     rendering_info.width = rt_width;
     rendering_info.height = rt_height;
-    rendering_info.depth.push_back(depth_info);
 
     ez_begin_rendering(rendering_info);
 
@@ -163,4 +168,8 @@ void ClusteredForwardRenderer::copy_to_screen(RenderContext* ctx)
     copy_region.dstSubresource.layerCount = 1;
     copy_region.extent = { out_color_ref->get_desc().width, out_color_ref->get_desc().height, 1 };
     ez_copy_image(scene_color_ref->get_texture(), out_color_ref->get_texture(), copy_region);
+
+    // Debug cluster
+    ClusterBuilder* cluster_builder = RenderSystem::get()->get_cluster_builder();
+    cluster_builder->debug(ctx);
 }

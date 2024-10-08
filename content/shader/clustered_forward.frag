@@ -12,5 +12,7 @@ layout(location = 0) out vec4 scene_color;
 void main()
 {
     Material material = get_material(vertex_uv);
-    scene_color = material.base_color;
+
+    vec3 sun_direction = normalize(vec3(0.0, -1.0, -1.0));
+    scene_color = vec4(max(dot(normalize(vertex_normal), -sun_direction), 0.0) * vec3(0.6) + vec3(0.1), 1.0);
 }
