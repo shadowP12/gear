@@ -19,12 +19,12 @@ struct ClusterRenderConstantBlock
 struct ClusterStoreConstantBlock
 {
     uint32_t cluster_render_data_size;
-    uint32_t cluster_helper_offset;
-    uint32_t cluster_screen_size[2];
     uint32_t max_render_element_count_div_32;
     uint32_t render_element_count_div_32;
     uint32_t max_cluster_element_count_div_32;
     uint32_t pad0;
+    uint32_t pad1;
+    uint32_t cluster_screen_size[2];
 };
 
 struct ClusterDebugConstantBlock
@@ -69,8 +69,7 @@ void ClusterBuilder::begin(RenderContext* ctx, RenderView* view)
     _max_element_count = MAX_CLUSTER_ELEMENT * ELEMENT_TYPE_MAX;
     uint32_t element_tag_bits_size = _max_element_count / 32;
     uint32_t element_tag_depth_bits_size = _max_element_count;
-    uint32_t element_tag_helper_bits_size = _max_element_count;
-    _cluster_render_buffer_size = _cluster_screen_size.x * _cluster_screen_size.y * (element_tag_bits_size + element_tag_depth_bits_size + element_tag_helper_bits_size) * sizeof(uint32_t);
+    _cluster_render_buffer_size = _cluster_screen_size.x * _cluster_screen_size.y * (element_tag_bits_size + element_tag_depth_bits_size) * sizeof(uint32_t);
 }
 
 void ClusterBuilder::add_light(LightType type, int index, const glm::mat4& transform, float radius, float spot_aperture)
@@ -130,8 +129,7 @@ void ClusterBuilder::bake(RenderContext* ctx)
         _state.screen_to_clusters_shift = get_shift_from_power_of_2(MAX_CLUSTER_SIZE);
         _state.cluster_screen_width = _cluster_screen_size.x;
         _state.cluster_depth_offset = _max_element_count / 32;
-        _state.cluster_helper_offset = _max_element_count / 32 + _max_element_count;
-        _state.cluster_data_size = _max_element_count / 32 + _max_element_count + _max_element_count;
+        _state.cluster_data_size = _max_element_count / 32 + _max_element_count;
 
         UniformBuffer* cluster_state_buffer = ctx->create_ub("cluster_state_buffer", sizeof(ClusterBuilderState));
         cluster_state_buffer->write((uint8_t*)&_state, sizeof(ClusterBuilderState));
@@ -253,8 +251,7 @@ void ClusterBuilder::bake(RenderContext* ctx)
             ez_bind_buffer(3, cluster_elements_buffer->get_buffer());
 
             ClusterStoreConstantBlock constant_block;
-            constant_block.cluster_render_data_size = _max_element_count / 32 + _max_element_count + _max_element_count;
-            constant_block.cluster_helper_offset = _max_element_count / 32 + _max_element_count;
+            constant_block.cluster_render_data_size = _max_element_count / 32 + _max_element_count;
             constant_block.max_render_element_count_div_32 = _max_element_count / 32;
             constant_block.cluster_screen_size[0] = _cluster_screen_size.x;
             constant_block.cluster_screen_size[1] = _cluster_screen_size.y;
@@ -299,7 +296,7 @@ void ClusterBuilder::debug(RenderContext* ctx)
     constant_block.cluster_screen_size[0] = _cluster_screen_size.x;
     constant_block.cluster_screen_size[1] = _cluster_screen_size.y;
     constant_block.cluster_shift = get_shift_from_power_of_2(MAX_CLUSTER_SIZE);
-    constant_block.cluster_type = ELEMENT_TYPE_SPOT_LIGHT;
+    constant_block.cluster_type = ELEMENT_TYPE_POINT_LIGHT;
     constant_block.orthogonal = _orthogonal;
     constant_block.z_far = _zf;
     constant_block.z_near = _zn;

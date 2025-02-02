@@ -16,9 +16,9 @@ layout(set = 0, binding = 1, std140) uniform State
     uint cluster_screen_width;
     uint cluster_data_size;
     uint cluster_depth_offset;
-    uint cluster_helper_offset;
     uint pad0;
     uint pad1;
+    uint pad2;
 } state;
 
 struct RenderElement
@@ -60,15 +60,7 @@ void main()
 
     uint z_write_offset = cluster_offset + state.cluster_depth_offset + element_index;
     uint z_write_bit = 1 << z_bit;
-
     aux = atomicOr(cluster_render.data[z_write_offset], z_write_bit);
-
-    uint helper_write_offset = cluster_offset + state.cluster_helper_offset + element_index;
-    uint z_minmax = cluster_render.data[helper_write_offset];
-    uint z_min = min(z_bit, z_minmax & uint(0xFFFF));
-    uint z_max = max(z_bit, z_minmax >> 16);
-    z_minmax = z_min | (z_max << 16);
-    cluster_render.data[helper_write_offset] = z_minmax;
 
     frag_color = vec4(vec3(float(aux)), 1.0);
 }

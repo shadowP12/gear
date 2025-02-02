@@ -31,9 +31,9 @@ struct ClusterBuilderState
     uint32_t cluster_screen_width;
     uint32_t cluster_data_size;
     uint32_t cluster_depth_offset;
-    uint32_t cluster_helper_offset;
     uint32_t pad0;
     uint32_t pad1;
+    uint32_t pad2;
 };
 
 class ClusterBuilder
