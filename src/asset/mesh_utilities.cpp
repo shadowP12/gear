@@ -8,16 +8,15 @@ EzBuffer create_mesh_buffer(void* data, uint32_t data_size, VkBufferUsageFlags u
     EzBufferDesc buffer_desc = {};
     buffer_desc.size = data_size;
     buffer_desc.usage = usage | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    buffer_desc.memory_flags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    buffer_desc.memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
     ez_create_buffer(buffer_desc, buffer);
 
     VkBufferMemoryBarrier2 barrier;
+    barrier = ez_buffer_barrier(buffer, EZ_RESOURCE_STATE_COPY_DEST);
+    ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
+
     if (data)
-    {
-        barrier = ez_buffer_barrier(buffer, EZ_RESOURCE_STATE_COPY_DEST);
-        ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
         ez_update_buffer(buffer, data_size, 0, data);
-    }
 
     EzResourceState flag = EZ_RESOURCE_STATE_UNDEFINED;
     if ((usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != 0)

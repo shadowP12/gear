@@ -69,8 +69,8 @@ void RenderSystem::render(Window* window)
     {
         TextureRef* t_ref = _ctx->get_texture_ref("out_color");
         VkImageMemoryBarrier2 copy_barriers[] = {
-            ez_image_barrier(t_ref->get_texture(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT),
-            ez_image_barrier(swapchain, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT),
+            ez_image_barrier(t_ref->get_texture(), EZ_RESOURCE_STATE_COPY_SOURCE),
+            ez_image_barrier(swapchain, EZ_RESOURCE_STATE_COPY_DEST),
         };
         ez_pipeline_barrier(0, 0, nullptr, 2, copy_barriers);
 

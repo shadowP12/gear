@@ -52,7 +52,11 @@ void main()
     uint usage_write_offset = cluster_offset + (element_index >> 5);
     uint usage_write_bit = 1 << (element_index & uint(0x1F));
 
-    uint aux = atomicOr(cluster_render.data[usage_write_offset], usage_write_bit);
+    uint aux = 0;
+    //if (!gl_HelperInvocation)
+    {
+        aux = atomicOr(cluster_render.data[usage_write_offset], usage_write_bit);
+    }
 
     float unit_depth = depth_interp * state.inv_z_far;
 
@@ -60,7 +64,10 @@ void main()
 
     uint z_write_offset = cluster_offset + state.cluster_depth_offset + element_index;
     uint z_write_bit = 1 << z_bit;
-    aux = atomicOr(cluster_render.data[z_write_offset], z_write_bit);
+    //if (!gl_HelperInvocation)
+    {
+        aux = atomicOr(cluster_render.data[z_write_offset], z_write_bit);
+    }
 
     frag_color = vec4(vec3(float(aux)), 1.0);
 }

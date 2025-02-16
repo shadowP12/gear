@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gpu_buffer.h"
 #include "render_constants.h"
 #include "render_resources.h"
 #include <rhi/ez_vulkan.h>
@@ -22,16 +23,16 @@ private:
     void clear_geometries();
 
 public:
-    VertexBuffer* sphere_vertex_buffer = nullptr;
-    IndexBuffer* sphere_index_buffer = nullptr;
+    GpuBuffer* sphere_vertex_buffer = nullptr;
+    GpuBuffer* sphere_index_buffer = nullptr;
     float sphere_overfit = 0.0;
 
-    VertexBuffer* cone_vertex_buffer = nullptr;
-    IndexBuffer* cone_index_buffer = nullptr;
+    GpuBuffer* cone_vertex_buffer = nullptr;
+    GpuBuffer* cone_index_buffer = nullptr;
     float cone_overfit = 0.0;
 
-    VertexBuffer* box_vertex_buffer = nullptr;
-    IndexBuffer* box_index_buffer = nullptr;
+    GpuBuffer* box_vertex_buffer = nullptr;
+    GpuBuffer* box_index_buffer = nullptr;
 
 private:
     std::vector<EzSampler> _samplers;

@@ -5,7 +5,7 @@
 
 class Window;
 class RenderContext;
-class VertexBuffer;
+class GpuBuffer;
 class IndexBuffer;
 
 class ImGuiRenderer
@@ -18,6 +18,6 @@ public:
     void render(RenderContext* ctx, Window* window);
 
 private:
-    VertexBuffer* _vertex_buffer = nullptr;
-    IndexBuffer* _index_buffer = nullptr;
+    GpuBuffer* _vertex_buffer = nullptr;
+    GpuBuffer* _index_buffer = nullptr;
 };

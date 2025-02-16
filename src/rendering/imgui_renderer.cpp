@@ -48,22 +48,22 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
 
     size_t vertex_size = imgui_draw_data->TotalVtxCount * sizeof(ImDrawVert);
     size_t index_size = imgui_draw_data->TotalIdxCount * sizeof(ImDrawIdx);
-    if (!_vertex_buffer || _vertex_buffer->get_buffer()->size < vertex_size)
+    if (!_vertex_buffer || _vertex_buffer->get_handle()->size < vertex_size)
     {
         if (_vertex_buffer)
         {
             SAFE_DELETE(_vertex_buffer);
         }
-        _vertex_buffer = new VertexBuffer(vertex_size, true);
+        _vertex_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Vertex, vertex_size);
     }
 
-    if (!_index_buffer || _index_buffer->get_buffer()->size < index_size)
+    if (!_index_buffer || _index_buffer->get_handle()->size < index_size)
     {
         if (_index_buffer)
         {
             SAFE_DELETE(_index_buffer);
         }
-        _index_buffer = new IndexBuffer(index_size, true);
+        _index_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Index, index_size);
     }
 
     uint32_t vtx_buffer_offset = 0;
@@ -134,9 +134,9 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
     ez_set_vertex_attrib(0, 1, VK_FORMAT_R32G32_SFLOAT, 8);
     ez_set_vertex_attrib(0, 2, VK_FORMAT_R8G8B8A8_UNORM, 16);
 
-    ez_bind_vertex_buffer(0, _vertex_buffer->get_buffer());
+    ez_bind_vertex_buffer(0, _vertex_buffer->get_handle());
 
-    ez_bind_index_buffer(_index_buffer->get_buffer(), sizeof(ImDrawIdx) == 2 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32);
+    ez_bind_index_buffer(_index_buffer->get_handle(), sizeof(ImDrawIdx) == 2 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32);
 
     uint32_t vtx_offset = 0;
     uint32_t idx_offset = 0;

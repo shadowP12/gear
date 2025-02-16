@@ -29,8 +29,8 @@ void ClusteredForwardRenderer::render(RenderContext* ctx)
 
 void ClusteredForwardRenderer::render_list(RenderContext* ctx, const DrawCommandType& draw_type)
 {
-    UniformBuffer* scene_ub = ctx->get_ub("scene_ub");
-    UniformBuffer* frame_ub = ctx->get_ub("frame_ub");
+    GpuBuffer* scene_ub = ctx->get_ub("scene_ub");
+    GpuBuffer* frame_ub = ctx->get_ub("frame_ub");
     RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
     DrawCommandList& draw_list = _scene->draw_list[draw_type];
     for (int i = 0; i < draw_list.cmd_count; ++i)
@@ -53,9 +53,9 @@ void ClusteredForwardRenderer::render_list(RenderContext* ctx, const DrawCommand
         ez_set_vertex_shader(vs_builder.build());
         ez_set_fragment_shader(fs_builder.build());
 
-        ez_bind_buffer(0, frame_ub->get_buffer());
+        ez_bind_buffer(0, frame_ub->get_handle());
 
-        ez_bind_buffer(1, scene_ub->get_buffer(), sizeof(SceneInstanceData), renderable->scene_index * sizeof(SceneInstanceData));
+        ez_bind_buffer(1, scene_ub->get_handle(), sizeof(SceneInstanceData), renderable->scene_index * sizeof(SceneInstanceData));
 
         shared_data->bind_samplers();
 
@@ -74,7 +74,7 @@ void ClusteredForwardRenderer::prepare(RenderContext* ctx)
     // Prepare FrameConstants
     _frame_constants.view_matrix = _scene->view[RenderView::Type::VIEW_TYPE_DISPLAY].view;
     _frame_constants.proj_matrix = _scene->view[RenderView::Type::VIEW_TYPE_DISPLAY].projection;
-    UniformBuffer* frame_ub = ctx->create_ub("frame_ub", sizeof(FrameConstants));
+    GpuBuffer* frame_ub = ctx->create_ub("frame_ub", sizeof(FrameConstants));
     frame_ub->write((uint8_t*)&_frame_constants, sizeof(FrameConstants));
 
     // Prepare RTs

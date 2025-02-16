@@ -28,7 +28,7 @@ void MaterialProxy::clear_dirty()
     {
         if (!material_ub)
         {
-            material_ub = new UniformBuffer(sizeof(MaterialParams));
+            material_ub = new GpuBuffer(BufferUsageFlags::Dynamic | BufferUsageFlags::Uniform, sizeof(MaterialParams));
         }
         material_ub->write((uint8_t*)&params, sizeof(MaterialParams));
     }
@@ -45,7 +45,7 @@ void MaterialProxy::compilation_environment(std::vector<std::string>& macros)
 
 void MaterialProxy::bind()
 {
-    ez_bind_buffer(2, material_ub->get_buffer());
+    ez_bind_buffer(2, material_ub->get_handle());
 
     if (base_color_texture)
     {

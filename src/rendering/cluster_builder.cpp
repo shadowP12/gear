@@ -8,6 +8,8 @@
 #include <core/bitops.h>
 #include <math/transform_util.h>
 
+uint32_t k_divisor = 2;
+
 struct ClusterRenderConstantBlock
 {
     uint32_t base_index;
@@ -115,26 +117,27 @@ void ClusterBuilder::bake(RenderContext* ctx)
 {
     DrawLabel draw_label("Prepare cluster buffer", DrawLabel::WHITE);
 
-    UniformBuffer* cluster_buffer = ctx->create_ub("cluster_buffer", _cluster_buffer_size);
+    GpuBuffer* cluster_buffer = ctx->create_ub("cluster_buffer", _cluster_buffer_size);
     cluster_buffer->clear(_cluster_buffer_size);
 
     if (_element_count > 0)
     {
-        UniformBuffer* cluster_render_buffer = ctx->create_ub("cluster_render_buffer", _cluster_render_buffer_size);
+        GpuBuffer* cluster_render_buffer = ctx->create_ub("cluster_render_buffer", _cluster_render_buffer_size);
         cluster_render_buffer->clear(_cluster_render_buffer_size);
 
         // Fill state
         _state.projection = _projection_mat;
         _state.inv_z_far = 1.0f / _zf;
         _state.screen_to_clusters_shift = get_shift_from_power_of_2(MAX_CLUSTER_SIZE);
+        _state.screen_to_clusters_shift -= k_divisor;
         _state.cluster_screen_width = _cluster_screen_size.x;
         _state.cluster_depth_offset = _max_element_count / 32;
         _state.cluster_data_size = _max_element_count / 32 + _max_element_count;
 
-        UniformBuffer* cluster_state_buffer = ctx->create_ub("cluster_state_buffer", sizeof(ClusterBuilderState));
+        GpuBuffer* cluster_state_buffer = ctx->create_ub("cluster_state_buffer", sizeof(ClusterBuilderState));
         cluster_state_buffer->write((uint8_t*)&_state, sizeof(ClusterBuilderState));
 
-        UniformBuffer* cluster_elements_buffer = ctx->create_ub("cluster_elements_buffer", sizeof(ClusterElement) * _element_count);
+        GpuBuffer* cluster_elements_buffer = ctx->create_ub("cluster_elements_buffer", sizeof(ClusterElement) * _element_count);
         cluster_elements_buffer->write((uint8_t*)_elements.data(), sizeof(ClusterElement) * _element_count);
 
         // Render stage
@@ -142,8 +145,9 @@ void ClusterBuilder::bake(RenderContext* ctx)
             RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
 
             TextureRef* out_color_ref = ctx->get_texture_ref("out_color");
-            uint32_t rt_width = out_color_ref->get_desc().width;
-            uint32_t rt_height = out_color_ref->get_desc().height;
+            uint32_t div_value = 1 << k_divisor;
+            uint32_t rt_width = out_color_ref->get_desc().width / div_value;
+            uint32_t rt_height = out_color_ref->get_desc().height / div_value;
 
             RenderContext::CreateStatus create_status;
             EzTextureDesc texture_desc{};
@@ -174,9 +178,8 @@ void ClusterBuilder::bake(RenderContext* ctx)
 
             ez_begin_rendering(rendering_info);
 
-            glm::vec4 vp = ctx->viewport_size;
-            ez_set_viewport(vp.x, vp.y, vp.z, vp.w);
-            ez_set_scissor((int32_t)vp.x, (int32_t)vp.y, (int32_t)vp.z, (int32_t)vp.w);
+            ez_set_viewport(0, 0, rt_width, rt_height);
+            ez_set_scissor(0, 0, rt_width, rt_height);
 
             EzBlendState blend_state;
             blend_state.blend_enable = true;
@@ -195,9 +198,9 @@ void ClusterBuilder::bake(RenderContext* ctx)
             ez_set_vertex_binding(0, 12);
             ez_set_vertex_attrib(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
 
-            ez_bind_buffer(1, cluster_state_buffer->get_buffer());
-            ez_bind_buffer(2, cluster_elements_buffer->get_buffer());
-            ez_bind_buffer(3, cluster_render_buffer->get_buffer());
+            ez_bind_buffer(1, cluster_state_buffer->get_handle());
+            ez_bind_buffer(2, cluster_elements_buffer->get_handle());
+            ez_bind_buffer(3, cluster_render_buffer->get_handle());
 
             ClusterRenderConstantBlock constant_block;
             for (int i = 0; i < _element_count; i++)
@@ -208,8 +211,8 @@ void ClusterBuilder::bake(RenderContext* ctx)
                     constant_block.base_index = i;
                     ez_push_constants(&constant_block, sizeof(ClusterRenderConstantBlock), 0);
 
-                    ez_bind_vertex_buffer(0, shared_data->sphere_vertex_buffer->get_buffer());
-                    ez_bind_index_buffer(shared_data->sphere_index_buffer->get_buffer(), VK_INDEX_TYPE_UINT16);
+                    ez_bind_vertex_buffer(0, shared_data->sphere_vertex_buffer->get_handle());
+                    ez_bind_index_buffer(shared_data->sphere_index_buffer->get_handle(), VK_INDEX_TYPE_UINT16);
 
                     ez_draw_indexed(80 * 3, 0, 0);
                 }
@@ -220,15 +223,15 @@ void ClusterBuilder::bake(RenderContext* ctx)
 
                     if (element.has_wide_spot_angle)
                     {
-                        ez_bind_vertex_buffer(0, shared_data->sphere_vertex_buffer ->get_buffer());
-                        ez_bind_index_buffer(shared_data->sphere_index_buffer ->get_buffer(), VK_INDEX_TYPE_UINT16);
+                        ez_bind_vertex_buffer(0, shared_data->sphere_vertex_buffer ->get_handle());
+                        ez_bind_index_buffer(shared_data->sphere_index_buffer ->get_handle(), VK_INDEX_TYPE_UINT16);
 
                         ez_draw_indexed(80 * 3, 0, 0);
                     }
                     else
                     {
-                        ez_bind_vertex_buffer(0, shared_data->cone_vertex_buffer->get_buffer());
-                        ez_bind_index_buffer(shared_data->cone_index_buffer->get_buffer(), VK_INDEX_TYPE_UINT16);
+                        ez_bind_vertex_buffer(0, shared_data->cone_vertex_buffer->get_handle());
+                        ez_bind_index_buffer(shared_data->cone_index_buffer->get_handle(), VK_INDEX_TYPE_UINT16);
 
                         ez_draw_indexed(62 * 3, 0, 0);
                     }
@@ -240,15 +243,15 @@ void ClusterBuilder::bake(RenderContext* ctx)
 
         // Store stage
         {
-            VkBufferMemoryBarrier2 barrier = ez_buffer_barrier(cluster_render_buffer->get_buffer(), EZ_RESOURCE_STATE_UNORDERED_ACCESS);
+            VkBufferMemoryBarrier2 barrier = ez_buffer_barrier(cluster_render_buffer->get_handle(), EZ_RESOURCE_STATE_UNORDERED_ACCESS);
             ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
 
             ez_reset_pipeline_state();
             ez_set_compute_shader(rhi_get_shader("shader://cluster_store.comp"));
 
-            ez_bind_buffer(1, cluster_render_buffer->get_buffer());
-            ez_bind_buffer(2, cluster_buffer->get_buffer());
-            ez_bind_buffer(3, cluster_elements_buffer->get_buffer());
+            ez_bind_buffer(1, cluster_render_buffer->get_handle());
+            ez_bind_buffer(2, cluster_buffer->get_handle());
+            ez_bind_buffer(3, cluster_elements_buffer->get_handle());
 
             ClusterStoreConstantBlock constant_block;
             constant_block.cluster_render_data_size = _max_element_count / 32 + _max_element_count;
@@ -261,7 +264,7 @@ void ClusterBuilder::bake(RenderContext* ctx)
 
             ez_dispatch(std::max(1u, (uint32_t)(_cluster_screen_size.x) / 8), std::max(1u, (uint32_t)(_cluster_screen_size.y) / 8), 1);
 
-            barrier = ez_buffer_barrier(cluster_buffer->get_buffer(), EZ_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier = ez_buffer_barrier(cluster_buffer->get_handle(), EZ_RESOURCE_STATE_UNORDERED_ACCESS);
             ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
         }
     }
@@ -273,7 +276,7 @@ void ClusterBuilder::debug(RenderContext* ctx)
 
     RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
 
-    UniformBuffer* cluster_buffer = ctx->get_ub("cluster_buffer");
+    GpuBuffer* cluster_buffer = ctx->get_ub("cluster_buffer");
     TextureRef* out_color_ref = ctx->get_texture_ref("out_color");
     TextureRef* scene_depth_ref = ctx->get_texture_ref("scene_depth");
 
@@ -285,7 +288,7 @@ void ClusterBuilder::debug(RenderContext* ctx)
     ez_reset_pipeline_state();
     ez_set_compute_shader(rhi_get_shader("shader://cluster_debug.comp"));
 
-    ez_bind_buffer(1, cluster_buffer->get_buffer());
+    ez_bind_buffer(1, cluster_buffer->get_handle());
     ez_bind_texture(2, out_color_ref->get_texture(), 0);
     ez_bind_texture(3, scene_depth_ref->get_texture(), 0);
     ez_bind_sampler(4, shared_data->get_sampler(SAMPLER_NEAREST_CLAMP));

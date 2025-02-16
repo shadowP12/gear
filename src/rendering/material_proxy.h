@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gpu_buffer.h"
 #include "render_resources.h"
 #include "material_constants.h"
 #include <rhi/ez_vulkan.h>
@@ -27,5 +28,5 @@ public:
     MaterialParams params;
     EzTexture base_color_texture = VK_NULL_HANDLE;
     MaterialAlphaMode alpha_mode;
-    UniformBuffer* material_ub = nullptr;
+    GpuBuffer* material_ub = nullptr;
 };

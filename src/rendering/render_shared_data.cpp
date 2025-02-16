@@ -66,16 +66,12 @@ void RenderSharedData::init_geometries()
         std::vector<uint8_t> vertex_data;
         vertex_data.resize(sizeof(float) * icosphere_vertex_count * 3);
         memcpy(vertex_data.data(), icosphere_vertices, vertex_data.size());
-
-        sphere_vertex_buffer = new VertexBuffer(vertex_data.size());
-        sphere_vertex_buffer->write(vertex_data.data(), vertex_data.size());
+        sphere_vertex_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Vertex, vertex_data.size(), vertex_data.data());
 
         std::vector<uint8_t> index_data;
         index_data.resize(sizeof(uint16_t) * icosphere_triangle_count * 3);
         memcpy(index_data.data(), icosphere_triangle_indices, index_data.size());
-
-        sphere_index_buffer = new IndexBuffer(index_data.size());
-        sphere_index_buffer->write(index_data.data(), index_data.size());
+        sphere_index_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Index, index_data.size(), index_data.data());
 
         float min_d = 1e20;
         for (uint32_t i = 0; i < icosphere_triangle_count; i++)
@@ -109,16 +105,12 @@ void RenderSharedData::init_geometries()
         std::vector<uint8_t> vertex_data;
         vertex_data.resize(sizeof(float) * cone_vertex_count * 3);
         memcpy(vertex_data.data(), cone_vertices, vertex_data.size());
-
-        cone_vertex_buffer = new VertexBuffer(vertex_data.size());
-        cone_vertex_buffer->write(vertex_data.data(), vertex_data.size());
+        cone_vertex_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Vertex, vertex_data.size(), vertex_data.data());
 
         std::vector<uint8_t> index_data;
         index_data.resize(sizeof(uint16_t) * cone_triangle_count * 3);
         memcpy(index_data.data(), cone_triangle_indices, index_data.size());
-
-        cone_index_buffer = new IndexBuffer(index_data.size());
-        cone_index_buffer->write(index_data.data(), index_data.size());
+        cone_index_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Index, index_data.size(), index_data.data());
 
         float min_d = 1e20;
         for (uint32_t i = 0; i < cone_triangle_count; i++)
@@ -164,16 +156,12 @@ void RenderSharedData::init_geometries()
         std::vector<uint8_t> vertex_data;
         vertex_data.resize(sizeof(float) * box_vertex_count * 3);
         memcpy(vertex_data.data(), box_vertices, vertex_data.size());
-
-        box_vertex_buffer = new VertexBuffer(vertex_data.size());
-        box_vertex_buffer->write(vertex_data.data(), vertex_data.size());
+        box_vertex_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Vertex, vertex_data.size(), vertex_data.data());
 
         std::vector<uint8_t> index_data;
         index_data.resize(sizeof(uint16_t) * box_triangle_count * 3);
         memcpy(index_data.data(), box_triangle_indices, index_data.size());
-
-        box_index_buffer = new IndexBuffer(index_data.size());
-        box_index_buffer->write(index_data.data(), index_data.size());
+        box_index_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Index, index_data.size(), index_data.data());
     }
 }
 

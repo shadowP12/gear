@@ -166,19 +166,19 @@ void RenderScene::prepare(RenderContext* ctx)
     }
     if (point_light_collector.count > 0)
     {
-        UniformBuffer* point_light_ub = ctx->create_ub("point_light_ub", point_light_collector.get_size());
+        GpuBuffer* point_light_ub = ctx->create_ub("point_light_ub", point_light_collector.get_size());
         point_light_ub->write((uint8_t*)point_light_collector.get_data(), point_light_collector.get_size());
     }
 
     if (spot_light_collector.count > 0)
     {
-        UniformBuffer* spot_light_ub = ctx->create_ub("spot_light_ub", spot_light_collector.get_size());
+        GpuBuffer* spot_light_ub = ctx->create_ub("spot_light_ub", spot_light_collector.get_size());
         spot_light_ub->write((uint8_t*)spot_light_collector.get_data(), spot_light_collector.get_size());
     }
 
     if (dir_light_collector.count > 0)
     {
-        UniformBuffer* dir_light_ub = ctx->create_ub("dir_light_ub", dir_light_collector.get_size());
+        GpuBuffer* dir_light_ub = ctx->create_ub("dir_light_ub", dir_light_collector.get_size());
         dir_light_ub->write((uint8_t*)dir_light_collector.get_data(), dir_light_collector.get_size());
     }
 
@@ -192,7 +192,7 @@ void RenderScene::prepare(RenderContext* ctx)
     }
     if (scene_collector.count > 0)
     {
-        UniformBuffer* scene_ub = ctx->create_ub("scene_ub", scene_collector.get_size());
+        GpuBuffer* scene_ub = ctx->create_ub("scene_ub", scene_collector.get_size());
         scene_ub->write((uint8_t*)scene_collector.get_data(), scene_collector.get_size());
     }
 

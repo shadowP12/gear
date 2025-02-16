@@ -26,7 +26,7 @@ void RenderContext::collect_viewport_info(Window* window)
     viewport_size = window->get_size();
 }
 
-UniformBuffer* RenderContext::get_ub(const std::string& name)
+GpuBuffer* RenderContext::get_ub(const std::string& name)
 {
     auto iter = _ub_cache.find(name);
     if (iter != _ub_cache.end())
@@ -36,20 +36,20 @@ UniformBuffer* RenderContext::get_ub(const std::string& name)
     return nullptr;
 }
 
-UniformBuffer* RenderContext::create_ub(const std::string& name, uint32_t size)
+GpuBuffer* RenderContext::create_ub(const std::string& name, uint32_t size)
 {
     CreateStatus status;
     return create_ub(name, size, status);
 }
 
-UniformBuffer* RenderContext::create_ub(const std::string& name, uint32_t size, CreateStatus& status)
+GpuBuffer* RenderContext::create_ub(const std::string& name, uint32_t size, CreateStatus& status)
 {
     status = CreateStatus::Keep;
-    UniformBuffer* ub = get_ub(name);
-    if (ub == nullptr || ub->get_buffer()->size != size)
+    GpuBuffer* ub = get_ub(name);
+    if (ub == nullptr || ub->get_handle()->size != size)
     {
         delete ub;
-        ub = new UniformBuffer(size);
+        ub = new GpuBuffer(BufferUsageFlags::Dynamic | BufferUsageFlags::Uniform | BufferUsageFlags::Storage, size);
         _ub_cache[name] = ub;
         status = CreateStatus::Recreated;
     }
