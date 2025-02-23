@@ -131,6 +131,9 @@ protected:
 
     void update_local_transform();
 
+public:
+    Event<> transform_changed_event;
+
 protected:
     int _id = -1;
     int _level_id = -1;

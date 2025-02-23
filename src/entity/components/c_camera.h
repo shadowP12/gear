@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity_component.h"
+#include "c_render.h"
 #include <core/enum_flag.h>
 
 enum class ProjectionMode
@@ -19,7 +19,7 @@ enum CameraUsage
 SP_MAKE_ENUM_FLAG(uint32_t, CameraUsage)
 
 class Entity;
-class CCamera : public EntityComponent
+class CCamera : public CRender
 {
 public:
     CCamera(Entity* entity);

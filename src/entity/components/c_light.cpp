@@ -3,7 +3,7 @@
 #include "entity/entity_notifications.h"
 
 CLight::CLight(Entity* entity)
-    : EntityComponent(entity)
+    : CRender(entity)
 {
 }
 
@@ -46,36 +46,43 @@ void CLight::deserialize(rapidjson::Value& value, Serialization::BinaryStream& b
 
 void CLight::set_light_type(LightType type)
 {
+    make_render_dirty();
     _type = type;
 }
 
 void CLight::set_intensity(float intensity)
 {
+    make_render_dirty();
     _intensity = intensity;
 }
 
 void CLight::set_color(glm::vec3 color)
 {
+    make_render_dirty();
     _color = color;
 }
 
 void CLight::set_range(float range)
 {
+    make_render_dirty();
     _range = range;
 }
 
 void CLight::set_attenuation(float attenuation)
 {
+    make_render_dirty();
     _attenuation = attenuation;
 }
 
 void CLight::set_spot_angle(float spot_angle)
 {
+    make_render_dirty();
     _spot_angle = spot_angle;
 }
 
 void CLight::set_spot_attenuation(float spot_attenuation)
 {
+    make_render_dirty();
     _spot_attenuation = spot_attenuation;
 }
 

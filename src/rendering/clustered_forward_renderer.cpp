@@ -6,6 +6,7 @@
 #include "vertex_factory.h"
 #include "material_proxy.h"
 #include "shader_builder.h"
+#include "utils/debug_utils.h"
 
 ClusteredForwardRenderer::ClusteredForwardRenderer()
 {
@@ -109,7 +110,7 @@ void ClusteredForwardRenderer::prepare(RenderContext* ctx)
 
 void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
 {
-    DrawLabel draw_label("Render opaque pass", DrawLabel::WHITE);
+    DebugLabel debug_label("Render opaque pass", DebugLabel::WHITE);
 
     TextureRef* scene_color_ref = ctx->get_texture_ref("scene_color");
     TextureRef* scene_depth_ref = ctx->get_texture_ref("scene_depth");
@@ -151,7 +152,7 @@ void ClusteredForwardRenderer::render_opaque_pass(RenderContext* ctx)
 
 void ClusteredForwardRenderer::copy_to_screen(RenderContext* ctx)
 {
-    DrawLabel draw_label("Copy to screen", DrawLabel::WHITE);
+    DebugLabel debug_label("Copy to screen", DebugLabel::WHITE);
 
     TextureRef* out_color_ref = ctx->get_texture_ref("out_color");
     TextureRef* scene_color_ref = ctx->get_texture_ref("scene_color");

@@ -3,15 +3,6 @@
 #include <rhi/ez_vulkan.h>
 #include <vector>
 
-struct DrawLabel
-{
-    static float WHITE[4];
-    static float RED[4];
-
-    DrawLabel(const char* label_name, const float color[4]);
-    ~DrawLabel();
-};
-
 enum DrawCommandType
 {
     DRAW_CMD_OPAQUE = 0,

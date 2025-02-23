@@ -7,7 +7,7 @@
 #include <glm/gtx/euler_angles.hpp>
 
 CCamera::CCamera(Entity* entity)
-    : EntityComponent(entity)
+    : CRender(entity)
 {
 }
 

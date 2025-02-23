@@ -30,7 +30,6 @@ private:
 
     void init_world();
 
-protected:
     void fill_draw_list(DrawCommandType type, int renderable_id);
 
 public:

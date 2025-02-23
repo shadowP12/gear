@@ -1,5 +1,6 @@
 #pragma once
 
+#include <core/event.h>
 #include <core/module.h>
 #include <core/serializable.h>
 #include <map>
@@ -13,11 +14,18 @@ public:
 
     virtual ~EntityComponent();
 
+    virtual bool listen_transform_changed() { return true; }
+
     static std::string get_static_class_name() { return "EntityComponent"; }
+
     virtual std::string get_class_name() { return "EntityComponent"; }
 
 protected:
+    virtual void notify_transform_changed() {}
+
+protected:
     Entity* _entity;
+    EventHandle _transform_changed_event_handle;
 };
 
 class EntityComponentFactory : public Module<EntityComponentFactory>

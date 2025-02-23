@@ -4,6 +4,7 @@
 #include "render_system.h"
 #include "draw_command.h"
 #include "window.h"
+#include "utils/debug_utils.h"
 #include <core/memory.h>
 #include <rhi/rhi_shader_mgr.h>
 #include <glm/glm.hpp>
@@ -35,7 +36,7 @@ ImGuiRenderer::~ImGuiRenderer()
 
 void ImGuiRenderer::render(RenderContext* ctx, Window* window)
 {
-    DrawLabel draw_label("ImGui pass", DrawLabel::WHITE);
+    DebugLabel debug_label("ImGui pass", DebugLabel::WHITE);
 
     ImGuiContext* imgui_ctx = window->get_imgui_ctx();
     ImGuiViewportP* imgui_viewport = imgui_ctx->Viewports[0];

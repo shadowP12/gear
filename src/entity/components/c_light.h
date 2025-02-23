@@ -1,10 +1,10 @@
 #pragma once
 
-#include "entity_component.h"
+#include "c_render.h"
 #include "rendering/render_constants.h"
 
 class Entity;
-class CLight : public EntityComponent
+class CLight : public CRender
 {
 public:
     CLight(Entity* entity);
@@ -12,9 +12,11 @@ public:
     virtual ~CLight();
 
     static std::string get_static_class_name() { return "CLight"; }
+
     virtual std::string get_class_name() { return "CLight"; }
 
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+
     virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
     void set_light_type(LightType type);

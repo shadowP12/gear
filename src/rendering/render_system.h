@@ -1,6 +1,7 @@
 #pragma once
 
 #include <core/module.h>
+#include <core/event.h>
 #include <rhi/ez_vulkan.h>
 #include <memory>
 
@@ -22,13 +23,15 @@ public:
     void setup();
     void finish();
     void render(Window* window);
-
     void set_world(World* world);
 
     RenderScene* get_scene() { return _scene; }
     RenderSharedData* get_shared_data() { return _shared_data; }
     ClusterBuilder* get_cluster_builder() { return _cluster_builder; }
-    ClusteredForwardRenderer* get_scene_renderer() { return _scene_renderer; }
+    ClusteredForwardRenderer* get_renderer() { return _scene_renderer; }
+
+public:
+    Event<> predraw_event;
 
 private:
     RenderContext* _ctx;

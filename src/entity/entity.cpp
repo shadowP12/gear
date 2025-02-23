@@ -224,6 +224,8 @@ void Entity::update_transform()
     {
         _children[i]->update_transform();
     }
+
+    transform_changed_event.broadcast();
 }
 
 void Entity::update_local_transform()

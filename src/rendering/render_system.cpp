@@ -37,6 +37,8 @@ void RenderSystem::set_world(World* world)
 
 void RenderSystem::render(Window* window)
 {
+    predraw_event.broadcast();
+
     EzSwapchain swapchain = window->get_swapchain();
     if (!swapchain)
         return;

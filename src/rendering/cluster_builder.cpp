@@ -3,6 +3,7 @@
 #include "render_context.h"
 #include "render_shared_data.h"
 #include "draw_command.h"
+#include "utils/debug_utils.h"
 #include <core/bitops.h>
 #include <core/memory.h>
 #include <core/bitops.h>
@@ -115,7 +116,7 @@ void ClusterBuilder::add_light(LightType type, int index, const glm::mat4& trans
 
 void ClusterBuilder::bake(RenderContext* ctx)
 {
-    DrawLabel draw_label("Prepare cluster buffer", DrawLabel::WHITE);
+    DebugLabel debug_label("Prepare cluster buffer", DebugLabel::WHITE);
 
     GpuBuffer* cluster_buffer = ctx->create_ub("cluster_buffer", _cluster_buffer_size);
     cluster_buffer->clear(_cluster_buffer_size);
@@ -272,7 +273,7 @@ void ClusterBuilder::bake(RenderContext* ctx)
 
 void ClusterBuilder::debug(RenderContext* ctx)
 {
-    DrawLabel draw_label("Cluster debug", DrawLabel::WHITE);
+    DebugLabel debug_label("Cluster debug", DebugLabel::WHITE);
 
     RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
 
