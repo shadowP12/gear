@@ -73,8 +73,8 @@ void ClusteredForwardRenderer::render_list(RenderContext* ctx, const DrawCommand
 void ClusteredForwardRenderer::prepare(RenderContext* ctx)
 {
     // Prepare FrameConstants
-    _frame_constants.view_matrix = _scene->view[RenderView::Type::VIEW_TYPE_DISPLAY].view;
-    _frame_constants.proj_matrix = _scene->view[RenderView::Type::VIEW_TYPE_DISPLAY].projection;
+    _frame_constants.view_matrix = _scene->view[DISPLAY_VIEW].view;
+    _frame_constants.proj_matrix = _scene->view[DISPLAY_VIEW].proj;
     GpuBuffer* frame_ub = ctx->create_ub("frame_ub", sizeof(FrameConstants));
     frame_ub->write((uint8_t*)&_frame_constants, sizeof(FrameConstants));
 

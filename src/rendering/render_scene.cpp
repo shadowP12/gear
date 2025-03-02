@@ -71,7 +71,7 @@ void RenderScene::fill_draw_list(DrawCommandType type, int renderable_id)
         return;
 
     draw_cmd->renderable = renderable_id;
-    draw_cmd->distance = glm::distance(view[RenderView::Type::VIEW_TYPE_DISPLAY].position, renderable_position);
+    draw_cmd->distance = glm::distance(view[DISPLAY_VIEW].position, renderable_position);
     draw_cmd->sort.sort_key = 0;
     draw_cmd->sort.vertex_factory_id = renderable->vertex_factory->get_type_id();
     draw_cmd->sort.material_id = material_proxy->material_id;
@@ -82,43 +82,12 @@ void RenderScene::prepare(RenderContext* ctx)
     if (!_world)
         return;
 
-    std::vector<Entity*>& camera_entities = _world->get_camera_entities();
-    for (auto entity : camera_entities)
-    {
-        CCamera* c_camera = entity->get_component<CCamera>();
-
-        auto change_view_func = [&](int view_id)
-        {
-            view[view_id].model = TransformUtil::remove_scale(entity->get_world_transform());
-            view[view_id].view = glm::inverse(view[view_id].model);
-            view[view_id].position = entity->get_world_translation();
-            view[view_id].view_direction = entity->get_front_vector();
-
-            view[view_id].zn = c_camera->get_near();
-            view[view_id].zf = c_camera->get_far();
-            view[view_id].projection = c_camera->get_proj_matrix();
-            view[view_id].ev100 = std::log2((c_camera->get_aperture() * c_camera->get_aperture()) / c_camera->get_shutter_speed() * 100.0f / c_camera->get_sensitivity());
-            view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, view[view_id].ev100));
-
-            view[view_id].is_orthogonal = c_camera->get_proj_mode() == ProjectionMode::ORTHO;
-        };
-
-        if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_MAIN)
-        {
-            change_view_func(RenderView::Type::VIEW_TYPE_MAIN);
-        }
-        if (c_camera->get_usage() & CameraUsage::CAMERA_USAGE_DISPLAY)
-        {
-            change_view_func(RenderView::Type::VIEW_TYPE_DISPLAY);
-        }
-    }
-
     point_light_collector.clear();
     spot_light_collector.clear();
     dir_light_collector.clear();
 
     ClusterBuilder* cluster_builder = RenderSystem::get()->get_cluster_builder();
-    cluster_builder->begin(ctx, &view[RenderView::Type::VIEW_TYPE_DISPLAY]);
+    cluster_builder->begin(ctx, &view[DISPLAY_VIEW]);
 
     std::vector<Entity*>& light_entities = _world->get_light_entities();
     for (auto entity : light_entities)

@@ -1,14 +1,17 @@
 #pragma once
-
 #include "renderable.h"
 #include "render_constants.h"
 #include "render_resources.h"
+#include "render_view.h"
 #include "draw_command.h"
 #include "collector/light_collector.h"
 #include "collector/renderable_collector.h"
 #include <core/event.h>
 #include <core/memory.h>
 #include <vector>
+
+#define MAIN_VIEW 0
+#define DISPLAY_VIEW 1
 
 class World;
 class Entity;
@@ -33,7 +36,8 @@ private:
     void fill_draw_list(DrawCommandType type, int renderable_id);
 
 public:
-    RenderView view[RenderView::VIEW_TYPE_MAX];
+    // Main/Display
+    RenderView view[2];
 
     // Collector begin
     RenderableCollector renderable_collector;

@@ -16,27 +16,6 @@ struct SceneInstanceData
     glm::mat4 pad2;
 };
 
-struct RenderView
-{
-    enum Type
-    {
-        VIEW_TYPE_MAIN,
-        VIEW_TYPE_DISPLAY,
-        VIEW_TYPE_MAX,
-    };
-
-    float zn;
-    float zf;
-    float ev100;
-    float exposure;
-    glm::vec3 position;
-    glm::vec3 view_direction;
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 projection;
-    bool is_orthogonal;
-};
-
 enum class LightType
 {
     Point,

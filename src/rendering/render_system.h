@@ -1,5 +1,4 @@
 #pragma once
-
 #include <core/module.h>
 #include <core/event.h>
 #include <rhi/ez_vulkan.h>

@@ -3,6 +3,7 @@
 #include "render_resources.h"
 #include "render_context.h"
 #include "render_constants.h"
+#include "render_view.h"
 #include <math/bounding_box.h>
 #include <math/plane.h>
 #include <rhi/ez_vulkan.h>

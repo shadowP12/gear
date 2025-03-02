@@ -2,7 +2,8 @@
 #include "world.h"
 #include "viewport.h"
 #include "entity/entity.h"
-#include "entity/entity_notifications.h"
+#include "rendering/render_system.h"
+#include "rendering/render_scene.h"
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
@@ -47,7 +48,7 @@ void CCamera::deserialize(rapidjson::Value& value, Serialization::BinaryStream& 
     _near = value["near"].GetDouble();
     _far = value["far"].GetDouble();
     _fov = value["fov"].GetDouble();
-    _usage = CameraUsage(value["usage"].GetInt());
+    _usage = ViewUsageFlags(value["usage"].GetInt());
     _mode = ProjectionMode(value["mode"].GetInt());
 }
 
@@ -62,7 +63,7 @@ glm::mat4 CCamera::get_proj_matrix()
         return glm::mat4(1.0f);
 
     float aspect = vp->get_aspect();
-    if (_mode == ProjectionMode::PERSPECTIVE)
+    if (_mode == ProjectionMode::Perspective)
     {
         glm::mat4 proj_matrix;
         proj_matrix = glm::perspective(glm::radians(_fov), aspect, _near, _far);
@@ -70,7 +71,7 @@ glm::mat4 CCamera::get_proj_matrix()
         proj_matrix[1][1] *= -1;
         return proj_matrix;
     }
-    else if (_mode == ProjectionMode::ORTHO)
+    else if (_mode == ProjectionMode::Ortho)
     {
         glm::mat4 proj_matrix;
         float size = 1.0;
@@ -82,42 +83,79 @@ glm::mat4 CCamera::get_proj_matrix()
 
 void CCamera::set_perspective()
 {
-    _mode = ProjectionMode::PERSPECTIVE;
+    make_render_dirty();
+    _mode = ProjectionMode::Perspective;
 }
 
 void CCamera::set_orthogonal()
 {
-    _mode = ProjectionMode::ORTHO;
+    make_render_dirty();
+    _mode = ProjectionMode::Ortho;
 }
 
-void CCamera::set_near(float near)
+void CCamera::set_near(float n)
 {
-    _near = near;
+    make_render_dirty();
+    _near = n;
 }
 
-void CCamera::set_far(float far)
+void CCamera::set_far(float f)
 {
-    _far = far;
+    make_render_dirty();
+    _far = f;
 }
 
-void CCamera::set_uasge(CameraUsage usage)
+void CCamera::set_uasge(ViewUsageFlags usage)
 {
+    make_render_dirty();
     _usage = usage;
 }
 
 void CCamera::set_aperture(float aperture)
 {
+    make_render_dirty();
     _aperture = aperture;
 }
 
 void CCamera::set_shutter_speed(float shutter_speed)
 {
+    make_render_dirty();
     _shutter_speed = shutter_speed;
 }
 
 void CCamera::set_sensitivity(float sensitivity)
 {
+    make_render_dirty();
     _sensitivity = sensitivity;
+}
+
+void CCamera::predraw()
+{
+    auto scene = RenderSystem::get()->get_scene();
+    auto change_view_func = [&](int view_id)
+    {
+        scene->view[view_id].model = TransformUtil::remove_scale(_entity->get_world_transform());
+        scene->view[view_id].view = glm::inverse(scene->view[view_id].model);
+        scene->view[view_id].proj = get_proj_matrix();
+        scene->view[view_id].position = _entity->get_world_translation();
+        scene->view[view_id].direction = _entity->get_front_vector();
+
+        scene->view[view_id].zn = get_near();
+        scene->view[view_id].zf = get_far();
+        scene->view[view_id].ev100 = std::log2((get_aperture() * get_aperture()) / get_shutter_speed() * 100.0f / get_sensitivity());
+        scene->view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, scene->view[view_id].ev100));
+
+        scene->view[view_id].proj_model = get_proj_mode();
+    };
+
+    if (_usage & ViewUsageFlags::Main)
+    {
+        change_view_func(MAIN_VIEW);
+    }
+    if (_usage & ViewUsageFlags::Display)
+    {
+        change_view_func(DISPLAY_VIEW);
+    }
 }
 
 REGISTER_ENTITY_COMPONENT(CCamera)

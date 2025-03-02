@@ -1,22 +1,7 @@
 #pragma once
 
 #include "c_render.h"
-#include <core/enum_flag.h>
-
-enum class ProjectionMode
-{
-    PERSPECTIVE = 0,
-    ORTHO = 1
-};
-
-enum CameraUsage
-{
-    CAMERA_USAGE_NONE = 0,
-    CAMERA_USAGE_MAIN = 0x1,
-    CAMERA_USAGE_DISPLAY = 0x2,
-    CAMERA_USAGE_MAIN_DISPLAY = CAMERA_USAGE_MAIN | CAMERA_USAGE_DISPLAY,
-};
-SP_MAKE_ENUM_FLAG(uint32_t, CameraUsage)
+#include "rendering/render_view.h"
 
 class Entity;
 class CCamera : public CRender
@@ -27,9 +12,11 @@ public:
     virtual ~CCamera();
 
     static std::string get_static_class_name() { return "CCamera"; }
+
     virtual std::string get_class_name() { return "CCamera"; }
 
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+
     virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
     glm::mat4 get_proj_matrix();
@@ -48,9 +35,9 @@ public:
 
     float get_far() { return _far; }
 
-    void set_uasge(CameraUsage usage);
+    void set_uasge(ViewUsageFlags usage);
 
-    CameraUsage get_usage() { return _usage; }
+    ViewUsageFlags get_usage() { return _usage; }
 
     void set_aperture(float aperture);
 
@@ -64,6 +51,9 @@ public:
 
     float get_sensitivity() { return _sensitivity; }
 
+protected:
+    void predraw() override;
+
 private:
     float _aperture = 16.0f;
     float _shutter_speed = 1.0f / 125.0f;
@@ -71,6 +61,6 @@ private:
     float _near = 0.0f;
     float _far = 100.0f;
     float _fov = 45.0f;
-    CameraUsage _usage;
+    ViewUsageFlags _usage;
     ProjectionMode _mode;
 };

@@ -19,10 +19,15 @@ void MainWindow::set_current_app(Application* app)
     _app = app;
 }
 
+bool show_demo_window = true;
 void MainWindow::draw_ui()
 {
     if (!_app)
         return;
+
+    if (show_demo_window)
+        ImGui::ShowDemoWindow(&show_demo_window);
+    return;
 
     World* world = _app->get_world();
     CameraController* camera_controller = _app->get_camera_controller();
@@ -38,7 +43,7 @@ void MainWindow::draw_ui()
                 CCamera* c_camera = cameras[i]->get_component<CCamera>();
                 if (ImGui::TreeNode(cameras[i]->get_name().c_str()))
                 {
-                    bool is_display = c_camera->get_usage() & CameraUsage::CAMERA_USAGE_DISPLAY;
+                    bool is_display = c_camera->get_usage() & ViewUsageFlags::Display;
                     if (ImGui::Checkbox("Current display", &is_display))
                     {
                         Entity* controlled_camera = camera_controller->get_camera();
@@ -47,11 +52,11 @@ void MainWindow::draw_ui()
                             camera_controller->set_camera(cameras[i]);
 
                             CCamera* controlled_c_camera = controlled_camera->get_component<CCamera>();
-                            int uasge = controlled_c_camera->get_usage() & ~CameraUsage::CAMERA_USAGE_DISPLAY;
-                            controlled_c_camera->set_uasge((CameraUsage)uasge);
+                            int uasge = controlled_c_camera->get_usage() & ~ViewUsageFlags::Display;
+                            controlled_c_camera->set_uasge((ViewUsageFlags)uasge);
 
-                            uasge = c_camera->get_usage() | CameraUsage::CAMERA_USAGE_DISPLAY;
-                            c_camera->set_uasge((CameraUsage)uasge);
+                            uasge = c_camera->get_usage() | ViewUsageFlags::Display;
+                            c_camera->set_uasge((ViewUsageFlags)uasge);
                         }
                     }
                     ImGui::TreePop();

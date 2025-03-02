@@ -63,9 +63,9 @@ void ClusterBuilder::begin(RenderContext* ctx, RenderView* view)
 
     _zn = view->zn;
     _zf = view->zf;
-    _orthogonal = view->is_orthogonal;
+    _orthogonal = view->proj_model == ProjectionMode::Ortho;
     _view_mat = view->view;
-    _projection_mat = view->projection;
+    _projection_mat = view->proj;
     _element_count = 0;
 
     _cluster_buffer_size = _cluster_screen_size.x * _cluster_screen_size.y * (MAX_CLUSTER_ELEMENT / 32 + 32) * ELEMENT_TYPE_MAX * sizeof(uint32_t);
