@@ -3,11 +3,12 @@
 #include "render_constants.h"
 #include "render_resources.h"
 #include "render_view.h"
+#include "light.h"
 #include "draw_command.h"
-#include "collector/light_collector.h"
 #include "collector/renderable_collector.h"
 #include <core/event.h>
 #include <core/memory.h>
+#include <core/object_pool.h>
 #include <vector>
 
 #define MAIN_VIEW 0
@@ -36,15 +37,17 @@ private:
     void fill_draw_list(DrawCommandType type, int renderable_id);
 
 public:
-    // Main/Display
+    // Views
     RenderView view[2];
+
+    // Lights
+    ObjectPool<OmniLight> point_lights;
+    ObjectPool<OmniLight> spot_lights;
+    ObjectPool<DirectionLight> dir_lights;
 
     // Collector begin
     RenderableCollector renderable_collector;
     SceneInstanceCollector scene_collector;
-    OmniLightCollector point_light_collector;
-    OmniLightCollector spot_light_collector;
-    DirectionLightCollector dir_light_collector;
     // Collector end
 
     DrawCommandList draw_list[DRAW_CMD_MAX];

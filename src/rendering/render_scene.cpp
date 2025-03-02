@@ -82,74 +82,8 @@ void RenderScene::prepare(RenderContext* ctx)
     if (!_world)
         return;
 
-    point_light_collector.clear();
-    spot_light_collector.clear();
-    dir_light_collector.clear();
-
     ClusterBuilder* cluster_builder = RenderSystem::get()->get_cluster_builder();
     cluster_builder->begin(ctx, &view[DISPLAY_VIEW]);
-
-    std::vector<Entity*>& light_entities = _world->get_light_entities();
-    for (auto entity : light_entities)
-    {
-        CLight* c_light = entity->get_component<CLight>();
-        glm::mat4 light_transform = TransformUtil::remove_scale(entity->get_world_transform());
-        glm::vec3 direction = entity->get_front_vector();
-        glm::vec3 pos = entity->get_world_translation();
-
-        if (c_light->get_light_type() == LightType::Direction)
-        {
-            dir_light_collector.add_item();
-        }
-        else if (c_light->get_light_type() == LightType::Point || c_light->get_light_type() == LightType::Spot)
-        {
-            int light_index = -1;
-            OmniLightData* light_data = nullptr;
-            if (c_light->get_light_type() == LightType::Point)
-            {
-                light_index = point_light_collector.add_item();
-                light_data = point_light_collector.get_item(light_index);
-            }
-            else
-            {
-                light_index = spot_light_collector.add_item();
-                light_data = spot_light_collector.get_item(light_index);
-            }
-
-            light_data->color = c_light->get_color();
-            light_data->intensity = c_light->get_intensity();
-
-            float radius = glm::max(0.001f, c_light->get_range());
-            light_data->inv_radius = 1.0f / radius;
-
-            light_data->position = pos;
-            light_data->direction = direction;
-
-            light_data->attenuation = c_light->get_attenuation();
-            light_data->cone_attenuation = c_light->get_spot_attenuation();
-            float spot_angle = c_light->get_spot_angle();
-            light_data->cone_angle = glm::radians(spot_angle);
-
-            cluster_builder->add_light(c_light->get_light_type(), light_index, light_transform, radius, spot_angle);
-        }
-    }
-    if (point_light_collector.count > 0)
-    {
-        GpuBuffer* point_light_ub = ctx->create_ub("point_light_ub", point_light_collector.get_size());
-        point_light_ub->write((uint8_t*)point_light_collector.get_data(), point_light_collector.get_size());
-    }
-
-    if (spot_light_collector.count > 0)
-    {
-        GpuBuffer* spot_light_ub = ctx->create_ub("spot_light_ub", spot_light_collector.get_size());
-        spot_light_ub->write((uint8_t*)spot_light_collector.get_data(), spot_light_collector.get_size());
-    }
-
-    if (dir_light_collector.count > 0)
-    {
-        GpuBuffer* dir_light_ub = ctx->create_ub("dir_light_ub", dir_light_collector.get_size());
-        dir_light_ub->write((uint8_t*)dir_light_collector.get_data(), dir_light_collector.get_size());
-    }
 
     renderable_collector.clear();
     scene_collector.clear();

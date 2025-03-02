@@ -1,7 +1,7 @@
 #pragma once
 
 #include "c_render.h"
-#include "rendering/render_constants.h"
+#include "rendering/light.h"
 
 class Entity;
 class CLight : public CRender
@@ -47,11 +47,17 @@ public:
 
     float get_spot_attenuation() { return _spot_attenuation; }
 
+protected:
+    void destroy_light();
+
+    void predraw() override;
+
 private:
     LightType _type;
+    uint32_t _light;
     glm::vec3 _color;
     /*
-     * Omni/Spot: candela
+     * Point/Spot: candela
      * Direction: lux
      */
     float _intensity = 0.0f;

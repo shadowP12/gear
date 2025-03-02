@@ -1,14 +1,40 @@
 #include "c_light.h"
 #include "entity/entity.h"
 #include "entity/entity_notifications.h"
+#include "rendering/render_system.h"
+#include "rendering/render_scene.h"
 
 CLight::CLight(Entity* entity)
     : CRender(entity)
 {
+    _light = INVALID_OBJECT_S;
 }
 
 CLight::~CLight()
 {
+    destroy_light();
+}
+
+void CLight::destroy_light()
+{
+    if (_light != INVALID_OBJECT_S)
+    {
+        auto scene = RenderSystem::get()->get_scene();
+        if (_type == LightType::Point)
+        {
+            scene->point_lights.remove(_light);
+        }
+        else if (_type == LightType::Spot)
+        {
+            scene->spot_lights.remove(_light);
+        }
+        else if (_type == LightType::Direction)
+        {
+            scene->dir_lights.remove(_light);
+        }
+
+        _light = INVALID_OBJECT_S;
+    }
 }
 
 void CLight::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
@@ -46,6 +72,7 @@ void CLight::deserialize(rapidjson::Value& value, Serialization::BinaryStream& b
 
 void CLight::set_light_type(LightType type)
 {
+    destroy_light();
     make_render_dirty();
     _type = type;
 }
@@ -84,6 +111,57 @@ void CLight::set_spot_attenuation(float spot_attenuation)
 {
     make_render_dirty();
     _spot_attenuation = spot_attenuation;
+}
+
+void CLight::predraw()
+{
+    auto scene = RenderSystem::get()->get_scene();
+
+    glm::mat4 light_transform = TransformUtil::remove_scale(_entity->get_world_transform());
+    glm::vec3 direction = _entity->get_front_vector();
+    glm::vec3 pos = _entity->get_world_translation();
+
+    if (_type == LightType::Point || _type == LightType::Spot)
+    {
+        OmniLight* light_obj = nullptr;
+        if (_type == LightType::Point)
+        {
+            if (_light == INVALID_OBJECT_S)
+            {
+                _light = scene->point_lights.add();
+            }
+
+            light_obj = scene->point_lights.get_obj(_light);
+        }
+        else
+        {
+            if (_light == INVALID_OBJECT_S)
+            {
+                _light = scene->spot_lights.add();
+            }
+
+            light_obj = scene->spot_lights.get_obj(_light);
+        }
+
+        light_obj->color = get_color();
+        light_obj->intensity = get_intensity();
+
+        float radius = glm::max(0.001f, get_range());
+        light_obj->inv_radius = 1.0f / radius;
+
+        light_obj->position = pos;
+        light_obj->direction = direction;
+
+        light_obj->attenuation = get_attenuation();
+        light_obj->cone_attenuation = get_spot_attenuation();
+
+        float spot_angle = get_spot_angle();
+        light_obj->cone_angle = glm::radians(spot_angle);
+    }
+    else if (_type == LightType::Direction)
+    {
+        // TODO
+    }
 }
 
 REGISTER_ENTITY_COMPONENT(CLight)
