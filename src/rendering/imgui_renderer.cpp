@@ -12,13 +12,9 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-struct ImGuiConstantBlock
-{
-    glm::mat4 proj_matrix;
-};
-
 ImGuiRenderer::ImGuiRenderer()
 {
+    _program = std::make_unique<Program>("shader://imgui.vert", "shader://imgui.frag");
 }
 
 ImGuiRenderer::~ImGuiRenderer()
@@ -36,16 +32,20 @@ ImGuiRenderer::~ImGuiRenderer()
 
 void ImGuiRenderer::render(RenderContext* ctx, Window* window)
 {
-    DebugLabel debug_label("ImGui pass", DebugLabel::WHITE);
+    DebugLabel debug_label("ImGui", DebugLabel::WHITE);
 
     ImGuiContext* imgui_ctx = window->get_imgui_ctx();
     ImGuiViewportP* imgui_viewport = imgui_ctx->Viewports[0];
     if (!imgui_viewport->DrawDataP.Valid)
+    {
         return;
+    }
 
     ImDrawData* imgui_draw_data = &imgui_viewport->DrawDataP;
     if (imgui_draw_data->TotalVtxCount <= 0)
+    {
         return;
+    }
 
     size_t vertex_size = imgui_draw_data->TotalVtxCount * sizeof(ImDrawVert);
     size_t index_size = imgui_draw_data->TotalIdxCount * sizeof(ImDrawIdx);
@@ -83,8 +83,10 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
     EzSampler font_sampler = shared_data->get_sampler(SamplerType::SAMPLER_LINEAR_CLAMP);
 
     glm::vec4 vp = ctx->viewport_size;
-    ImGuiConstantBlock constant_block;
-    constant_block.proj_matrix = glm::ortho(0.0f, (float)vp.z, 0.0f, (float)vp.w, 0.0f, 10.0f);
+    glm::mat4 proj_matrix = glm::ortho(0.0f, (float)vp.z, 0.0f, (float)vp.w, 0.0f, 10.0f);
+
+    _program->set_parameter("proj_matrix", &proj_matrix);
+    _program->set_parameter("im_texture", font_texture, font_sampler);
 
     TextureRef* out_color_ref = ctx->get_texture_ref("out_color");
     uint32_t rt_width = out_color_ref->get_desc().width;
@@ -106,9 +108,7 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
     rendering_info.height = rt_height;
 
     ez_begin_rendering(rendering_info);
-
     ez_set_viewport(vp.x, vp.y, vp.z, vp.w);
-
     ez_set_scissor((int32_t)vp.x, (int32_t)vp.y, (int32_t)vp.z, (int32_t)vp.w);
 
     EzBlendState blend_state;
@@ -120,13 +120,7 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
     depth_state.depth_write = false;
     ez_set_depth_state(depth_state);
 
-    ez_set_vertex_shader(rhi_get_shader("shader://imgui.vert"));
-    ez_set_fragment_shader(rhi_get_shader("shader://imgui.frag"));
-
-    ez_bind_texture(0, font_texture, 0);
-    ez_bind_sampler(0, font_sampler);
-
-    ez_push_constants(&constant_block, sizeof(ImGuiConstantBlock), 0);
+    _program->bind();
 
     ez_set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
@@ -136,7 +130,6 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
     ez_set_vertex_attrib(0, 2, VK_FORMAT_R8G8B8A8_UNORM, 16);
 
     ez_bind_vertex_buffer(0, _vertex_buffer->get_handle());
-
     ez_bind_index_buffer(_index_buffer->get_handle(), sizeof(ImDrawIdx) == 2 ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32);
 
     uint32_t vtx_offset = 0;
@@ -168,3 +161,5 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
 
     ez_end_rendering();
 }
+
+ImGuiRenderer* g_imgui_renderer = nullptr;

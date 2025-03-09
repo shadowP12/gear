@@ -2,10 +2,9 @@
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 1) in vec4 in_color;
-
 layout(location = 0) out vec4 out_color;
 
-layout(binding = 0) uniform sampler2D im_texture;
+layout(binding = 1) uniform sampler2D im_texture;
 
 void main()
 {
