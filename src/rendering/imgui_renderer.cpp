@@ -78,9 +78,8 @@ void ImGuiRenderer::render(RenderContext* ctx, Window* window)
         idx_buffer_offset += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
     }
 
-    RenderSharedData* shared_data = RenderSystem::get()->get_shared_data();
     EzTexture font_texture = window->get_font_texture();
-    EzSampler font_sampler = shared_data->get_sampler(SamplerType::SAMPLER_LINEAR_CLAMP);
+    EzSampler font_sampler = g_rsd->get_sampler(SamplerType::LinearClamp);
 
     glm::vec4 vp = ctx->viewport_size;
     glm::mat4 proj_matrix = glm::ortho(0.0f, (float)vp.z, 0.0f, (float)vp.w, 0.0f, 10.0f);

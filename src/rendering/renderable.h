@@ -3,15 +3,15 @@
 #include "render_constants.h"
 #include <math/bounding_box.h>
 #include <rhi/ez_vulkan.h>
-#include <memory>
 
+class Program;
 class VertexFactory;
-class MaterialProxy;
+
 struct Renderable
 {
-    int scene_index = -1;
-    VkPrimitiveTopology primitive_topology;
+    DrawType draw_type;
+    Program* program;
     VertexFactory* vertex_factory;
-    MaterialProxy* material_proxy;
+    glm::mat4 transform;
     BoundingBox bounding_box;
 };

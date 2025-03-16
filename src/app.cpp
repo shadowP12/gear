@@ -40,15 +40,11 @@ void Application::setup(const ApplicationSetting& setting)
     {
         _camera_controller->set_camera(camera_entities[0]);
     }
-
-    RenderSystem::get()->set_world(_world);
 }
 
 void Application::exit()
 {
     SAFE_DELETE(_camera_controller);
-
-    RenderSystem::get()->set_world(nullptr);
     SAFE_DELETE(_world);
 
     AssetManager::get()->finish();
@@ -72,9 +68,11 @@ bool Application::should_close()
 void Application::run()
 {
     Window::glfw_poll_events();
+
     double current_time = Window::glfw_get_time();
     float dt = _time > 0.0 ? (float)(current_time - _time) : (float)(1.0f / 60.0f);
     _time = current_time;
+
     tick(dt);
 }
 

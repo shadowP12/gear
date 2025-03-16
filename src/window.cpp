@@ -1,6 +1,5 @@
 #include "window.h"
-#include "asset/image.h"
-#include "asset/image_utilities.h"
+#include "asset/texture_asset.h"
 #include <core/path.h>
 #include <input/input_events.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -16,8 +15,7 @@ Window::Window(uint32_t width, uint32_t height)
 {
     _window_id = g_window_id++;
     _glfw_window = glfwCreateWindow(width, height, "Gear", nullptr, nullptr);
-    _width = width;
-    _height = height;
+
     _window_ptr = glfwGetWin32Window(_glfw_window);
     glfwSetFramebufferSizeCallback(_glfw_window, window_size_callback);
     glfwSetCursorPosCallback(_glfw_window, cursor_position_callback);
@@ -67,7 +65,7 @@ Window::Window(uint32_t width, uint32_t height)
     font_image.width = tex_width;
     font_image.height = tex_height;
     font_image.format = VK_FORMAT_R8G8B8A8_UNORM;
-    _font_texture = ImageUtilities::create_texture(&font_image);
+    _font_texture = create_texture(&font_image);
     ez_create_texture_view(_font_texture, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
 }
 
@@ -133,9 +131,7 @@ void Window::mouse_scroll_callback(GLFWwindow* window, double offset_x, double o
 
 void Window::internal_window_size_callback(int w, int h)
 {
-    _width = w;
-    _height = h;
-    set_size(0, 0, _width, _height);
+    set_size(0, 0, w, h);
 }
 
 void Window::internal_cursor_position_callback(double pos_x, double pos_y)

@@ -16,9 +16,15 @@ struct SceneInstanceData
     glm::mat4 pad2;
 };
 
-enum SamplerType
+enum class SamplerType
 {
-    SAMPLER_NEAREST_CLAMP = 0,
-    SAMPLER_LINEAR_CLAMP = 1,
-    SAMPLER_MAX_COUNT = 2,
+    NearestClamp = 0,
+    LinearClamp,
+    Count
+};
+
+enum DrawType
+{
+    DRAW_OPAQUE = 0,
+    DRAW_MAXCOUNT
 };

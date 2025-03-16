@@ -4,13 +4,19 @@
 #include <rhi/ez_vulkan.h>
 #include <unordered_map>
 
+// Todo
+// RenderBufferResource
+// RenderTextureResource
+
 class TextureRef
 {
 public:
     TextureRef(const EzTextureDesc& desc);
+
     ~TextureRef();
 
     EzTexture get_texture() { return _texture; }
+
     const EzTextureDesc& get_desc() { return _desc; }
 
 private:

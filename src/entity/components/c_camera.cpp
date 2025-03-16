@@ -2,7 +2,6 @@
 #include "world.h"
 #include "viewport.h"
 #include "entity/entity.h"
-#include "rendering/render_system.h"
 #include "rendering/render_scene.h"
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -131,28 +130,28 @@ void CCamera::set_sensitivity(float sensitivity)
 
 void CCamera::predraw()
 {
-    auto scene = RenderSystem::get()->get_scene();
     auto change_view_func = [&](int view_id)
     {
-        scene->view[view_id].model = TransformUtil::remove_scale(_entity->get_world_transform());
-        scene->view[view_id].view = glm::inverse(scene->view[view_id].model);
-        scene->view[view_id].proj = get_proj_matrix();
-        scene->view[view_id].position = _entity->get_world_translation();
-        scene->view[view_id].direction = _entity->get_front_vector();
+        g_scene->view[view_id].model = TransformUtil::remove_scale(_entity->get_world_transform());
+        g_scene->view[view_id].view = glm::inverse(g_scene->view[view_id].model);
+        g_scene->view[view_id].proj = get_proj_matrix();
+        g_scene->view[view_id].position = _entity->get_world_translation();
+        g_scene->view[view_id].direction = _entity->get_front_vector();
 
-        scene->view[view_id].zn = get_near();
-        scene->view[view_id].zf = get_far();
-        scene->view[view_id].ev100 = std::log2((get_aperture() * get_aperture()) / get_shutter_speed() * 100.0f / get_sensitivity());
-        scene->view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, scene->view[view_id].ev100));
+        g_scene->view[view_id].zn = get_near();
+        g_scene->view[view_id].zf = get_far();
+        g_scene->view[view_id].ev100 = std::log2((get_aperture() * get_aperture()) / get_shutter_speed() * 100.0f / get_sensitivity());
+        g_scene->view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, g_scene->view[view_id].ev100));
 
-        scene->view[view_id].proj_model = get_proj_mode();
+        g_scene->view[view_id].proj_model = get_proj_mode();
     };
 
-    if (_usage & ViewUsageFlags::Main)
+    if (enum_has_flags(_usage, ViewUsageFlags::Main))
     {
         change_view_func(MAIN_VIEW);
     }
-    if (_usage & ViewUsageFlags::Display)
+
+    if (enum_has_flags(_usage, ViewUsageFlags::Display))
     {
         change_view_func(DISPLAY_VIEW);
     }

@@ -4,17 +4,17 @@
 #include <rhi/ez_vulkan.h>
 #include <math/bounding_box.h>
 
-class VertexFactory;
-class Material;
+class MaterialAsset;
 
-class Mesh : public Asset
+class MeshAsset : public Asset
 {
 public:
-    Mesh(const std::string& asset_path = "");
+    MeshAsset(const std::string& asset_path = "");
 
-    virtual ~Mesh();
+    virtual ~MeshAsset();
 
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+
     virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
     std::vector<uint8_t>& get_data() { return _data; }
@@ -41,8 +41,7 @@ public:
         uint32_t index_offset;
         bool using_16u;
         BoundingBox bounding_box;
-        Material* material = nullptr;
-        VertexFactory* vertex_factory = nullptr;
+        MaterialAsset* material = nullptr;
         VkPrimitiveTopology primitive_topology;
         int vertex_buffer_count = 0;
         EzBuffer vertex_buffers[EZ_NUM_VERTEX_BUFFERS];
@@ -51,9 +50,6 @@ public:
     };
 
     std::vector<Surface*>& get_surfaces() {return _surfaces;}
-
-private:
-    void generate_surfaces_buffer();
 
 protected:
     std::vector<uint8_t> _data;

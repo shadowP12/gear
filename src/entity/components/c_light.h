@@ -4,6 +4,7 @@
 #include "rendering/light.h"
 
 class Entity;
+
 class CLight : public CRender
 {
 public:

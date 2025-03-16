@@ -43,7 +43,7 @@ void MainWindow::draw_ui()
                 CCamera* c_camera = cameras[i]->get_component<CCamera>();
                 if (ImGui::TreeNode(cameras[i]->get_name().c_str()))
                 {
-                    bool is_display = c_camera->get_usage() & ViewUsageFlags::Display;
+                    bool is_display = enum_has_flags(c_camera->get_usage(), ViewUsageFlags::Display);
                     if (ImGui::Checkbox("Current display", &is_display))
                     {
                         Entity* controlled_camera = camera_controller->get_camera();
@@ -52,7 +52,7 @@ void MainWindow::draw_ui()
                             camera_controller->set_camera(cameras[i]);
 
                             CCamera* controlled_c_camera = controlled_camera->get_component<CCamera>();
-                            int uasge = controlled_c_camera->get_usage() & ~ViewUsageFlags::Display;
+                            ViewUsageFlags uasge = controlled_c_camera->get_usage() & ~ViewUsageFlags::Display;
                             controlled_c_camera->set_uasge((ViewUsageFlags)uasge);
 
                             uasge = c_camera->get_usage() | ViewUsageFlags::Display;

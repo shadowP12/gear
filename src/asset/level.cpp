@@ -1,7 +1,6 @@
 #include "level.h"
 #include "entity/entity.h"
 #include "entity/components/c_camera.h"
-#include "entity/entity_notifications.h"
 
 Level::Level(const std::string& asset_path)
     : Asset(asset_path)

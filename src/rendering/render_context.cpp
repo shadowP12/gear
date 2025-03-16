@@ -21,7 +21,7 @@ RenderContext::~RenderContext()
     _t_ref_cache.clear();
 }
 
-void RenderContext::collect_viewport_info(Window* window)
+void RenderContext::collect_info(Window* window)
 {
     viewport_size = window->get_size();
 }

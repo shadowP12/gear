@@ -14,10 +14,6 @@ public:
 
     virtual ~Window();
 
-    uint32_t get_width() { return _width; }
-
-    uint32_t get_height() { return _height; }
-
     void set_title(const char* title);
 
     bool should_close();
@@ -62,9 +58,7 @@ protected:
     int _window_id = 0;
     void* _window_ptr = nullptr;
     GLFWwindow* _glfw_window = nullptr;
-    uint32_t _width = 0;
-    uint32_t _height = 0;
-    EzSwapchain _swapchain = VK_NULL_HANDLE;
     ImGuiContext* _imgui_ctx = nullptr;
+    EzSwapchain _swapchain = VK_NULL_HANDLE;
     EzTexture _font_texture = VK_NULL_HANDLE;
 };

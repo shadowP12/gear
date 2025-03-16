@@ -1,26 +1,21 @@
 #pragma once
 
+#include "render_constants.h"
 #include <rhi/ez_vulkan.h>
 #include <vector>
 
-enum DrawCommandType
-{
-    DRAW_CMD_OPAQUE = 0,
-    DRAW_CMD_ALPHA = 1,
-    DRAW_CMD_MAX = 2,
-};
+class Program;
+class VertexFactory;
+class RenderContext;
 
 struct DrawCommand
 {
-    int renderable = -1;
-    float distance = 0.0f;
+    uint32_t scene_index;
+    float distance;
+    Program* program;
+    VertexFactory* vertex_factory;
     union
     {
-        struct
-        {
-            uint64_t vertex_factory_id : 4;
-            uint64_t material_id : 16;
-        };
         struct
         {
             uint64_t sort_key;
@@ -30,11 +25,16 @@ struct DrawCommand
 
 struct DrawCommandList
 {
-    std::size_t cmd_count = 0;
-    std::vector<DrawCommand> cmds;
+    void draw(RenderContext* ctx);
 
     void sort();
+
     void sort_by_depth();
+
     void clear();
+
     DrawCommand* add_element();
+
+    std::size_t cmd_count = 0;
+    std::vector<DrawCommand> cmds;
 };

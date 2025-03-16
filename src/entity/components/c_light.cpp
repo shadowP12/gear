@@ -1,7 +1,5 @@
 #include "c_light.h"
 #include "entity/entity.h"
-#include "entity/entity_notifications.h"
-#include "rendering/render_system.h"
 #include "rendering/render_scene.h"
 
 CLight::CLight(Entity* entity)
@@ -19,18 +17,17 @@ void CLight::destroy_light()
 {
     if (_light != INVALID_OBJECT_S)
     {
-        auto scene = RenderSystem::get()->get_scene();
         if (_type == LightType::Point)
         {
-            scene->point_lights.remove(_light);
+            g_scene->point_lights.remove(_light);
         }
         else if (_type == LightType::Spot)
         {
-            scene->spot_lights.remove(_light);
+            g_scene->spot_lights.remove(_light);
         }
         else if (_type == LightType::Direction)
         {
-            scene->dir_lights.remove(_light);
+            g_scene->dir_lights.remove(_light);
         }
 
         _light = INVALID_OBJECT_S;
@@ -115,8 +112,6 @@ void CLight::set_spot_attenuation(float spot_attenuation)
 
 void CLight::predraw()
 {
-    auto scene = RenderSystem::get()->get_scene();
-
     glm::mat4 light_transform = TransformUtil::remove_scale(_entity->get_world_transform());
     glm::vec3 direction = _entity->get_front_vector();
     glm::vec3 pos = _entity->get_world_translation();
@@ -128,19 +123,19 @@ void CLight::predraw()
         {
             if (_light == INVALID_OBJECT_S)
             {
-                _light = scene->point_lights.add();
+                _light = g_scene->point_lights.add();
             }
 
-            light_obj = scene->point_lights.get_obj(_light);
+            light_obj = g_scene->point_lights.get_obj(_light);
         }
         else
         {
             if (_light == INVALID_OBJECT_S)
             {
-                _light = scene->spot_lights.add();
+                _light = g_scene->spot_lights.add();
             }
 
-            light_obj = scene->spot_lights.get_obj(_light);
+            light_obj = g_scene->spot_lights.get_obj(_light);
         }
 
         light_obj->color = get_color();

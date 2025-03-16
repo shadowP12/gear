@@ -6,7 +6,8 @@ void AssetManager::setup()
 
 void AssetManager::finish()
 {
-    for (auto& iter : _asset_dict) {
+    for (auto& iter : _asset_dict)
+    {
         delete iter.second;
     }
     _asset_dict.clear();

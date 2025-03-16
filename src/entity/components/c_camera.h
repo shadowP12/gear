@@ -4,6 +4,7 @@
 #include "rendering/render_view.h"
 
 class Entity;
+
 class CCamera : public CRender
 {
 public:

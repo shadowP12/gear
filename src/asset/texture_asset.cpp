@@ -1,10 +1,8 @@
-#include "image_utilities.h"
+#include "texture_asset.h"
 #include <core/path.h>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBIR_FLAG_ALPHA_PREMULTIPLIED
 #include <stb_image.h>
-
-namespace ImageUtilities {
 
 Image* load_image(const std::string& file)
 {
@@ -55,4 +53,41 @@ EzTexture create_texture(Image* image)
     return texture;
 }
 
-} // namespace ImageUtilities
+TextureAsset::TextureAsset(const std::string& asset_path)
+    : Asset(asset_path)
+{
+}
+
+TextureAsset::~TextureAsset()
+{
+    if (_image)
+    {
+        delete[] _image->data;
+        delete _image;
+    }
+
+    if (_texture)
+    {
+        ez_destroy_texture(_texture);
+    }
+}
+
+void TextureAsset::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
+{
+    writer.StartObject();
+    writer.Key("uri");
+    writer.String(_uri.c_str());
+    writer.EndObject();
+}
+
+void TextureAsset::deserialize(const rapidjson::Value& value, Serialization::BinaryStream& bin)
+{
+    _uri = value["uri"].GetString();
+    _image = load_image(Path::fix_path(_uri));
+
+    if (_image)
+    {
+        _texture = create_texture(_image);
+        ez_create_texture_view(_texture, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
+    }
+}

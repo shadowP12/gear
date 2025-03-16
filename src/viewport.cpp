@@ -1,23 +1,21 @@
 #include "viewport.h"
 
-Viewport::Viewport(int x, int y, int w, int h)
+Viewport::Viewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
     set_size(x, y, w, h);
 }
 
-void Viewport::set_size(int x, int y, int w, int h)
+void Viewport::set_size(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
-    _size = glm::vec4(x, y, w, h);
-    _width = w - x;
-    _hight = h - y;
+    _size = glm::ivec4(x, y, w, h);
 }
 
-glm::vec4 Viewport::get_size()
+glm::ivec4 Viewport::get_size()
 {
     return _size;
 }
 
 float Viewport::get_aspect()
 {
-    return (float)_width / (float)_hight;
+    return (float)_size.z / (float)_size.w;
 }

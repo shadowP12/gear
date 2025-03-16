@@ -12,7 +12,6 @@ public:
     RenderSharedData();
     ~RenderSharedData();
 
-    void bind_samplers();
     EzSampler get_sampler(SamplerType type);
 
 private:
@@ -37,3 +36,5 @@ public:
 private:
     std::vector<EzSampler> _samplers;
 };
+
+extern RenderSharedData* g_rsd;

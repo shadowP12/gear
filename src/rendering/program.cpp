@@ -149,6 +149,22 @@ void Program::set_parameter(const std::string& name, const void* data)
     memcpy(_parameter_data + member.offset, data, member.size);
 }
 
+void Program::set_parameter(const std::string& name, EzBuffer buffer)
+{
+    uint32_t binding = _parameters_lookup[name];
+    _parameters[binding].buffer = buffer;
+    _parameters[binding].size = buffer->size;
+    _parameters[binding].offset = 0;
+}
+
+void Program::set_parameter(const std::string& name, EzBuffer buffer, uint32_t size, uint32_t offset)
+{
+    uint32_t binding = _parameters_lookup[name];
+    _parameters[binding].buffer = buffer;
+    _parameters[binding].size = size;
+    _parameters[binding].offset = offset;
+}
+
 void Program::set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view)
 {
     uint32_t binding = _parameters_lookup[name];

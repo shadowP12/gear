@@ -17,7 +17,7 @@ RenderSharedData::~RenderSharedData()
 
 void RenderSharedData::init_samplers()
 {
-    _samplers.resize(SAMPLER_MAX_COUNT);
+    _samplers.resize((int)SamplerType::Count);
 
     {
         EzSampler sampler;
@@ -28,7 +28,7 @@ void RenderSharedData::init_samplers()
         sampler_desc.address_v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         sampler_desc.address_w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         ez_create_sampler(sampler_desc, sampler);
-        _samplers[SAMPLER_NEAREST_CLAMP] = sampler;
+        _samplers[(int)SamplerType::NearestClamp] = sampler;
     }
 
     {
@@ -38,7 +38,7 @@ void RenderSharedData::init_samplers()
         sampler_desc.address_v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         sampler_desc.address_w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         ez_create_sampler(sampler_desc, sampler);
-        _samplers[SAMPLER_LINEAR_CLAMP] = sampler;
+        _samplers[(int)SamplerType::LinearClamp] = sampler;
     }
 }
 
@@ -177,14 +177,9 @@ void RenderSharedData::clear_geometries()
     SAFE_DELETE(box_index_buffer);
 }
 
-void RenderSharedData::bind_samplers()
-{
-    // Ref sampler_inc.glsl
-    ez_bind_sampler(20 + SAMPLER_NEAREST_CLAMP, _samplers[SAMPLER_NEAREST_CLAMP]);
-    ez_bind_sampler(20 + SAMPLER_LINEAR_CLAMP, _samplers[SAMPLER_LINEAR_CLAMP]);
-}
-
 EzSampler RenderSharedData::get_sampler(SamplerType type)
 {
     return _samplers[(int)type];
 }
+
+RenderSharedData* g_rsd = nullptr;

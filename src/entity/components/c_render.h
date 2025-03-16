@@ -20,7 +20,7 @@ public:
 protected:
     virtual void predraw() {};
 
-    void make_render_dirty() { _render_dirty = true; };
+    virtual void make_render_dirty() { _render_dirty = true; };
 
 protected:
     void predraw_imp();

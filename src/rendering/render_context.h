@@ -23,7 +23,7 @@ public:
 
     ~RenderContext();
 
-    void collect_viewport_info(Window* window);
+    void collect_info(Window* window);
 
     GpuBuffer* get_ub(const std::string& name);
     GpuBuffer* create_ub(const std::string& name, uint32_t size);
@@ -34,7 +34,7 @@ public:
     TextureRef* create_texture_ref(const std::string& name, const EzTextureDesc& desc, CreateStatus& status);
 
 public:
-    glm::vec4 viewport_size;
+    glm::ivec4 viewport_size;
 
 private:
     std::unordered_map<std::string, GpuBuffer*> _ub_cache;

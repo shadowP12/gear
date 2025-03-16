@@ -8,7 +8,7 @@ enum class ProjectionMode
     Ortho = 1
 };
 
-enum ViewUsageFlags
+enum class ViewUsageFlags
 {
     Main = 0x1,
     Display = 0x2

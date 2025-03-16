@@ -1,24 +1,60 @@
-#include "mesh.h"
-#include "material.h"
+#include "mesh_asset.h"
+#include "material_asset.h"
 #include "asset_manager.h"
-#include "mesh_utilities.h"
-#include "rendering/vertex_factory.h"
 #include <core/memory.h>
 
-Mesh::Mesh(const std::string& asset_path)
+EzBuffer create_mesh_buffer(void* data, uint32_t data_size, VkBufferUsageFlags usage)
+{
+    EzBuffer buffer;
+    EzBufferDesc buffer_desc = {};
+    buffer_desc.size = data_size;
+    buffer_desc.usage = usage | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    buffer_desc.memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    ez_create_buffer(buffer_desc, buffer);
+
+    VkBufferMemoryBarrier2 barrier;
+    barrier = ez_buffer_barrier(buffer, EZ_RESOURCE_STATE_COPY_DEST);
+    ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
+
+    if (data)
+    {
+        ez_update_buffer(buffer, data_size, 0, data);
+    }
+
+    EzResourceState flag = EZ_RESOURCE_STATE_UNDEFINED;
+    if ((usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != 0)
+        flag |= EZ_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    if ((usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT) != 0)
+        flag |= EZ_RESOURCE_STATE_INDEX_BUFFER;
+    if ((usage & VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT) != 0)
+        flag |= EZ_RESOURCE_STATE_INDIRECT_ARGUMENT;
+    barrier = ez_buffer_barrier(buffer, EZ_RESOURCE_STATE_SHADER_RESOURCE | EZ_RESOURCE_STATE_UNORDERED_ACCESS | flag);
+    ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
+
+    return buffer;
+}
+
+void generate_surface_buffer(MeshAsset::Surface* surface, uint8_t* data)
+{
+    surface->vertex_buffer_count = 4;
+    surface->vertex_buffers[0] = create_mesh_buffer(data + surface->position_offset, surface->position_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    surface->vertex_buffers[1] = create_mesh_buffer(data + surface->normal_offset, surface->normal_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    surface->vertex_buffers[2] = create_mesh_buffer(data + surface->tangent_offset, surface->tangent_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    surface->vertex_buffers[3] = create_mesh_buffer(data + surface->uv0_offset, surface->uv0_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    surface->index_count = surface->index_count;
+    surface->index_type = surface->using_16u ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
+    surface->index_buffer = create_mesh_buffer(data + surface->index_offset, surface->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+}
+
+MeshAsset::MeshAsset(const std::string& asset_path)
     : Asset(asset_path)
 {
 }
 
-Mesh::~Mesh()
+MeshAsset::~MeshAsset()
 {
     for (auto surface : _surfaces)
     {
-        if (surface->vertex_factory)
-        {
-            SAFE_DELETE(surface->vertex_factory);
-        }
-
         for (int i = 0; i < surface->vertex_buffer_count; ++i)
         {
             ez_destroy_buffer(surface->vertex_buffers[i]);
@@ -33,7 +69,7 @@ Mesh::~Mesh()
     _surfaces.clear();
 }
 
-void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
+void MeshAsset::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
 {
     writer.StartObject();
     writer.Key("data_size");
@@ -103,7 +139,7 @@ void Mesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, S
     bin.write(_data.data(), _data.size());
 }
 
-void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
+void MeshAsset::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
 {
      uint32_t data_size = value["data_size"].GetInt();
      uint8_t* data = bin.read(data_size);
@@ -133,43 +169,15 @@ void Mesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin
         surface->index_offset = surfaces_value["index_offset"].GetInt();
         surface->using_16u = surfaces_value["using_16u"].GetBool();
         surface->primitive_topology = (VkPrimitiveTopology)surfaces_value["primitive_topology"].GetInt();
+        generate_surface_buffer(surface, data);
 
         glm::vec3 maxp = Serialization::r_vec3(surfaces_value["maxp"]);
         glm::vec3 minp = Serialization::r_vec3(surfaces_value["minp"]);
         surface->bounding_box.merge(maxp);
         surface->bounding_box.merge(minp);
 
-        surface->material = AssetManager::get()->load<Material>(surfaces_value["material"].GetString());
+        surface->material = AssetManager::get()->load<MaterialAsset>(surfaces_value["material"].GetString());
 
         _surfaces.push_back(surface);
-     }
-
-     generate_surfaces_buffer();
-}
-
-void Mesh::generate_surfaces_buffer()
-{
-     for (auto surface : _surfaces)
-     {
-        surface->vertex_buffer_count = 4;
-        surface->vertex_buffers[0] = MeshUtilities::create_mesh_buffer(_data.data() + surface->position_offset, surface->position_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        surface->vertex_buffers[1] = MeshUtilities::create_mesh_buffer(_data.data() + surface->normal_offset, surface->normal_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        surface->vertex_buffers[2] = MeshUtilities::create_mesh_buffer(_data.data() + surface->tangent_offset, surface->tangent_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        surface->vertex_buffers[3] = MeshUtilities::create_mesh_buffer(_data.data() + surface->uv0_offset, surface->uv0_size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        surface->index_count = surface->index_count;
-        surface->index_type = surface->using_16u ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
-        surface->index_buffer = MeshUtilities::create_mesh_buffer(_data.data() + surface->index_offset, surface->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-        StaticMeshVertexFactory* vertex_factory = new StaticMeshVertexFactory();
-        vertex_factory->vertex_count = surface->vertex_count;
-        vertex_factory->vertex_buffer_count = surface->vertex_buffer_count;
-        for (int i = 0; i < surface->vertex_buffer_count; ++i)
-        {
-            vertex_factory->vertex_buffers[i] = surface->vertex_buffers[i];
-        }
-        vertex_factory->index_count = surface->index_count;
-        vertex_factory->index_type = surface->index_type;
-        vertex_factory->index_buffer = surface->index_buffer;
-        surface->vertex_factory = vertex_factory;
      }
 }

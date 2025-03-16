@@ -1,8 +1,7 @@
 #include "render_system.h"
 #include "render_context.h"
 #include "render_scene.h"
-#include "cluster_builder.h"
-#include "clustered_forward_renderer.h"
+#include "renderer.h"
 #include "imgui_renderer.h"
 #include "render_shared_data.h"
 #include "window.h"
@@ -11,28 +10,19 @@
 void RenderSystem::setup()
 {
     _ctx = new RenderContext();
-    _scene = new RenderScene();
-    _cluster_builder = new ClusterBuilder();
-    _scene_renderer = new ClusteredForwardRenderer();
-    _shared_data = new RenderSharedData();
-    _imgui_renderer = new ImGuiRenderer();
-
-    _scene_renderer->set_scene(_scene);
+    g_rsd = new RenderSharedData();
+    g_scene = new RenderScene();
+    g_renderer = new Renderer();
+    g_imgui_renderer = new ImGuiRenderer();
 }
 
 void RenderSystem::finish()
 {
+    SAFE_DELETE(g_scene);
+    SAFE_DELETE(g_imgui_renderer);
+    SAFE_DELETE(g_renderer);
+    SAFE_DELETE(g_rsd);
     SAFE_DELETE(_ctx);
-    SAFE_DELETE(_scene_renderer);
-    SAFE_DELETE(_cluster_builder);
-    SAFE_DELETE(_scene);
-    SAFE_DELETE(_shared_data);
-    SAFE_DELETE(_imgui_renderer);
-}
-
-void RenderSystem::set_world(World* world)
-{
-    _scene->set_world(world);
 }
 
 void RenderSystem::render(Window* window)
@@ -45,7 +35,7 @@ void RenderSystem::render(Window* window)
 
     ez_acquire_next_image(swapchain);
 
-    _ctx->collect_viewport_info(window);
+    _ctx->collect_info(window);
 
     {
         RenderContext::CreateStatus create_status;
@@ -61,11 +51,9 @@ void RenderSystem::render(Window* window)
         }
     }
 
-    _scene->prepare(_ctx);
+    g_renderer->render(_ctx);
 
-    _scene_renderer->render(_ctx);
-
-    _imgui_renderer->render(_ctx, window);
+    g_imgui_renderer->render(_ctx, window);
 
     // Copy to swapchain
     {

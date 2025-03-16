@@ -5,7 +5,6 @@
 #include "render_view.h"
 #include "light.h"
 #include "draw_command.h"
-#include "collector/renderable_collector.h"
 #include <core/event.h>
 #include <core/memory.h>
 #include <core/object_pool.h>
@@ -25,17 +24,6 @@ public:
 
     ~RenderScene();
 
-    void set_world(World* world);
-
-    void prepare(RenderContext* ctx);
-
-private:
-    void clear_world();
-
-    void init_world();
-
-    void fill_draw_list(DrawCommandType type, int renderable_id);
-
 public:
     // Views
     RenderView view[2];
@@ -45,13 +33,8 @@ public:
     ObjectPool<OmniLight> spot_lights;
     ObjectPool<DirectionLight> dir_lights;
 
-    // Collector begin
-    RenderableCollector renderable_collector;
-    SceneInstanceCollector scene_collector;
-    // Collector end
-
-    DrawCommandList draw_list[DRAW_CMD_MAX];
-
-private:
-    World* _world = nullptr;
+    // Renderables
+    ObjectPool<Renderable> renderables;
 };
+
+extern RenderScene* g_scene;

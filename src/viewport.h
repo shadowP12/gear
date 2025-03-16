@@ -5,16 +5,14 @@
 class Viewport
 {
 public:
-    Viewport(int x, int y, int w, int h);
+    Viewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
-    glm::vec4 get_size();
+    glm::ivec4 get_size();
 
-    void set_size(int x, int y, int w, int h);
+    void set_size(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
     float get_aspect();
 
 private:
-    int _width;
-    int _hight;
     glm::vec4 _size;
 };
