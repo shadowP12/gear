@@ -44,10 +44,10 @@ void RenderSystem::render(Window* window)
         texture_desc.height = swapchain->height;
         texture_desc.format = VK_FORMAT_B8G8R8A8_UNORM;
         texture_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
-        TextureRef* t_ref = _ctx->create_texture_ref("out_color", texture_desc, create_status);
+        EzTexture out_rt = _ctx->create_texture("out_color", texture_desc, create_status);
         if (create_status == RenderContext::CreateStatus::Recreated)
         {
-            ez_create_texture_view(t_ref->get_texture(), VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
+            ez_create_texture_view(out_rt, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
         }
     }
 
@@ -57,9 +57,9 @@ void RenderSystem::render(Window* window)
 
     // Copy to swapchain
     {
-        TextureRef* t_ref = _ctx->get_texture_ref("out_color");
+        EzTexture out_rt = _ctx->get_texture("out_color");
         VkImageMemoryBarrier2 copy_barriers[] = {
-            ez_image_barrier(t_ref->get_texture(), EZ_RESOURCE_STATE_COPY_SOURCE),
+            ez_image_barrier(out_rt, EZ_RESOURCE_STATE_COPY_SOURCE),
             ez_image_barrier(swapchain, EZ_RESOURCE_STATE_COPY_DEST),
         };
         ez_pipeline_barrier(0, 0, nullptr, 2, copy_barriers);
@@ -70,7 +70,7 @@ void RenderSystem::render(Window* window)
         copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         copy_region.dstSubresource.layerCount = 1;
         copy_region.extent = { swapchain->width, swapchain->height, 1 };
-        ez_copy_image(t_ref->get_texture(), swapchain, copy_region);
+        ez_copy_image(out_rt, swapchain, copy_region);
     }
 
     // Present

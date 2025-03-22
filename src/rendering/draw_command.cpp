@@ -45,8 +45,8 @@ void DrawCommandList::sort_by_depth()
 
 void DrawCommandList::draw(RenderContext* ctx)
 {
-    EzBuffer scene_ub = ctx->get_ub("u_scene")->get_handle();
-    EzBuffer frame_ub = ctx->get_ub("u_frame")->get_handle();
+    EzBuffer scene_ub = ctx->get_buffer("u_scene");
+    EzBuffer frame_ub = ctx->get_buffer("u_frame");
 
     for (int i = 0; i < cmd_count; ++i)
     {

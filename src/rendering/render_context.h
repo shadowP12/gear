@@ -1,8 +1,7 @@
 #pragma once
 
 #include "render_constants.h"
-#include "render_resources.h"
-#include "gpu_buffer.h"
+#include <rhi/ez_vulkan.h>
 #include <glm/glm.hpp>
 #include <string>
 #include <unordered_map>
@@ -25,18 +24,19 @@ public:
 
     void collect_info(Window* window);
 
-    GpuBuffer* get_ub(const std::string& name);
-    GpuBuffer* create_ub(const std::string& name, uint32_t size);
-    GpuBuffer* create_ub(const std::string& name, uint32_t size, CreateStatus& status);
+    EzBuffer get_buffer(const std::string& name);
 
-    TextureRef* get_texture_ref(const std::string& name);
-    TextureRef* create_texture_ref(const std::string& name, const EzTextureDesc& desc);
-    TextureRef* create_texture_ref(const std::string& name, const EzTextureDesc& desc, CreateStatus& status);
+    EzBuffer create_buffer(const std::string& name, const EzBufferDesc& desc, bool fit = true);
+
+    EzTexture get_texture(const std::string& name);
+
+    EzTexture create_texture(const std::string& name, const EzTextureDesc& desc, CreateStatus& status);
 
 public:
     glm::ivec4 viewport_size;
 
 private:
-    std::unordered_map<std::string, GpuBuffer*> _ub_cache;
-    std::unordered_map<std::string, TextureRef*> _t_ref_cache;
+    std::unordered_map<std::string, EzBuffer> _buffer_cache;
+    std::unordered_map<std::string, EzTexture> _texture_cache;
+    std::unordered_map<std::string, EzTextureDesc> _texture_desc_cache;
 };

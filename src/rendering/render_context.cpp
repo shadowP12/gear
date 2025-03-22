@@ -1,6 +1,22 @@
 #include "render_context.h"
 #include <window.h>
-#include <core/memory.h>
+#include <core/hash.h>
+
+std::size_t compute_texture_hash(const EzTextureDesc& desc)
+{
+    std::size_t hash = 0;
+    hash_combine(hash, desc.width);
+    hash_combine(hash, desc.height);
+    hash_combine(hash, desc.depth);
+    hash_combine(hash, desc.levels);
+    hash_combine(hash, desc.layers);
+    hash_combine(hash, desc.format);
+    hash_combine(hash, desc.image_type);
+    hash_combine(hash, desc.usage);
+    hash_combine(hash, desc.samples);
+    hash_combine(hash, desc.memory_flags);
+    return hash;
+}
 
 RenderContext::RenderContext()
 {
@@ -8,17 +24,17 @@ RenderContext::RenderContext()
 
 RenderContext::~RenderContext()
 {
-    for (auto& iter : _ub_cache)
+    for (auto& iter : _buffer_cache)
     {
-        delete iter.second;
+        ez_destroy_buffer(iter.second);
     }
-    _ub_cache.clear();
+    _buffer_cache.clear();
 
-    for (auto& iter : _t_ref_cache)
+    for (auto& iter : _texture_cache)
     {
-        delete iter.second;
+        ez_destroy_texture(iter.second);
     }
-    _t_ref_cache.clear();
+    _texture_cache.clear();
 }
 
 void RenderContext::collect_info(Window* window)
@@ -26,62 +42,62 @@ void RenderContext::collect_info(Window* window)
     viewport_size = window->get_size();
 }
 
-GpuBuffer* RenderContext::get_ub(const std::string& name)
+EzBuffer RenderContext::get_buffer(const std::string& name)
 {
-    auto iter = _ub_cache.find(name);
-    if (iter != _ub_cache.end())
+    auto iter = _buffer_cache.find(name);
+    if (iter != _buffer_cache.end())
     {
         return iter->second;
     }
     return nullptr;
 }
 
-GpuBuffer* RenderContext::create_ub(const std::string& name, uint32_t size)
+EzBuffer RenderContext::create_buffer(const std::string& name, const EzBufferDesc& desc, bool fit)
 {
-    CreateStatus status;
-    return create_ub(name, size, status);
-}
-
-GpuBuffer* RenderContext::create_ub(const std::string& name, uint32_t size, CreateStatus& status)
-{
-    status = CreateStatus::Keep;
-    GpuBuffer* ub = get_ub(name);
-    if (ub == nullptr || ub->get_handle()->size != size)
+    EzBuffer buffer = get_buffer(name);
+    if (buffer == nullptr || buffer->size != desc.size)
     {
-        delete ub;
-        ub = new GpuBuffer(BufferUsageFlags::Dynamic | BufferUsageFlags::Uniform | BufferUsageFlags::Storage, size);
-        _ub_cache[name] = ub;
-        status = CreateStatus::Recreated;
+        if (buffer)
+        {
+            if ( !fit && buffer->size > desc.size )
+            {
+                return buffer;
+            }
+
+            ez_destroy_buffer(buffer);
+        }
+
+        ez_create_buffer(desc, buffer);
+        _buffer_cache[name] = buffer;
     }
-    return ub;
+    return buffer;
 }
 
-TextureRef* RenderContext::get_texture_ref(const std::string& name)
+EzTexture RenderContext::get_texture(const std::string& name)
 {
-    auto iter = _t_ref_cache.find(name);
-    if (iter != _t_ref_cache.end())
+    auto iter = _texture_cache.find(name);
+    if (iter != _texture_cache.end())
     {
         return iter->second;
     }
     return nullptr;
 }
 
-TextureRef* RenderContext::create_texture_ref(const std::string& name, const EzTextureDesc& desc)
-{
-    CreateStatus status;
-    return create_texture_ref(name, desc, status);
-}
-
-TextureRef* RenderContext::create_texture_ref(const std::string& name, const EzTextureDesc& desc, CreateStatus& status)
+EzTexture RenderContext::create_texture(const std::string& name, const EzTextureDesc& desc, CreateStatus& status)
 {
     status = CreateStatus::Keep;
-    TextureRef* t_ref = get_texture_ref(name);
-    if (t_ref == nullptr || compute_texture_ref_hash(t_ref->get_desc()) != compute_texture_ref_hash(desc))
+    EzTexture texture = get_texture(name);
+    if (texture == nullptr || compute_texture_hash(_texture_desc_cache[name]) != compute_texture_hash(desc))
     {
-        delete t_ref;
-        t_ref = new TextureRef(desc);
-        _t_ref_cache[name] = t_ref;
+        if (texture)
+        {
+            ez_destroy_texture(texture);
+        }
+
+        ez_create_texture(desc, texture);
+        _texture_cache[name] = texture;
+        _texture_desc_cache[name] = desc;
         status = CreateStatus::Recreated;
     }
-    return t_ref;
+    return texture;
 }

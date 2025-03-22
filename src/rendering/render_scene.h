@@ -1,7 +1,6 @@
 #pragma once
 #include "renderable.h"
 #include "render_constants.h"
-#include "render_resources.h"
 #include "render_view.h"
 #include "light.h"
 #include "draw_command.h"

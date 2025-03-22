@@ -1,25 +1,15 @@
 #include "mesh_asset.h"
 #include "material_asset.h"
 #include "asset_manager.h"
+#include "rendering/utils/render_utils.h"
 #include <core/memory.h>
 
 EzBuffer create_mesh_buffer(void* data, uint32_t data_size, VkBufferUsageFlags usage)
 {
-    EzBuffer buffer;
     EzBufferDesc buffer_desc = {};
     buffer_desc.size = data_size;
     buffer_desc.usage = usage | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     buffer_desc.memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    ez_create_buffer(buffer_desc, buffer);
-
-    VkBufferMemoryBarrier2 barrier;
-    barrier = ez_buffer_barrier(buffer, EZ_RESOURCE_STATE_COPY_DEST);
-    ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
-
-    if (data)
-    {
-        ez_update_buffer(buffer, data_size, 0, data);
-    }
 
     EzResourceState flag = EZ_RESOURCE_STATE_UNDEFINED;
     if ((usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != 0)
@@ -28,10 +18,8 @@ EzBuffer create_mesh_buffer(void* data, uint32_t data_size, VkBufferUsageFlags u
         flag |= EZ_RESOURCE_STATE_INDEX_BUFFER;
     if ((usage & VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT) != 0)
         flag |= EZ_RESOURCE_STATE_INDIRECT_ARGUMENT;
-    barrier = ez_buffer_barrier(buffer, EZ_RESOURCE_STATE_SHADER_RESOURCE | EZ_RESOURCE_STATE_UNORDERED_ACCESS | flag);
-    ez_pipeline_barrier(0, 1, &barrier, 0, nullptr);
 
-    return buffer;
+    return create_render_buffer(buffer_desc, flag, data);
 }
 
 void generate_surface_buffer(MeshAsset::Surface* surface, uint8_t* data)

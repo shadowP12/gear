@@ -1,4 +1,5 @@
 #include "render_shared_data.h"
+#include "utils/render_utils.h"
 #include <core/memory.h>
 #include <math/bounding_box.h>
 #include <math/plane.h>
@@ -52,6 +53,9 @@ void RenderSharedData::clear_samplers()
 
 void RenderSharedData::init_geometries()
 {
+    EzBufferDesc buffer_desc = {};
+    buffer_desc.memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
     // Sphere mesh
     {
         static const uint32_t icosphere_vertex_count = 42;
@@ -66,12 +70,18 @@ void RenderSharedData::init_geometries()
         std::vector<uint8_t> vertex_data;
         vertex_data.resize(sizeof(float) * icosphere_vertex_count * 3);
         memcpy(vertex_data.data(), icosphere_vertices, vertex_data.size());
-        sphere_vertex_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Vertex, vertex_data.size(), vertex_data.data());
+
+        buffer_desc.size = vertex_data.size();
+        buffer_desc.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        sphere_vertex_buffer = create_render_buffer(buffer_desc, EZ_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_data.data());
 
         std::vector<uint8_t> index_data;
         index_data.resize(sizeof(uint16_t) * icosphere_triangle_count * 3);
         memcpy(index_data.data(), icosphere_triangle_indices, index_data.size());
-        sphere_index_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Index, index_data.size(), index_data.data());
+
+        buffer_desc.size = index_data.size();
+        buffer_desc.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        sphere_index_buffer = create_render_buffer(buffer_desc, EZ_RESOURCE_STATE_INDEX_BUFFER, index_data.data());
 
         float min_d = 1e20;
         for (uint32_t i = 0; i < icosphere_triangle_count; i++)
@@ -105,12 +115,18 @@ void RenderSharedData::init_geometries()
         std::vector<uint8_t> vertex_data;
         vertex_data.resize(sizeof(float) * cone_vertex_count * 3);
         memcpy(vertex_data.data(), cone_vertices, vertex_data.size());
-        cone_vertex_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Vertex, vertex_data.size(), vertex_data.data());
+
+        buffer_desc.size = vertex_data.size();
+        buffer_desc.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        cone_vertex_buffer = create_render_buffer(buffer_desc, EZ_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_data.data());
 
         std::vector<uint8_t> index_data;
         index_data.resize(sizeof(uint16_t) * cone_triangle_count * 3);
         memcpy(index_data.data(), cone_triangle_indices, index_data.size());
-        cone_index_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Index, index_data.size(), index_data.data());
+
+        buffer_desc.size = index_data.size();
+        buffer_desc.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        cone_index_buffer = create_render_buffer(buffer_desc, EZ_RESOURCE_STATE_INDEX_BUFFER, index_data.data());
 
         float min_d = 1e20;
         for (uint32_t i = 0; i < cone_triangle_count; i++)
@@ -156,25 +172,31 @@ void RenderSharedData::init_geometries()
         std::vector<uint8_t> vertex_data;
         vertex_data.resize(sizeof(float) * box_vertex_count * 3);
         memcpy(vertex_data.data(), box_vertices, vertex_data.size());
-        box_vertex_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Vertex, vertex_data.size(), vertex_data.data());
+
+        buffer_desc.size = vertex_data.size();
+        buffer_desc.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        box_vertex_buffer = create_render_buffer(buffer_desc, EZ_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertex_data.data());
 
         std::vector<uint8_t> index_data;
         index_data.resize(sizeof(uint16_t) * box_triangle_count * 3);
         memcpy(index_data.data(), box_triangle_indices, index_data.size());
-        box_index_buffer = new GpuBuffer(BufferUsageFlags::Static | BufferUsageFlags::Index, index_data.size(), index_data.data());
+
+        buffer_desc.size = index_data.size();
+        buffer_desc.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        box_index_buffer = create_render_buffer(buffer_desc, EZ_RESOURCE_STATE_INDEX_BUFFER, index_data.data());
     }
 }
 
 void RenderSharedData::clear_geometries()
 {
-    SAFE_DELETE(sphere_vertex_buffer);
-    SAFE_DELETE(sphere_index_buffer);
+    ez_destroy_buffer(sphere_vertex_buffer);
+    ez_destroy_buffer(sphere_index_buffer);
 
-    SAFE_DELETE(cone_vertex_buffer);
-    SAFE_DELETE(cone_index_buffer);
+    ez_destroy_buffer(cone_vertex_buffer);
+    ez_destroy_buffer(cone_index_buffer);
 
-    SAFE_DELETE(box_vertex_buffer);
-    SAFE_DELETE(box_index_buffer);
+    ez_destroy_buffer(box_vertex_buffer);
+    ez_destroy_buffer(box_index_buffer);
 }
 
 EzSampler RenderSharedData::get_sampler(SamplerType type)
