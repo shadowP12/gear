@@ -1,0 +1,47 @@
+#version 450
+#extension GL_GOOGLE_include_directive : enable
+
+#include "light_inc.glsl"
+
+layout(std140, binding = 0) uniform Params
+{
+    uvec2 lit_count;
+} u_params;
+
+layout(set = 0, binding = 1, std430) buffer restrict ClusterBuffer
+{
+    Cluster data[];
+} s_clusters;
+
+layout(set = 0, binding = 2, std430) buffer restrict PointLitBuffer
+{
+    OmniLight data[];
+} s_point_lits;
+
+layout(set = 0, binding = 3, std430) buffer restrict SpotLitBuffer
+{
+    OmniLight data[];
+} s_spot_lits;
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+    uint tile_index =
+    gl_WorkGroupID.x +
+    gl_WorkGroupID.y * gl_NumWorkGroups.x +
+    gl_WorkGroupID.z * gl_NumWorkGroups.x * gl_NumWorkGroups.y;
+
+    uint point_lit_bit = 0;
+    for (uint i = 0; i < u_params.lit_count.x; ++i)
+    {
+        OmniLight lit = s_point_lits.data[i];
+    }
+
+    uint spot_lit_bit = 0;
+    for (uint i = 0; i < u_params.lit_count.y; ++i)
+    {
+        OmniLight lit = s_spot_lits.data[i];
+    }
+
+    s_clusters.data[tile_index].lit_bits = uvec2(point_lit_bit, spot_lit_bit);
+}

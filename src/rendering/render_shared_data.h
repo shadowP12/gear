@@ -34,6 +34,8 @@ public:
     EzBuffer box_vertex_buffer = nullptr;
     EzBuffer box_index_buffer = nullptr;
 
+    EzBuffer quad_buffer = nullptr;
+
 private:
     std::vector<EzSampler> _samplers;
 };

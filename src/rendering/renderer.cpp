@@ -4,9 +4,11 @@
 #include "vertex_factory.h"
 #include "utils/debug_utils.h"
 #include "utils/render_utils.h"
+#include "passes/light_cluster_pass.h"
 
 Renderer::Renderer()
 {
+    light_cluster_pass = std::make_unique<LightClusterPass>();
 }
 
 Renderer::~Renderer()
@@ -16,6 +18,7 @@ Renderer::~Renderer()
 void Renderer::render(RenderContext* ctx)
 {
     prepare(ctx);
+    light_cluster_pass->exec(ctx);
     render_opaque_pass(ctx);
     copy_to_screen(ctx);
 }
@@ -54,8 +57,10 @@ void Renderer::prepare(RenderContext* ctx)
 
     // Prepare FrameConstants
     FrameConstants frame_constants;
+    frame_constants.view_position = glm::vec4(g_scene->view[DISPLAY_VIEW].position, 0.0);
     frame_constants.view_matrix = g_scene->view[DISPLAY_VIEW].view;
     frame_constants.proj_matrix = g_scene->view[DISPLAY_VIEW].proj;
+    frame_constants.inv_view_proj_matrix = glm::inverse(frame_constants.proj_matrix * frame_constants.view_matrix);
 
     EzBufferDesc buffer_desc{};
     buffer_desc.size = sizeof(FrameConstants);

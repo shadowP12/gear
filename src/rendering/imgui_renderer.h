@@ -7,7 +7,6 @@
 
 class Window;
 class RenderContext;
-class GpuBuffer;
 class Program;
 
 class ImGuiRenderer

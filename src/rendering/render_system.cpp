@@ -3,6 +3,7 @@
 #include "render_scene.h"
 #include "renderer.h"
 #include "imgui_renderer.h"
+#include "debug_renderer.h"
 #include "render_shared_data.h"
 #include "window.h"
 #include <core/memory.h>
@@ -14,12 +15,14 @@ void RenderSystem::setup()
     g_scene = new RenderScene();
     g_renderer = new Renderer();
     g_imgui_renderer = new ImGuiRenderer();
+    g_debug_renderer = new DebugRenderer();
 }
 
 void RenderSystem::finish()
 {
-    SAFE_DELETE(g_scene);
+    SAFE_DELETE(g_debug_renderer);
     SAFE_DELETE(g_imgui_renderer);
+    SAFE_DELETE(g_scene);
     SAFE_DELETE(g_renderer);
     SAFE_DELETE(g_rsd);
     SAFE_DELETE(_ctx);
@@ -52,7 +55,7 @@ void RenderSystem::render(Window* window)
     }
 
     g_renderer->render(_ctx);
-
+    g_debug_renderer->render(_ctx);
     g_imgui_renderer->render(_ctx, window);
 
     // Copy to swapchain

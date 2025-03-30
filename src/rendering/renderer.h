@@ -2,6 +2,7 @@
 
 #include "render_constants.h"
 #include "draw_command.h"
+#include <memory>
 
 class RenderContext;
 
@@ -21,6 +22,8 @@ public:
     void copy_to_screen(RenderContext* ctx);
 
     DrawCommandList draw_lists[DRAW_MAXCOUNT];
+
+    std::unique_ptr<class LightClusterPass> light_cluster_pass;
 };
 
 extern Renderer* g_renderer;

@@ -43,6 +43,11 @@ void clear_render_buffer(EzBuffer buffer, EzResourceState dst_state)
 
 void update_render_buffer(EzBuffer buffer, EzResourceState dst_state, uint32_t size, uint32_t offset, void* data)
 {
+    if (size == 0)
+    {
+        return;
+    }
+
     if (buffer->memory_usage == VMA_MEMORY_USAGE_CPU_ONLY)
     {
         uint8_t* mapdata;

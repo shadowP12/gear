@@ -4,8 +4,10 @@
 
 struct FrameConstants
 {
+    glm::vec4 view_position;
     glm::mat4 view_matrix;
     glm::mat4 proj_matrix;
+    glm::mat4 inv_view_proj_matrix;
 };
 
 struct SceneInstanceData

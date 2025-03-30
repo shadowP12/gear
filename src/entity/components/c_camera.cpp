@@ -135,6 +135,7 @@ void CCamera::predraw()
         g_scene->view[view_id].model = TransformUtil::remove_scale(_entity->get_world_transform());
         g_scene->view[view_id].view = glm::inverse(g_scene->view[view_id].model);
         g_scene->view[view_id].proj = get_proj_matrix();
+        g_scene->view[view_id].inv_proj = glm::inverse(get_proj_matrix());
         g_scene->view[view_id].position = _entity->get_world_translation();
         g_scene->view[view_id].direction = _entity->get_front_vector();
 
