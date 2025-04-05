@@ -61,8 +61,8 @@ void CameraController::on_mouse_event_received(MouseEvent mouse_event)
         glm::vec3 camera_pos = _camera->get_translation();
         glm::vec3 camera_front = _camera->get_front_vector();
 
-        const float speed = 0.2f;
-        camera_pos -= camera_front * mouse_event.offset_y * speed;
+        const float speed = 0.4f;
+        camera_pos += camera_front * mouse_event.offset_y * speed;
         _camera->set_translation(camera_pos);
     }
 }

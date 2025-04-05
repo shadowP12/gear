@@ -1,10 +1,12 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
 
+#define PI 3.1415926535897932384626433832795
 #include "light_inc.glsl"
 
 layout(std140, binding = 0) uniform Params
 {
+    mat4 view_matrix;
     uvec2 lit_count;
 } u_params;
 
@@ -13,15 +15,40 @@ layout(set = 0, binding = 1, std430) buffer restrict ClusterBuffer
     Cluster data[];
 } s_clusters;
 
-layout(set = 0, binding = 2, std430) buffer restrict PointLitBuffer
+layout(set = 0, binding = 2) uniform PointLitBuffer
 {
-    OmniLight data[];
-} s_point_lits;
+    OmniLight data[MAX_LIGHT_DATA_STRUCTS];
+} u_point_lits;
 
-layout(set = 0, binding = 3, std430) buffer restrict SpotLitBuffer
+layout(set = 0, binding = 3) uniform SpotLitBuffer
 {
-    OmniLight data[];
-} s_spot_lits;
+    OmniLight data[MAX_LIGHT_DATA_STRUCTS];
+} u_spot_lits;
+
+bool test_sphere_aabb(vec3 p, float r, vec3 aabb_min, vec3 aabb_max)
+{
+    vec3 d = clamp(p, aabb_min, aabb_max);
+    float dis_sq = dot(d - p, d - p);
+    return dis_sq <= r * r;
+}
+
+vec4 bounding_sphere(vec3 origin, vec3 forward, float size, float angle)
+{
+    vec4 shp;
+    float half_angle = angle / 2;
+    if(half_angle > PI / 4.0f)
+    {
+        shp.w = tan(half_angle) * size;
+        shp.xyz = origin + forward * size;
+    }
+    else
+    {
+        shp.w = size / (2.0f * cos(half_angle));
+        shp.xyz = origin + forward * shp.w;
+    }
+
+    return shp;
+}
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main()
@@ -31,17 +58,37 @@ void main()
     gl_WorkGroupID.y * gl_NumWorkGroups.x +
     gl_WorkGroupID.z * gl_NumWorkGroups.x * gl_NumWorkGroups.y;
 
+    vec3 aabb_min = s_clusters.data[tile_index].aabb_min.xyz;
+    vec3 aabb_max = s_clusters.data[tile_index].aabb_max.xyz;
+
     uint point_lit_bit = 0;
     for (uint i = 0; i < u_params.lit_count.x; ++i)
     {
-        OmniLight lit = s_point_lits.data[i];
+        OmniLight lit = u_point_lits.data[i];
+        vec4 lit_pos_vs = vec4(lit.position, 1.0);
+        lit_pos_vs = u_params.view_matrix * lit_pos_vs;
+
+        if (test_sphere_aabb(lit_pos_vs.xyz, 1.0 / lit.inv_radius, aabb_min, aabb_max))
+        {
+            point_lit_bit |= (uint(1) << i);
+        }
     }
 
     uint spot_lit_bit = 0;
     for (uint i = 0; i < u_params.lit_count.y; ++i)
     {
-        OmniLight lit = s_spot_lits.data[i];
+        OmniLight lit = u_spot_lits.data[i];
+        vec4 sph = bounding_sphere(lit.position, lit.direction, 1.0 / lit.inv_radius, lit.cone_angle);
+        //sph = vec4(0.0, 0.0, 0.0, 50.0);
+        vec4 sph_vs = vec4(sph.xyz, 1.0);
+        sph_vs = u_params.view_matrix * sph_vs;
+
+        if (test_sphere_aabb(sph_vs.xyz, sph.w, aabb_min, aabb_max))
+        {
+            spot_lit_bit |= (uint(1) << i);
+        }
     }
 
-    s_clusters.data[tile_index].lit_bits = uvec2(point_lit_bit, spot_lit_bit);
+    s_clusters.data[tile_index].lit_bits.x = point_lit_bit;
+    s_clusters.data[tile_index].lit_bits.y = spot_lit_bit;
 }

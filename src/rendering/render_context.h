@@ -34,6 +34,7 @@ public:
 
 public:
     glm::ivec4 viewport_size;
+    glm::uvec4 cluster_size;
 
 private:
     std::unordered_map<std::string, EzBuffer> _buffer_cache;

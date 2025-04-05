@@ -4,10 +4,12 @@
 
 struct FrameConstants
 {
+    glm::uvec4 cluster_size;
     glm::vec4 view_position;
     glm::mat4 view_matrix;
     glm::mat4 proj_matrix;
     glm::mat4 inv_view_proj_matrix;
+    glm::vec2 z_near_far;
 };
 
 struct SceneInstanceData

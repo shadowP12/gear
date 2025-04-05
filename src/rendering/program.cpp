@@ -165,6 +165,13 @@ void Program::set_parameter(const std::string& name, EzBuffer buffer, uint32_t s
     _parameters[binding].offset = offset;
 }
 
+void Program::set_parameter(const std::string& name, EzTexture texture, uint32_t view)
+{
+    uint32_t binding = _parameters_lookup[name];
+    _parameters[binding].texture = texture;
+    _parameters[binding].view = view;
+}
+
 void Program::set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view)
 {
     uint32_t binding = _parameters_lookup[name];

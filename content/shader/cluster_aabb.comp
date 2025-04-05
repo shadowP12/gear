@@ -18,7 +18,7 @@ layout(set = 0, binding = 1, std430) buffer restrict ClusterBuffer
 
 vec3 screen_to_view(vec2 screen)
 {
-    vec4 ndc = vec4(screen / u_params.screen_size * 2.0 - 1.0, -1.0, 1.0);
+    vec4 ndc = vec4(screen / u_params.screen_size * 2.0 - 1.0, 0.0, 1.0);
     vec4 view = u_params.inv_proj * ndc;
     view /= view.w;
     return view.xyz;
@@ -27,8 +27,8 @@ vec3 screen_to_view(vec2 screen)
 vec3 ray_intersect_z_plane(vec3 start_point, vec3 end_point, float z_distance)
 {
     vec3 direction = end_point - start_point;
-    vec3 normal = vec3(0.0, 0.0, -1.0);
-    float t = (z_distance - dot(normal, start_point)) / dot(normal, direction);
+    vec3 forward = vec3(0.0, 0.0, -1.0);
+    float t = (z_distance - dot(forward, start_point)) / dot(forward, direction);
     return start_point + t * direction;
 }
 
@@ -62,8 +62,8 @@ void main()
     vec3 max_near = ray_intersect_z_plane(eye_pos, max_vs, plane_near);
     vec3 max_far = ray_intersect_z_plane(eye_pos, max_vs, plane_far);
 
-    s_clusters.data[tile_index].aabb_min = vec4(min(min_near, min_far), 0.0);
-    s_clusters.data[tile_index].aabb_max = vec4(max(max_near, max_far), 0.0);
-    s_clusters.data[tile_index].lit_bits[0] = 0;
-    s_clusters.data[tile_index].lit_bits[1] = 0;
+    s_clusters.data[tile_index].aabb_min = vec4(min(min(min_near, min_far), min(max_near, max_far)), 0.0);
+    s_clusters.data[tile_index].aabb_max = vec4(max(max(min_near, min_far), max(max_near, max_far)), 0.0);
+    s_clusters.data[tile_index].lit_bits.x = 0;
+    s_clusters.data[tile_index].lit_bits.y = 0;
 }

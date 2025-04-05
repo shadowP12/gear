@@ -1,11 +1,13 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
+#define MAX_LIGHT_DATA_STRUCTS 32
+
 struct Cluster
 {
     vec4 aabb_min;
     vec4 aabb_max;
-    uvec2 lit_bits;
+    uvec4 lit_bits;
 };
 
 struct OmniLight

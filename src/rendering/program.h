@@ -26,6 +26,8 @@ public:
 
     void set_parameter(const std::string& name, EzBuffer buffer, uint32_t size, uint32_t offset = 0);
 
+    void set_parameter(const std::string& name, EzTexture texture, uint32_t view = 0);
+
     void set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view = 0);
 
 private:

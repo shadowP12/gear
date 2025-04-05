@@ -17,9 +17,12 @@ Renderer::~Renderer()
 
 void Renderer::render(RenderContext* ctx)
 {
+    light_cluster_pass->predraw(ctx);
+
     prepare(ctx);
     light_cluster_pass->exec(ctx);
     render_opaque_pass(ctx);
+    //light_cluster_pass->debug(ctx);
     copy_to_screen(ctx);
 }
 
@@ -57,6 +60,8 @@ void Renderer::prepare(RenderContext* ctx)
 
     // Prepare FrameConstants
     FrameConstants frame_constants;
+    frame_constants.z_near_far = glm::vec2(g_scene->view[DISPLAY_VIEW].zn, g_scene->view[DISPLAY_VIEW].zf);
+    frame_constants.cluster_size = ctx->cluster_size;
     frame_constants.view_position = glm::vec4(g_scene->view[DISPLAY_VIEW].position, 0.0);
     frame_constants.view_matrix = g_scene->view[DISPLAY_VIEW].view;
     frame_constants.proj_matrix = g_scene->view[DISPLAY_VIEW].proj;

@@ -194,17 +194,18 @@ glm::mat4 Entity::get_world_transform()
 
 glm::vec3 Entity::get_right_vector()
 {
-    return glm::vec3(_world_transform[0][0], _world_transform[0][1], _world_transform[0][2]);
+    return glm::normalize(glm::vec3(_world_transform[0][0], _world_transform[0][1], _world_transform[0][2]));
 }
 
 glm::vec3 Entity::get_up_vector()
 {
-    return glm::vec3(_world_transform[1][0], _world_transform[1][1], _world_transform[1][2]);
+    return glm::normalize(glm::vec3(_world_transform[1][0], _world_transform[1][1], _world_transform[1][2]));
 }
 
 glm::vec3 Entity::get_front_vector()
 {
-    return glm::vec3(_world_transform[2][0], _world_transform[2][1], _world_transform[2][2]);
+    // The camera looks towards -z
+    return glm::normalize(-glm::vec3(_world_transform[2][0], _world_transform[2][1], _world_transform[2][2]));
 }
 
 glm::vec3 Entity::get_world_translation()

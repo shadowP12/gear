@@ -1,10 +1,5 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
-
-// Based on Godot Engine's implementation.
-// <https://github.com/godotengine/godot/tree/master>
-
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+#extension GL_GOOGLE_include_directive : enable
 
 const vec3 usage_gradient[33] = vec3[]( // 1 (none) + 32
             vec3(0.14, 0.17, 0.23),
@@ -41,80 +36,53 @@ const vec3 usage_gradient[33] = vec3[]( // 1 (none) + 32
             vec3(0.83, 0.22, 0.32),
             vec3(1.00, 0.63, 0.70));
 
-layout(push_constant) uniform ConstantBlock
+#define USING_FRAME_UNIFORMS 0
+#include "uniforms.glsl"
+#include "light_inc.glsl"
+
+layout(std140, binding = 1) uniform Params
 {
     uvec2 screen_size;
-    uvec2 cluster_screen_size;
-    uint cluster_shift;
-    uint cluster_type;
-    float z_near;
-    float z_far;
-    bool orthogonal;
-    uint max_cluster_element_count_div_32;
-    uint pad0;
-    uint pad1;
-} constant;
+} u_params;
 
-layout(set = 0, binding = 1, std430) buffer restrict readonly ClusterData {
-    uint data[];
-} cluster_data;
+layout(set = 0, binding = 2, std430) buffer restrict ClusterBuffer
+{
+    Cluster data[];
+} s_clusters;
 
-layout(rgba8, set = 0, binding = 2) uniform restrict writeonly image2D screen_buffer;
-layout(set = 0, binding = 3) uniform texture2D depth_buffer;
-layout(set = 0, binding = 4) uniform sampler depth_buffer_sampler;
+layout(rgba8, set = 0, binding = 3) uniform restrict writeonly image2D screen_buffer;
+layout(set = 0, binding = 4) uniform sampler2D depth_buffer;
 
-void main() {
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+void main()
+{
     uvec2 screen_pos = gl_GlobalInvocationID.xy;
-    if (any(greaterThanEqual(screen_pos, constant.screen_size)))
+    if (any(greaterThanEqual(screen_pos, u_params.screen_size)))
     {
         return;
     }
 
-    uvec2 cluster_pos = screen_pos >> constant.cluster_shift;
+    float z_near = u_frame.z_near_far.x;
+    float z_far = u_frame.z_near_far.y;
+    float depth = texelFetch(depth_buffer, ivec2(screen_pos), 0).r;
+    depth = z_near * z_far / (z_far + depth * (z_near - z_far)); // Linearize depth
+    uint z_tile = uint(log2(abs(depth) / z_near) / log2(z_far / z_near) * float(u_frame.cluster_size.z));
 
-    uint offset = cluster_pos.y * constant.cluster_screen_size.x + cluster_pos.x;
-    offset += constant.cluster_screen_size.x * constant.cluster_screen_size.y * constant.cluster_type;
-    offset *= (constant.max_cluster_element_count_div_32 + 32);
-
-    float depth = texelFetch(sampler2D(depth_buffer, depth_buffer_sampler), ivec2(screen_pos), 0).r * 2.0 - 1.0; // Back to NDC
-
-    // Linearize depth
-    if (constant.orthogonal)
-    {
-        depth = ((depth + (constant.z_far + constant.z_near) / (constant.z_far - constant.z_near)) * (constant.z_far - constant.z_near)) / 2.0;
-    }
-    else
-    {
-        depth = 2.0 * constant.z_near * constant.z_far / (constant.z_far + constant.z_near - depth * (constant.z_far - constant.z_near));
-    }
-    depth /= constant.z_far;
-
-    uint slice = uint(clamp(floor(depth * 32.0), 0.0, 31.0));
-    uint slice_minmax = cluster_data.data[offset + constant.max_cluster_element_count_div_32 + slice];
-    uint item_min = slice_minmax & uint(0xFFFF);
-    uint item_max = slice_minmax >> 16;
+    vec2 tile_size = u_params.screen_size / u_frame.cluster_size.xy;
+    uvec3 tile = uvec3(screen_pos / tile_size, z_tile);
+    uint tile_index = tile.x + (tile.y * u_frame.cluster_size.x) + (tile.z * u_frame.cluster_size.x * u_frame.cluster_size.y);
 
     uint item_count = 0;
-    for (uint i = 0; i < constant.max_cluster_element_count_div_32; i++)
+    uint bits = s_clusters.data[tile_index].lit_bits.y; // lit_bits.y
+    while (bits != 0)
     {
-        uint slice_bits = cluster_data.data[offset + i];
-        while (slice_bits != 0)
-        {
-            uint bit = findLSB(slice_bits);
-            uint item = i * 32 + bit;
-            if ((item >= item_min && item < item_max))
-            {
-                item_count++;
-            }
-            slice_bits &= uint(~(1 << bit));
-        }
+        uint bit = findLSB(bits);
+        item_count++;
+        bits &= uint(~(1 << bit));
     }
 
     item_count = min(item_count, 32);
-
     vec3 color = usage_gradient[item_count];
-
-    color = mix(color * 1.2, color * 0.3, float(slice) / 31.0);
-
+    color = mix(color * 1.2, color * 0.3, float(z_tile) / 31.0);
     imageStore(screen_buffer, ivec2(screen_pos), vec4(color, 1.0));
 }
