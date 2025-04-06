@@ -62,13 +62,16 @@ void Renderer::prepare(RenderContext* ctx)
     ez_pipeline_barrier(0, 0, nullptr, 2, rt_barriers);
 
     // Prepare FrameConstants
+    RenderView* render_view = &g_scene->view[DISPLAY_VIEW];
     FrameConstants frame_constants;
-    frame_constants.z_near_far = glm::vec2(g_scene->view[DISPLAY_VIEW].zn, g_scene->view[DISPLAY_VIEW].zf);
+    frame_constants.z_near_far = glm::vec2(render_view->zn, render_view->zf);
     frame_constants.cluster_size = ctx->cluster_size;
-    frame_constants.view_position = glm::vec4(g_scene->view[DISPLAY_VIEW].position, 0.0);
-    frame_constants.view_matrix = g_scene->view[DISPLAY_VIEW].view;
-    frame_constants.proj_matrix = g_scene->view[DISPLAY_VIEW].proj;
+    frame_constants.view_position = glm::vec4(render_view->position, 0.0);
+    frame_constants.view_matrix = render_view->view;
+    frame_constants.proj_matrix = render_view->proj;
     frame_constants.inv_view_proj_matrix = glm::inverse(frame_constants.proj_matrix * frame_constants.view_matrix);
+    frame_constants.ev100 = render_view->ev100;
+    frame_constants.exposure = render_view->exposure;
 
     EzBufferDesc buffer_desc{};
     buffer_desc.size = sizeof(FrameConstants);

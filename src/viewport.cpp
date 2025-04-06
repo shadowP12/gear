@@ -7,10 +7,10 @@ Viewport::Viewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 
 void Viewport::set_size(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
-    _size = glm::ivec4(x, y, w, h);
+    _size = glm::uvec4(x, y, w, h);
 }
 
-glm::ivec4 Viewport::get_size()
+glm::uvec4 Viewport::get_size()
 {
     return _size;
 }

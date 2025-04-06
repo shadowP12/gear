@@ -10,6 +10,8 @@ layout(std140, binding = USING_FRAME_UNIFORMS) uniform FrameConstants
     mat4 proj_matrix;
     mat4 inv_view_proj_matrix;
     vec2 z_near_far;
+    float ev100;
+    float exposure;
 } u_frame;
 #endif
 

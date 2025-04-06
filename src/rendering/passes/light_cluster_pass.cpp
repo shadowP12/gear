@@ -77,7 +77,7 @@ void LightClusterPass::exec(RenderContext* ctx)
     // Gen cluster aabbs
     RenderView* view = &g_scene->view[DISPLAY_VIEW];
     glm::vec2 z_near_far = glm::vec2(view->zn, view->zf);
-    glm::vec2 screen_size = glm::vec2(ctx->viewport_size.w, ctx->viewport_size.z);
+    glm::uvec2 screen_size = ctx->screen_size;
     glm::uvec4 cluster_size = glm::uvec4(k_cluster_size_x, k_cluster_size_y, k_cluster_size_z, 0);
 
     _aabb_program->set_parameter("near_far", &z_near_far);
@@ -124,7 +124,7 @@ void LightClusterPass::debug(RenderContext* ctx)
     rt_barriers[1] = ez_image_barrier(scene_depth_rt, EZ_RESOURCE_STATE_SHADER_RESOURCE);
     ez_pipeline_barrier(0, 0, nullptr, 2, rt_barriers);
 
-    glm::uvec2 screen_size = glm::uvec2(ctx->viewport_size.z, ctx->viewport_size.w);
+    glm::uvec2 screen_size = ctx->screen_size;
 
     _debug_program->set_parameter("frame_ub", frame_ub);
     _debug_program->set_parameter("screen_size", &screen_size);

@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #define PI 3.1415926535897932384626433832795
-#include "light_inc.glsl"
+
 
 layout(std140, binding = 0) uniform Params
 {
@@ -10,20 +10,8 @@ layout(std140, binding = 0) uniform Params
     uvec2 lit_count;
 } u_params;
 
-layout(set = 0, binding = 1, std430) buffer restrict ClusterBuffer
-{
-    Cluster data[];
-} s_clusters;
-
-layout(set = 0, binding = 2) uniform PointLitBuffer
-{
-    OmniLight data[MAX_LIGHT_DATA_STRUCTS];
-} u_point_lits;
-
-layout(set = 0, binding = 3) uniform SpotLitBuffer
-{
-    OmniLight data[MAX_LIGHT_DATA_STRUCTS];
-} u_spot_lits;
+#define USING_CLUSTER_LIGHTING 1
+#include "light_inc.glsl"
 
 bool test_sphere_aabb(vec3 p, float r, vec3 aabb_min, vec3 aabb_max)
 {

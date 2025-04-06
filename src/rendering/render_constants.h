@@ -10,6 +10,8 @@ struct FrameConstants
     glm::mat4 proj_matrix;
     glm::mat4 inv_view_proj_matrix;
     glm::vec2 z_near_far;
+    float ev100;
+    float exposure;
 };
 
 struct SceneInstanceData

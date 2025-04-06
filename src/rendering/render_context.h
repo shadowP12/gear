@@ -33,7 +33,8 @@ public:
     EzTexture create_texture(const std::string& name, const EzTextureDesc& desc, CreateStatus& status);
 
 public:
-    glm::ivec4 viewport_size;
+    glm::uvec4 viewport_size;
+    glm::uvec2 screen_size;
     glm::uvec4 cluster_size;
 
 private:

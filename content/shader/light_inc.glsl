@@ -35,4 +35,22 @@ struct DirectionLight
     float intensity;
 };
 
+#ifdef USING_CLUSTER_LIGHTING
+layout(set = 0, binding = USING_CLUSTER_LIGHTING, std430) buffer restrict ClusterBuffer
+{
+    Cluster data[];
+} s_clusters;
+
+
+layout(set = 0, binding = USING_CLUSTER_LIGHTING + 1) uniform PointLitBuffer
+{
+    OmniLight data[MAX_LIGHT_DATA_STRUCTS];
+} u_point_lits;
+
+layout(set = 0, binding = USING_CLUSTER_LIGHTING + 2) uniform SpotLitBuffer
+{
+    OmniLight data[MAX_LIGHT_DATA_STRUCTS];
+} u_spot_lits;
+#endif
+
 #endif
