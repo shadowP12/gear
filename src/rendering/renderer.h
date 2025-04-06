@@ -24,6 +24,7 @@ public:
     DrawCommandList draw_lists[DRAW_MAXCOUNT];
 
     std::unique_ptr<class LightClusterPass> light_cluster_pass;
+    std::unique_ptr<class PostProcessPass> post_process_pass;
 };
 
 extern Renderer* g_renderer;

@@ -5,10 +5,12 @@
 #include "utils/debug_utils.h"
 #include "utils/render_utils.h"
 #include "passes/light_cluster_pass.h"
+#include "passes/post_process_pass.h"
 
 Renderer::Renderer()
 {
     light_cluster_pass = std::make_unique<LightClusterPass>();
+    post_process_pass = std::make_unique<PostProcessPass>();
 }
 
 Renderer::~Renderer()
@@ -23,6 +25,7 @@ void Renderer::render(RenderContext* ctx)
     light_cluster_pass->exec(ctx);
     render_opaque_pass(ctx);
     //light_cluster_pass->debug(ctx);
+    post_process_pass->exec(ctx);
     copy_to_screen(ctx);
 }
 
@@ -37,7 +40,7 @@ void Renderer::prepare(RenderContext* ctx)
     EzTextureDesc texture_desc{};
     texture_desc.width = rt_width;
     texture_desc.height = rt_height;
-    texture_desc.format = VK_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
     texture_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     EzTexture scene_color_rt = ctx->create_texture("scene_color", texture_desc, create_status);
     if (create_status == RenderContext::CreateStatus::Recreated)
@@ -151,9 +154,9 @@ void Renderer::copy_to_screen(RenderContext* ctx)
     DebugLabel debug_label("Copy to screen", DebugLabel::WHITE);
 
     EzTexture out_color_rt = ctx->get_texture("out_color");
-    EzTexture scene_color_rt = ctx->get_texture("scene_color");
+    EzTexture final_rt_rt = post_process_pass->get_final_rt(ctx);
     VkImageMemoryBarrier2 copy_barriers[] = {
-        ez_image_barrier(scene_color_rt, EZ_RESOURCE_STATE_COPY_SOURCE),
+        ez_image_barrier(final_rt_rt, EZ_RESOURCE_STATE_COPY_SOURCE),
         ez_image_barrier(out_color_rt, EZ_RESOURCE_STATE_COPY_DEST),
     };
     ez_pipeline_barrier(0, 0, nullptr, 2, copy_barriers);
@@ -164,7 +167,7 @@ void Renderer::copy_to_screen(RenderContext* ctx)
     copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     copy_region.dstSubresource.layerCount = 1;
     copy_region.extent = { out_color_rt->width, out_color_rt->height, 1 };
-    ez_copy_image(scene_color_rt, out_color_rt, copy_region);
+    ez_copy_image(final_rt_rt, out_color_rt, copy_region);
 }
 
 Renderer* g_renderer = nullptr;
