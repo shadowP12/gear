@@ -20,18 +20,14 @@ void CCamera::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer
     writer.StartObject();
     writer.Key("class_name");
     writer.String(get_class_name().c_str());
-    writer.Key("aperture");
-    writer.Double(_aperture);
-    writer.Key("shutter_speed");
-    writer.Double(_shutter_speed);
-    writer.Key("sensitivity");
-    writer.Double(_sensitivity);
     writer.Key("near");
     writer.Double(_near);
     writer.Key("far");
     writer.Double(_far);
     writer.Key("fov");
     writer.Double(_fov);
+    writer.Key("exposure");
+    writer.Double(_exposure);
     writer.Key("usage");
     writer.Int(int(_usage));
     writer.Key("mode");
@@ -41,12 +37,10 @@ void CCamera::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer
 
 void CCamera::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
 {
-    _aperture = value["aperture"].GetDouble();
-    _shutter_speed = value["shutter_speed"].GetDouble();
-    _sensitivity = value["sensitivity"].GetDouble();
     _near = value["near"].GetDouble();
     _far = value["far"].GetDouble();
     _fov = value["fov"].GetDouble();
+    _exposure = value["exposure"].GetDouble();
     _usage = ViewUsageFlags(value["usage"].GetInt());
     _mode = ProjectionMode(value["mode"].GetInt());
 }
@@ -110,22 +104,10 @@ void CCamera::set_uasge(ViewUsageFlags usage)
     _usage = usage;
 }
 
-void CCamera::set_aperture(float aperture)
+void CCamera::set_exposure(float exposure)
 {
     make_render_dirty();
-    _aperture = aperture;
-}
-
-void CCamera::set_shutter_speed(float shutter_speed)
-{
-    make_render_dirty();
-    _shutter_speed = shutter_speed;
-}
-
-void CCamera::set_sensitivity(float sensitivity)
-{
-    make_render_dirty();
-    _sensitivity = sensitivity;
+    _exposure = exposure;
 }
 
 void CCamera::predraw()
@@ -137,12 +119,11 @@ void CCamera::predraw()
         g_scene->view[view_id].proj = get_proj_matrix();
         g_scene->view[view_id].inv_proj = glm::inverse(get_proj_matrix());
         g_scene->view[view_id].position = _entity->get_world_translation();
-        g_scene->view[view_id].direction = _entity->get_front_vector();
+        g_scene->view[view_id].direction = glm::normalize(_entity->get_front_vector());
 
         g_scene->view[view_id].zn = get_near();
         g_scene->view[view_id].zf = get_far();
-        g_scene->view[view_id].ev100 = std::log2((get_aperture() * get_aperture()) / get_shutter_speed() * 100.0f / get_sensitivity());
-        g_scene->view[view_id].exposure = 1.0f / (1.2f * std::pow(2.0, g_scene->view[view_id].ev100));
+        g_scene->view[view_id].exposure =  get_exposure();
 
         g_scene->view[view_id].proj_model = get_proj_mode();
     };

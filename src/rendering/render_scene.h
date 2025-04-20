@@ -28,8 +28,8 @@ public:
     RenderView view[2];
 
     // Lights
-    ObjectPool<OmniLight> point_lights;
-    ObjectPool<OmniLight> spot_lights;
+    ObjectPool<PunctualLight> point_lights;
+    ObjectPool<PunctualLight> spot_lights;
     ObjectPool<DirectionLight> dir_lights;
 
     // Renderables

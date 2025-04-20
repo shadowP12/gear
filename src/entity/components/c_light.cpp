@@ -47,12 +47,10 @@ void CLight::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer,
     Serialization::w_vec3(writer, _color);
     writer.Key("range");
     writer.Double(_range);
-    writer.Key("attenuation");
-    writer.Double(_attenuation);
     writer.Key("spot_angle");
     writer.Double(_spot_angle);
-    writer.Key("spot_attenuation");
-    writer.Double(_spot_attenuation);
+    writer.Key("inner_angle");
+    writer.Double(_inner_angle);
     writer.EndObject();
 }
 
@@ -62,9 +60,8 @@ void CLight::deserialize(rapidjson::Value& value, Serialization::BinaryStream& b
     _intensity = value["intensity"].GetDouble();
     _color = Serialization::r_vec3(value["color"]);
     _range = value["range"].GetDouble();
-    _attenuation = value["attenuation"].GetDouble();
     _spot_angle = value["spot_angle"].GetDouble();
-    _spot_attenuation = value["spot_attenuation"].GetDouble();
+    _inner_angle = value["inner_angle"].GetDouble();
 }
 
 void CLight::set_light_type(LightType type)
@@ -92,22 +89,16 @@ void CLight::set_range(float range)
     _range = range;
 }
 
-void CLight::set_attenuation(float attenuation)
-{
-    make_render_dirty();
-    _attenuation = attenuation;
-}
-
 void CLight::set_spot_angle(float spot_angle)
 {
     make_render_dirty();
     _spot_angle = spot_angle;
 }
 
-void CLight::set_spot_attenuation(float spot_attenuation)
+void CLight::set_inner_angle(float inner_angle)
 {
     make_render_dirty();
-    _spot_attenuation = spot_attenuation;
+    _inner_angle = inner_angle;
 }
 
 void CLight::predraw()
@@ -118,7 +109,7 @@ void CLight::predraw()
 
     if (_type == LightType::Point || _type == LightType::Spot)
     {
-        OmniLight* light_obj = nullptr;
+        PunctualLight* light_obj = nullptr;
         if (_type == LightType::Point)
         {
             if (_light == INVALID_OBJECT_S)
@@ -138,20 +129,14 @@ void CLight::predraw()
             light_obj = g_scene->spot_lights.get_obj(_light);
         }
 
-        light_obj->color = get_color();
-        light_obj->intensity = get_intensity();
-
         float radius = glm::max(0.001f, get_range());
         light_obj->inv_radius = 1.0f / radius;
-
+        light_obj->color = get_color();
+        light_obj->intensity = get_intensity();
         light_obj->position = pos;
         light_obj->direction = direction;
-
-        light_obj->attenuation = get_attenuation();
-        light_obj->cone_attenuation = get_spot_attenuation();
-
-        float spot_angle = get_spot_angle();
-        light_obj->cone_angle = glm::radians(spot_angle);
+        light_obj->cone_angle = glm::radians(get_spot_angle());
+        light_obj->inner_angle = glm::radians(get_inner_angle());
     }
     else if (_type == LightType::Direction)
     {

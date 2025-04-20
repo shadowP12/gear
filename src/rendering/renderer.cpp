@@ -40,7 +40,7 @@ void Renderer::prepare(RenderContext* ctx)
     EzTextureDesc texture_desc{};
     texture_desc.width = rt_width;
     texture_desc.height = rt_height;
-    texture_desc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+    texture_desc.format = VK_FORMAT_R32G32B32A32_SFLOAT;//VK_FORMAT_R16G16B16A16_SFLOAT;
     texture_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     EzTexture scene_color_rt = ctx->create_texture("scene_color", texture_desc, create_status);
     if (create_status == RenderContext::CreateStatus::Recreated)
@@ -67,10 +67,10 @@ void Renderer::prepare(RenderContext* ctx)
     frame_constants.z_near_far = glm::vec2(render_view->zn, render_view->zf);
     frame_constants.cluster_size = ctx->cluster_size;
     frame_constants.view_position = glm::vec4(render_view->position, 0.0);
+    frame_constants.view_direction = glm::vec4(render_view->direction, 0.0);
     frame_constants.view_matrix = render_view->view;
     frame_constants.proj_matrix = render_view->proj;
     frame_constants.inv_view_proj_matrix = glm::inverse(frame_constants.proj_matrix * frame_constants.view_matrix);
-    frame_constants.ev100 = render_view->ev100;
     frame_constants.exposure = render_view->exposure;
 
     EzBufferDesc buffer_desc{};

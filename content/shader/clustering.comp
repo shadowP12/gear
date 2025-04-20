@@ -3,7 +3,6 @@
 
 #define PI 3.1415926535897932384626433832795
 
-
 layout(std140, binding = 0) uniform Params
 {
     mat4 view_matrix;
@@ -52,7 +51,7 @@ void main()
     uint point_lit_bit = 0;
     for (uint i = 0; i < u_params.lit_count.x; ++i)
     {
-        OmniLight lit = u_point_lits.data[i];
+        PunctualLight lit = u_point_lits.data[i];
         vec4 lit_pos_vs = vec4(lit.position, 1.0);
         lit_pos_vs = u_params.view_matrix * lit_pos_vs;
 
@@ -65,7 +64,7 @@ void main()
     uint spot_lit_bit = 0;
     for (uint i = 0; i < u_params.lit_count.y; ++i)
     {
-        OmniLight lit = u_spot_lits.data[i];
+        PunctualLight lit = u_spot_lits.data[i];
         vec4 sph = bounding_sphere(lit.position, lit.direction, 1.0 / lit.inv_radius, lit.cone_angle);
         //sph = vec4(0.0, 0.0, 0.0, 50.0);
         vec4 sph_vs = vec4(sph.xyz, 1.0);

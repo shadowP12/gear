@@ -1,11 +1,13 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
+precision highp float;
+precision highp int;
 
 layout(location = 0) in vec4 vertex_world_position;
 layout(location = 1) in vec3 vertex_normal;
 layout(location = 2) in vec2 vertex_uv;
 
-layout(location = 0) out vec4 scene_color;
+layout(location = 0) out vec4 frag_color;
 
 #define USING_FRAME_UNIFORMS 0
 #include "uniforms.glsl"
@@ -34,10 +36,68 @@ uint get_cluster_index(vec4 frag_coord)
     return tile_index;
 }
 
+float quick_hash(vec2 pos)
+{
+    const vec3 magic = vec3(0.06711056f, 0.00583715f, 52.9829189f);
+    return fract(magic.z * fract(dot(pos, magic.xy)));
+}
+
+vec3 surface_shading()
+{
+    vec3 base_color = vec3(1.0, 1.0, 1.0);
+    return base_color / 3.1415926;
+}
+
 void main()
 {
+    vec3 V = normalize(u_frame.view_direction.xyz);
+    vec3 N = normalize(vertex_normal);
+    float NoV = clamp(dot(N, V), 0.0, 1.0);
+    float exposure = u_frame.exposure;
+    vec4 final_color = vec4(0.0, 0.0, 0.0, 1.0);
+
     uint cluster_index = get_cluster_index(gl_FragCoord);
 
-    vec3 sun_direction = normalize(vec3(0.0, -1.0, -1.0));
-    scene_color = vec4(max(dot(normalize(vertex_normal), -sun_direction), 0.0) * vec3(0.6) + vec3(0.1), 1.0);
+    uint point_lit_bits = s_clusters.data[cluster_index].lit_bits.x;
+    while (point_lit_bits != 0)
+    {
+        uint bit = findLSB(point_lit_bits);
+        point_lit_bits &= uint(~(1 << bit));
+
+        PunctualLight lit = u_point_lits.data[bit];
+        vec3 pos_to_lit = lit.position - vertex_world_position.xyz;
+        vec3 L = normalize(pos_to_lit);
+        vec3 H = normalize(V + L);
+        float NoL = clamp(dot(N, L), 0.0, 1.0);
+        float NoH = clamp(dot(N, H), 0.0, 1.0);
+        float LoH = clamp(dot(L, H), 0.0, 1.0);
+        float distance = length(pos_to_lit);
+        float noise = quick_hash(gl_FragCoord.xy) * 0.05; //  Reduce color banding
+        float attenuation = get_distance_attenuation(distance + noise, lit.inv_radius);
+
+        final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * attenuation;
+    }
+
+    uint spot_lit_bits = s_clusters.data[cluster_index].lit_bits.y;
+    while (spot_lit_bits != 0)
+    {
+        uint bit = findLSB(spot_lit_bits);
+        spot_lit_bits &= uint(~(1 << bit));
+
+        PunctualLight lit = u_spot_lits.data[bit];
+        vec3 pos_to_lit = lit.position - vertex_world_position.xyz;
+        vec3 L = normalize(pos_to_lit);
+        vec3 H = normalize(V + L);
+        float NoL = clamp(dot(N, L), 0.0, 1.0);
+        float NoH = clamp(dot(N, H), 0.0, 1.0);
+        float LoH = clamp(dot(L, H), 0.0, 1.0);
+        float distance = length(pos_to_lit);
+        float noise = quick_hash(gl_FragCoord.xy) * 0.05; //  Reduce color banding
+        float attenuation = get_distance_attenuation(distance + noise, lit.inv_radius);
+        attenuation *= get_angle_attenuation(L, lit.direction, lit.cone_angle, lit.inner_angle);
+
+        final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * attenuation;
+    }
+
+    frag_color = final_color;
 }

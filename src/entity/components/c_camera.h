@@ -36,29 +36,19 @@ public:
 
     float get_far() { return _far; }
 
+    void set_exposure(float exposure);
+
+    float get_exposure() { return _exposure; }
+
     void set_uasge(ViewUsageFlags usage);
 
     ViewUsageFlags get_usage() { return _usage; }
-
-    void set_aperture(float aperture);
-
-    float get_aperture() { return _aperture; }
-
-    void set_shutter_speed(float shutter_speed);
-
-    float get_shutter_speed() { return _shutter_speed; }
-
-    void set_sensitivity(float sensitivity);
-
-    float get_sensitivity() { return _sensitivity; }
 
 protected:
     void predraw() override;
 
 private:
-    float _aperture = 16.0f;
-    float _shutter_speed = 1.0f / 125.0f;
-    float _sensitivity = 100.0f;
+    float _exposure = 1.0f;
     float _near = 0.0f;
     float _far = 100.0f;
     float _fov = 45.0f;

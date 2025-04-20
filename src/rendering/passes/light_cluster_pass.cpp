@@ -44,12 +44,12 @@ void LightClusterPass::exec(RenderContext* ctx)
     /*
     for (int i = 0; i < g_scene->point_lights.size(); ++i)
     {
-        const OmniLight* point_lit = g_scene->point_lights[i];
+        const PunctualLight* point_lit = g_scene->point_lights[i];
         g_debug_renderer->add_sphere(glm::vec3(0.3, 0.3, 0.8), point_lit->position, 1.0f / point_lit->inv_radius);
     }
     for (int i = 0; i < g_scene->spot_lights.size(); ++i)
     {
-        const OmniLight* spot_lit = g_scene->spot_lights[i];
+        const PunctualLight* spot_lit = g_scene->spot_lights[i];
         g_debug_renderer->add_cone(glm::vec3(0.3, 0.3, 0.8), spot_lit->position, spot_lit->direction, spot_lit->cone_angle, 1.0f / spot_lit->inv_radius);
     }
     */
@@ -57,13 +57,13 @@ void LightClusterPass::exec(RenderContext* ctx)
     EzBufferDesc buffer_desc{};
     buffer_desc.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     buffer_desc.memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    buffer_desc.size = MAX_LIGHT_DATA_STRUCTS * sizeof(OmniLight);
+    buffer_desc.size = MAX_LIGHT_DATA_STRUCTS * sizeof(PunctualLight);
     EzBuffer u_point_lits = ctx->create_buffer("u_point_lits", buffer_desc, false);
-    update_render_buffer(u_point_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, g_scene->point_lights.size() * sizeof(OmniLight), 0, (uint8_t*)g_scene->point_lights.data());
+    update_render_buffer(u_point_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, g_scene->point_lights.size() * sizeof(PunctualLight), 0, (uint8_t*)g_scene->point_lights.data());
 
-    buffer_desc.size = MAX_LIGHT_DATA_STRUCTS * sizeof(OmniLight);
+    buffer_desc.size = MAX_LIGHT_DATA_STRUCTS * sizeof(PunctualLight);
     EzBuffer u_spot_lits = ctx->create_buffer("u_spot_lits", buffer_desc, false);
-    update_render_buffer(u_spot_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, g_scene->spot_lights.size() * sizeof(OmniLight), 0, (uint8_t*)g_scene->spot_lights.data());
+    update_render_buffer(u_spot_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, g_scene->spot_lights.size() * sizeof(PunctualLight), 0, (uint8_t*)g_scene->spot_lights.data());
 
     buffer_desc.size = k_cluster_count * sizeof(Cluster);
     buffer_desc.memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;

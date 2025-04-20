@@ -36,17 +36,13 @@ public:
 
     float get_range() { return _range; }
 
-    void set_attenuation(float attenuation);
-
-    float get_attenuation() { return _attenuation; }
-
     void set_spot_angle(float spot_angle);
 
     float get_spot_angle() { return _spot_angle; }
 
-    void set_spot_attenuation(float spot_attenuation);
+    void set_inner_angle(float inner_angle);
 
-    float get_spot_attenuation() { return _spot_attenuation; }
+    float get_inner_angle() { return _inner_angle; }
 
 protected:
     void destroy_light();
@@ -57,13 +53,8 @@ private:
     LightType _type;
     uint32_t _light;
     glm::vec3 _color;
-    /*
-     * Point/Spot: candela
-     * Direction: lux
-     */
     float _intensity = 0.0f;
     float _range = 5.0f;
-    float _attenuation = 1.0f;
     float _spot_angle = 45.0f;
-    float _spot_attenuation = 1.0f;
+    float _inner_angle = 40.0f;
 };

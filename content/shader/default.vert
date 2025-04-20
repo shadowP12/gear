@@ -17,7 +17,7 @@ layout(location = 2) out vec2 vertex_uv;
 void main()
 {
     vertex_uv = in_texcoord;
-    vertex_normal = in_normal;
+    vertex_normal = mat3(transpose(inverse(u_scene.transform))) * in_normal;
     vertex_world_position = u_scene.transform * vec4(in_position, 1.0);
     gl_Position = u_frame.proj_matrix * u_frame.view_matrix * vertex_world_position;
 }

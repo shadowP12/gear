@@ -9,7 +9,7 @@ enum class LightType
     Direction,
 };
 
-struct OmniLight
+struct PunctualLight
 {
     glm::vec3 position;
     float inv_radius;
@@ -20,10 +20,10 @@ struct OmniLight
     glm::vec3 color;
     float intensity;
 
-    float attenuation;
-    float cone_attenuation;
     float cone_angle;
+    float inner_angle;
     float pad0;
+    float pad1;
 };
 
 struct DirectionLight

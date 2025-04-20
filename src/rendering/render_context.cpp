@@ -40,7 +40,7 @@ RenderContext::~RenderContext()
 void RenderContext::collect_info(Window* window)
 {
     viewport_size = window->get_size();
-    screen_size =  glm::uvec2(viewport_size.w, viewport_size.z);
+    screen_size =  glm::uvec2(viewport_size.z, viewport_size.w);
 }
 
 EzBuffer RenderContext::get_buffer(const std::string& name)

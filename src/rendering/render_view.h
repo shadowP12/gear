@@ -19,7 +19,6 @@ struct RenderView
 {
     float zn;
     float zf;
-    float ev100;
     float exposure;
     glm::vec3 position;
     glm::vec3 direction;
