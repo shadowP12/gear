@@ -9,10 +9,16 @@
 CMesh::CMesh(Entity* entity)
     : CRender(entity)
 {
+    _scene_inst = INVALID_OBJECT_S;
 }
 
 CMesh::~CMesh()
 {
+    if (_scene_inst != INVALID_OBJECT_S)
+    {
+        g_scene->scene_insts.remove(_scene_inst);
+        _scene_inst = INVALID_OBJECT_S;
+    }
     destroy_renderables();
 }
 
@@ -61,6 +67,15 @@ void CMesh::destroy_renderables()
 
 void CMesh::predraw()
 {
+    if ( _scene_inst == INVALID_OBJECT_S )
+    {
+        _scene_inst = g_scene->scene_insts.add();
+    }
+
+    uint32_t scene_inst_index = g_scene->scene_insts.get_index(_scene_inst);
+    auto scene_inst_obj = g_scene->scene_insts.get_obj(_scene_inst);
+    scene_inst_obj->transform = _entity->get_world_transform();
+
     if (_mesh && _renderables.size() == 0)
     {
         auto& surfaces = _mesh->get_surfaces();
@@ -101,7 +116,7 @@ void CMesh::predraw()
                 renderable->draw_type = programs_iter.first;
                 renderable->program = programs_iter.second;
                 renderable->vertex_factory = &vertex_factory;
-                renderable->bounding_box = surface->bounding_box;
+                renderable->local_bounding_box = surface->bounding_box;
 
                 _renderables.push_back(renderable_hanele);
             }
@@ -111,7 +126,9 @@ void CMesh::predraw()
     for (int i = 0; i < _renderables.size(); ++i)
     {
         Renderable* renderable = g_scene->renderables.get_obj(_renderables[i]);
-        renderable->transform = _entity->get_world_transform();
+        renderable->scene_index = scene_inst_index;
+        renderable->transform = scene_inst_obj->transform;
+        renderable->bounding_box = renderable->local_bounding_box.transform(renderable->transform);
     }
 }
 

@@ -31,7 +31,7 @@ LightClusterPass::LightClusterPass()
 LightClusterPass::~LightClusterPass()
 {}
 
-void LightClusterPass::predraw(RenderContext* ctx)
+void LightClusterPass::setup(RenderContext* ctx)
 {
     ctx->cluster_size = glm::uvec4(k_cluster_size_x, k_cluster_size_y, k_cluster_size_z, 0);
 }
@@ -54,16 +54,25 @@ void LightClusterPass::exec(RenderContext* ctx)
     }
     */
 
+    uint32_t update_lit_count = 0;
+
     EzBufferDesc buffer_desc{};
     buffer_desc.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     buffer_desc.memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
     buffer_desc.size = MAX_LIGHT_DATA_STRUCTS * sizeof(PunctualLight);
     EzBuffer u_point_lits = ctx->create_buffer("u_point_lits", buffer_desc, false);
-    update_render_buffer(u_point_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, g_scene->point_lights.size() * sizeof(PunctualLight), 0, (uint8_t*)g_scene->point_lights.data());
+    update_lit_count = glm::min((uint32_t)MAX_LIGHT_DATA_STRUCTS, (uint32_t)g_scene->point_lights.size());
+    update_render_buffer(u_point_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, update_lit_count * sizeof(PunctualLight), 0, (uint8_t*)g_scene->point_lights.data());
 
     buffer_desc.size = MAX_LIGHT_DATA_STRUCTS * sizeof(PunctualLight);
     EzBuffer u_spot_lits = ctx->create_buffer("u_spot_lits", buffer_desc, false);
-    update_render_buffer(u_spot_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, g_scene->spot_lights.size() * sizeof(PunctualLight), 0, (uint8_t*)g_scene->spot_lights.data());
+    update_lit_count = glm::min((uint32_t)MAX_LIGHT_DATA_STRUCTS, (uint32_t)g_scene->spot_lights.size());
+    update_render_buffer(u_spot_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, update_lit_count * sizeof(PunctualLight), 0, (uint8_t*)g_scene->spot_lights.data());
+
+    buffer_desc.size = sizeof(DirectionLight);
+    EzBuffer u_dir_lits = ctx->create_buffer("u_dir_lits", buffer_desc, false);
+    update_lit_count = glm::min((uint32_t)1, (uint32_t)g_scene->dir_lights.size());
+    update_render_buffer(u_dir_lits, EZ_RESOURCE_STATE_SHADER_RESOURCE, update_lit_count * sizeof(DirectionLight), 0, (uint8_t*)g_scene->dir_lights.data());
 
     buffer_desc.size = k_cluster_count * sizeof(Cluster);
     buffer_desc.memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -100,6 +109,7 @@ void LightClusterPass::exec(RenderContext* ctx)
     _clustering_program->set_parameter("view_matrix", &view_matrix);
     _clustering_program->set_parameter("u_point_lits", u_point_lits);
     _clustering_program->set_parameter("u_spot_lits", u_spot_lits);
+    _clustering_program->set_parameter("u_dir_lits", u_dir_lits);
     _clustering_program->set_parameter("s_clusters", s_clusters);
     _clustering_program->bind();
 

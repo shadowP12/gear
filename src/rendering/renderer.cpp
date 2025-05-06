@@ -5,11 +5,13 @@
 #include "utils/debug_utils.h"
 #include "utils/render_utils.h"
 #include "passes/light_cluster_pass.h"
+#include "passes/shadow_pass.h"
 #include "passes/post_process_pass.h"
 
 Renderer::Renderer()
 {
     light_cluster_pass = std::make_unique<LightClusterPass>();
+    shadow_pass = std::make_unique<ShadowPass>();
     post_process_pass = std::make_unique<PostProcessPass>();
 }
 
@@ -19,9 +21,11 @@ Renderer::~Renderer()
 
 void Renderer::render(RenderContext* ctx)
 {
-    light_cluster_pass->predraw(ctx);
+    shadow_pass->setup(ctx);
+    light_cluster_pass->setup(ctx);
+    setup(ctx);
 
-    prepare(ctx);
+    shadow_pass->exec(ctx);
     light_cluster_pass->exec(ctx);
     render_opaque_pass(ctx);
     //light_cluster_pass->debug(ctx);
@@ -29,7 +33,7 @@ void Renderer::render(RenderContext* ctx)
     copy_to_screen(ctx);
 }
 
-void Renderer::prepare(RenderContext* ctx)
+void Renderer::setup(RenderContext* ctx)
 {
     // Prepare RTs
     EzTexture out_color_rt = ctx->get_texture("out_color");
@@ -40,7 +44,7 @@ void Renderer::prepare(RenderContext* ctx)
     EzTextureDesc texture_desc{};
     texture_desc.width = rt_width;
     texture_desc.height = rt_height;
-    texture_desc.format = VK_FORMAT_R32G32B32A32_SFLOAT;//VK_FORMAT_R16G16B16A16_SFLOAT;
+    texture_desc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
     texture_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     EzTexture scene_color_rt = ctx->create_texture("scene_color", texture_desc, create_status);
     if (create_status == RenderContext::CreateStatus::Recreated)
@@ -61,7 +65,7 @@ void Renderer::prepare(RenderContext* ctx)
     rt_barriers[1] = ez_image_barrier(scene_depth_rt, EZ_RESOURCE_STATE_DEPTH_WRITE);
     ez_pipeline_barrier(0, 0, nullptr, 2, rt_barriers);
 
-    // Prepare FrameConstants
+    // Prepare global uniform buffers
     RenderView* render_view = &g_scene->view[DISPLAY_VIEW];
     FrameConstants frame_constants;
     frame_constants.z_near_far = glm::vec2(render_view->zn, render_view->zf);
@@ -72,6 +76,7 @@ void Renderer::prepare(RenderContext* ctx)
     frame_constants.proj_matrix = render_view->proj;
     frame_constants.inv_view_proj_matrix = glm::inverse(frame_constants.proj_matrix * frame_constants.view_matrix);
     frame_constants.exposure = render_view->exposure;
+    frame_constants.has_sun = g_scene->dir_lights.size() > 0;
 
     EzBufferDesc buffer_desc{};
     buffer_desc.size = sizeof(FrameConstants);
@@ -80,40 +85,36 @@ void Renderer::prepare(RenderContext* ctx)
     EzBuffer frame_ub = ctx->create_buffer("u_frame", buffer_desc);
     update_render_buffer(frame_ub, EZ_RESOURCE_STATE_SHADER_RESOURCE, sizeof(FrameConstants), 0, (uint8_t*)&frame_constants);
 
-    // Prepare DrawList
+    buffer_desc.size = sizeof(SceneInstanceData) * g_scene->scene_insts.size();
+    EzBuffer scene_ub = ctx->create_buffer("u_scene", buffer_desc, false);
+    update_render_buffer(scene_ub, EZ_RESOURCE_STATE_SHADER_RESOURCE, sizeof(SceneInstanceData) * g_scene->scene_insts.size(), 0, (uint8_t*)g_scene->scene_insts.data());
+
+    // Prepare drawlist
     for (int i = 0; i < DRAW_MAXCOUNT; ++i)
     {
-        draw_lists[i].clear();
+        ctx->draw_lists[i].clear();
     }
 
-    VertexFactory* last_vertex_factory = nullptr;
-    std::vector<SceneInstanceData> scene_data;
     for (int i = 0; i < g_scene->renderables.size(); ++i)
     {
         Renderable* renderable = g_scene->renderables[i];
         glm::mat4& renderable_transform = renderable->transform;
         glm::vec3 renderable_position = glm::vec3(renderable_transform[3][0], renderable_transform[3][1], renderable_transform[3][2]);
 
-        if (last_vertex_factory != renderable->vertex_factory)
+        if (renderable->draw_type == DRAW_SHADOW)
         {
-            SceneInstanceData scene_instance;
-            scene_instance.transform = renderable_transform;
-            scene_data.push_back(scene_instance);
-
-            last_vertex_factory = renderable->vertex_factory;
+            shadow_pass->process(ctx, renderable);
         }
-
-        DrawCommand* draw_cmd = draw_lists[renderable->draw_type].add_element();
-        draw_cmd->scene_index = scene_data.size() - 1;
-        draw_cmd->vertex_factory = renderable->vertex_factory;
-        draw_cmd->program = renderable->program;
-        draw_cmd->distance = glm::distance(g_scene->view[DISPLAY_VIEW].position, renderable_position);
-        draw_cmd->sort.sort_key = 0;
+        else
+        {
+            DrawCommand* draw_cmd = ctx->draw_lists[renderable->draw_type].add_element();
+            draw_cmd->scene_index = renderable->scene_index;
+            draw_cmd->vertex_factory = renderable->vertex_factory;
+            draw_cmd->program = renderable->program;
+            draw_cmd->distance = glm::distance(g_scene->view[DISPLAY_VIEW].position, renderable_position);
+            draw_cmd->sort.sort_key = 0;
+        }
     }
-
-    buffer_desc.size = sizeof(SceneInstanceData) * scene_data.size();
-    EzBuffer scene_ub = ctx->create_buffer("u_scene", buffer_desc, false);
-    update_render_buffer(scene_ub, EZ_RESOURCE_STATE_SHADER_RESOURCE, sizeof(SceneInstanceData) * scene_data.size(), 0, (uint8_t*)scene_data.data());
 }
 
 void Renderer::render_opaque_pass(RenderContext* ctx)
@@ -147,7 +148,7 @@ void Renderer::render_opaque_pass(RenderContext* ctx)
     ez_set_viewport(vp.x, vp.y, vp.z, vp.w);
     ez_set_scissor((int32_t)vp.x, (int32_t)vp.y, (int32_t)vp.z, (int32_t)vp.w);
 
-    draw_lists[DRAW_OPAQUE].draw(ctx);
+    ctx->draw_lists[DRAW_OPAQUE].draw(ctx);
 
     ez_end_rendering();
 }

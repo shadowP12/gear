@@ -45,10 +45,11 @@ void DrawCommandList::sort_by_depth()
 
 void DrawCommandList::draw(RenderContext* ctx)
 {
-    EzBuffer scene_ub = ctx->get_buffer("u_scene");
-    EzBuffer frame_ub = ctx->get_buffer("u_frame");
+    EzBuffer u_scene = ctx->get_buffer("u_scene");
+    EzBuffer u_frame = ctx->get_buffer("u_frame");
     EzBuffer u_point_lits = ctx->get_buffer("u_point_lits");
     EzBuffer u_spot_lits = ctx->get_buffer("u_spot_lits");
+    EzBuffer u_dir_lits = ctx->get_buffer("u_dir_lits");
     EzBuffer s_clusters = ctx->get_buffer("s_clusters");
 
     for (int i = 0; i < cmd_count; ++i)
@@ -58,10 +59,11 @@ void DrawCommandList::draw(RenderContext* ctx)
         Program* program = cmd->program;
 
         program->set_parameter("screen_size", &ctx->screen_size);
-        program->set_parameter("u_frame", frame_ub);
-        program->set_parameter("u_scene", scene_ub, sizeof(SceneInstanceData), cmd->scene_index * sizeof(SceneInstanceData));
+        program->set_parameter("u_frame", u_frame);
+        program->set_parameter("u_scene", u_scene, sizeof(SceneInstanceData), cmd->scene_index * sizeof(SceneInstanceData));
         program->set_parameter("u_point_lits", u_point_lits);
         program->set_parameter("u_spot_lits", u_spot_lits);
+        program->set_parameter("u_dir_lits", u_dir_lits);
         program->set_parameter("s_clusters", s_clusters);
         program->bind();
 

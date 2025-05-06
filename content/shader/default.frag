@@ -1,7 +1,5 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
-precision highp float;
-precision highp int;
 
 layout(location = 0) in vec4 vertex_world_position;
 layout(location = 1) in vec3 vertex_normal;
@@ -12,11 +10,11 @@ layout(location = 0) out vec4 frag_color;
 #define USING_FRAME_UNIFORMS 0
 #include "uniforms.glsl"
 
-// 2 - 4
+// 2 - 5
 #define USING_CLUSTER_LIGHTING 2
 #include "light_inc.glsl"
 
-layout(std140, binding = 5) uniform Params
+layout(std140, binding = 6) uniform Params
 {
     uvec2 screen_size;
 } u_params;
@@ -54,6 +52,7 @@ void main()
     vec3 N = normalize(vertex_normal);
     float NoV = clamp(dot(N, V), 0.0, 1.0);
     float exposure = u_frame.exposure;
+    float noise = quick_hash(gl_FragCoord.xy) * 0.05;//  Reduce color banding
     vec4 final_color = vec4(0.0, 0.0, 0.0, 1.0);
 
     uint cluster_index = get_cluster_index(gl_FragCoord);
@@ -72,7 +71,6 @@ void main()
         float NoH = clamp(dot(N, H), 0.0, 1.0);
         float LoH = clamp(dot(L, H), 0.0, 1.0);
         float distance = length(pos_to_lit);
-        float noise = quick_hash(gl_FragCoord.xy) * 0.05; //  Reduce color banding
         float attenuation = get_distance_attenuation(distance + noise, lit.inv_radius);
 
         final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * attenuation;
@@ -92,11 +90,19 @@ void main()
         float NoH = clamp(dot(N, H), 0.0, 1.0);
         float LoH = clamp(dot(L, H), 0.0, 1.0);
         float distance = length(pos_to_lit);
-        float noise = quick_hash(gl_FragCoord.xy) * 0.05; //  Reduce color banding
         float attenuation = get_distance_attenuation(distance + noise, lit.inv_radius);
         attenuation *= get_angle_attenuation(L, lit.direction, lit.cone_angle, lit.inner_angle);
 
         final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * attenuation;
+    }
+
+    if (u_frame.has_sun)
+    {
+        DirectionLight lit = u_dir_lits.data[0];
+        vec3 L = normalize(-lit.direction);
+        float NoL = clamp(dot(N, L), 0.0, 1.0);
+
+        final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * NoL;
     }
 
     frag_color = final_color;

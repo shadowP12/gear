@@ -12,7 +12,7 @@ public:
 
     ~LightClusterPass();
 
-    void predraw(RenderContext* ctx);
+    void setup(RenderContext* ctx);
 
     void exec(RenderContext* ctx);
 

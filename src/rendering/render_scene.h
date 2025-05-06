@@ -34,6 +34,9 @@ public:
 
     // Renderables
     ObjectPool<Renderable> renderables;
+
+    // Scene instances
+    ObjectPool<SceneInstanceData> scene_insts;
 };
 
 extern RenderScene* g_scene;

@@ -32,4 +32,7 @@ struct DirectionLight
     float size;
     glm::vec3 color;
     float intensity;
+
+    bool has_shadow;
+    uint32_t shadow;
 };

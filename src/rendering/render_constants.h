@@ -12,6 +12,7 @@ struct FrameConstants
     glm::mat4 inv_view_proj_matrix;
     glm::vec2 z_near_far;
     float exposure;
+    bool has_sun;
 };
 
 struct SceneInstanceData
@@ -32,5 +33,6 @@ enum class SamplerType
 enum DrawType
 {
     DRAW_OPAQUE = 0,
+    DRAW_SHADOW = 1,
     DRAW_MAXCOUNT
 };

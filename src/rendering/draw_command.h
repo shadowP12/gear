@@ -23,9 +23,10 @@ struct DrawCommand
     } sort;
 };
 
-struct DrawCommandList
+class DrawCommandList
 {
-    void draw(RenderContext* ctx);
+public:
+    virtual void draw(RenderContext* ctx);
 
     void sort();
 

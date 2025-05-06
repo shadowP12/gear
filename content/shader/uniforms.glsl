@@ -12,6 +12,7 @@ layout(std140, binding = USING_FRAME_UNIFORMS) uniform FrameConstants
     mat4 inv_view_proj_matrix;
     vec2 z_near_far;
     float exposure;
+    bool has_sun;
 } u_frame;
 #endif
 

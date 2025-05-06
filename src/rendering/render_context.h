@@ -1,6 +1,8 @@
 #pragma once
 
 #include "render_constants.h"
+#include "draw_command.h"
+#include "light.h"
 #include <rhi/ez_vulkan.h>
 #include <glm/glm.hpp>
 #include <string>
@@ -36,6 +38,7 @@ public:
     glm::uvec4 viewport_size;
     glm::uvec2 screen_size;
     glm::uvec4 cluster_size;
+    DrawCommandList draw_lists[DRAW_MAXCOUNT];
 
 private:
     std::unordered_map<std::string, EzBuffer> _buffer_cache;

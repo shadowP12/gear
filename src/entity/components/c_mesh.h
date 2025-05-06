@@ -41,6 +41,7 @@ protected:
 
 private:
     MeshAsset* _mesh;
+    uint32_t _scene_inst;
     std::vector<VertexFactory> _vertex_factorys;
     std::vector<uint32_t> _renderables;
     MeshRnderDirtyFlag _render_dirty_flags = MeshRnderDirtyFlag::None;

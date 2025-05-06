@@ -1,6 +1,7 @@
-#ifndef LIGHT_H
-#define LIGHT_H
+#ifndef LIGHT_INC_H
+#define LIGHT_INC_H
 
+#define MAX_DIRECTION_LIGHT 1
 #define MAX_LIGHT_DATA_STRUCTS 32
 
 struct Cluster
@@ -33,6 +34,9 @@ struct DirectionLight
     float size;
     vec3 color;
     float intensity;
+
+    bool has_shadow;
+    uint shadow;
 };
 
 #ifdef USING_CLUSTER_LIGHTING
@@ -40,7 +44,6 @@ layout(set = 0, binding = USING_CLUSTER_LIGHTING, std430) buffer restrict Cluste
 {
     Cluster data[];
 } s_clusters;
-
 
 layout(set = 0, binding = USING_CLUSTER_LIGHTING + 1) uniform PointLitBuffer
 {
@@ -51,6 +54,11 @@ layout(set = 0, binding = USING_CLUSTER_LIGHTING + 2) uniform SpotLitBuffer
 {
     PunctualLight data[MAX_LIGHT_DATA_STRUCTS];
 } u_spot_lits;
+
+layout(set = 0, binding = USING_CLUSTER_LIGHTING + 3) uniform DirLitBuffer
+{
+    DirectionLight data[MAX_DIRECTION_LIGHT];
+} u_dir_lits;
 #endif
 
 float get_distance_attenuation(float distance, float inv_radius)

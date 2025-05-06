@@ -44,6 +44,10 @@ public:
 
     float get_inner_angle() { return _inner_angle; }
 
+    void set_has_shadow(bool has_shadow);
+
+    bool get_has_shadow() { return _has_shadow; }
+
 protected:
     void destroy_light();
 
@@ -57,4 +61,5 @@ private:
     float _range = 5.0f;
     float _spot_angle = 45.0f;
     float _inner_angle = 40.0f;
+    bool _has_shadow = true;
 };
