@@ -1,6 +1,8 @@
 #ifndef SHADOW_INC_H
 #define SHADOW_INC_H
 
+#define SHADOW_CASCADE_COUNT 2
+
 struct PerShadowInfo
 {
     mat4 light_matrixs[6];

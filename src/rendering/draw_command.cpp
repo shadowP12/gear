@@ -1,5 +1,6 @@
 #include "draw_command.h"
 #include "render_context.h"
+#include "render_shared_data.h"
 #include "program.h"
 #include "vertex_factory.h"
 #include <algorithm>
@@ -51,6 +52,9 @@ void DrawCommandList::draw(RenderContext* ctx)
     EzBuffer u_spot_lits = ctx->get_buffer("u_spot_lits");
     EzBuffer u_dir_lits = ctx->get_buffer("u_dir_lits");
     EzBuffer s_clusters = ctx->get_buffer("s_clusters");
+    EzBuffer u_shadow_infos = ctx->get_buffer("u_shadow_infos");
+    EzTexture t_shadow_map = ctx->get_texture("t_shadow_map");
+    EzSampler shadow_sampler = g_rsd->get_sampler(SamplerType::Shadow);
 
     for (int i = 0; i < cmd_count; ++i)
     {
@@ -65,6 +69,12 @@ void DrawCommandList::draw(RenderContext* ctx)
         program->set_parameter("u_spot_lits", u_spot_lits);
         program->set_parameter("u_dir_lits", u_dir_lits);
         program->set_parameter("s_clusters", s_clusters);
+        program->set_parameter("u_shadow_infos", u_shadow_infos);
+        for (int j = 0; j < ctx->shadow_cascade_count; ++j)
+        {
+            program->set_parameter_array("t_shadow_map", t_shadow_map, shadow_sampler, j, j);
+        }
+
         program->bind();
 
         ez_set_primitive_topology(vertex_factory->prim_topo);

@@ -1,5 +1,11 @@
 #include "program.h"
 #include <rhi/rhi_shader_mgr.h>
+#include <math/math_define.h>
+
+static void reset_parameter(ProgramParameter& parameter)
+{
+    parameter = ProgramParameter();
+}
 
 Program::Program(const std::string& vs, const std::string& fs)
 {
@@ -114,11 +120,11 @@ void Program::bind()
         ez_bind_buffer(_parameter_buffer_binding->binding, _parameter_buffer);
     }
 
-    for (const auto& iter : _parameters)
+    for (auto& iter : _parameters)
     {
         auto parameter_binding = _parameters_binding[iter.first];
         auto descriptor_type = parameter_binding->descriptor_type;
-        const ProgramParameter& parameter = iter.second;
+        ProgramParameter& parameter = iter.second;
 
         if (_parameter_buffer_binding && _parameter_buffer_binding->binding == parameter_binding->binding)
         {
@@ -133,13 +139,37 @@ void Program::bind()
         else if( descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE ||
                  descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE)
         {
-            ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.view);
+            if ( parameter_binding->image.arrayed > 0)
+            {
+                for (int i = 0; i < parameter.array_count; ++i)
+                {
+                    ez_bind_texture_array(parameter_binding->binding, parameter.textures[i], parameter.views[i], i);
+                }
+            }
+            else
+            {
+                ez_bind_texture(parameter_binding->binding, parameter.textures[0], parameter.views[0]);
+            }
         }
         else if(descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
         {
-            ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.view);
-            ez_bind_sampler(parameter_binding->binding, parameter.sampler);
+            if ( parameter_binding->image.arrayed > 0)
+            {
+                for (int i = 0; i < parameter.array_count; ++i)
+                {
+                    ez_bind_texture_array(parameter_binding->binding, parameter.textures[i], parameter.views[i], i);
+                    ez_bind_sampler_array(parameter_binding->binding, parameter.samplers[i], i);
+                }
+            }
+            else
+            {
+                ez_bind_texture(parameter_binding->binding, parameter.textures[0], parameter.views[0]);
+                ez_bind_sampler(parameter_binding->binding, parameter.samplers[0]);
+            }
         }
+
+        // Reset parameter
+        reset_parameter(parameter);
     }
 }
 
@@ -168,14 +198,31 @@ void Program::set_parameter(const std::string& name, EzBuffer buffer, uint32_t s
 void Program::set_parameter(const std::string& name, EzTexture texture, uint32_t view)
 {
     uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].texture = texture;
-    _parameters[binding].view = view;
+    _parameters[binding].textures[0] = texture;
+    _parameters[binding].views[0] = view;
 }
 
 void Program::set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view)
 {
     uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].texture = texture;
-    _parameters[binding].sampler = sampler;
-    _parameters[binding].view = view;
+    _parameters[binding].textures[0] = texture;
+    _parameters[binding].samplers[0] = sampler;
+    _parameters[binding].views[0] = view;
+}
+
+void Program::set_parameter_array(const std::string& name, EzTexture texture, uint32_t view, uint32_t array)
+{
+    uint32_t binding = _parameters_lookup[name];
+    _parameters[binding].textures[array] = texture;
+    _parameters[binding].views[array] = view;
+    _parameters[binding].array_count = glm::max(array, _parameters[binding].array_count);
+}
+
+void Program::set_parameter_array(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view, uint32_t array)
+{
+    uint32_t binding = _parameters_lookup[name];
+    _parameters[binding].textures[array] = texture;
+    _parameters[binding].samplers[array] = sampler;
+    _parameters[binding].views[array] = view;
+    _parameters[binding].array_count = glm::max(array, _parameters[binding].array_count);
 }

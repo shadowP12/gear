@@ -18,6 +18,7 @@ ShadowPass::~ShadowPass()
 
 void ShadowPass::setup(RenderContext* ctx)
 {
+    ctx->shadow_cascade_count = SHADOW_CASCADE_COUNT;
     _draw_list.clear();
 
     _shadow_infos.clear();
@@ -51,17 +52,17 @@ void ShadowPass::exec(RenderContext* ctx)
     texture_desc.image_type = VK_IMAGE_TYPE_2D;
     texture_desc.format = VK_FORMAT_D24_UNORM_S8_UINT;
     texture_desc.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    EzTexture shadow_map = ctx->create_texture("shadow_map", texture_desc, create_status);
+    EzTexture t_shadow_map = ctx->create_texture("t_shadow_map", texture_desc, create_status);
     if (create_status == RenderContext::CreateStatus::Recreated)
     {
         for (uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++)
         {
-            ez_create_texture_view(shadow_map, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, i, 1);
+            ez_create_texture_view(t_shadow_map, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, i, 1);
         }
     }
 
     VkImageMemoryBarrier2 rt_barriers[1];
-    rt_barriers[0] = ez_image_barrier(shadow_map, EZ_RESOURCE_STATE_DEPTH_WRITE);
+    rt_barriers[0] = ez_image_barrier(t_shadow_map, EZ_RESOURCE_STATE_DEPTH_WRITE);
     ez_pipeline_barrier(0, 0, nullptr, 1, rt_barriers);
 
     EzBufferDesc buffer_desc{};
@@ -85,6 +86,7 @@ void ShadowPass::exec(RenderContext* ctx)
         float range = max_distance - min_distance;
         float ratio = max_distance / min_distance;
         float log_ratio = glm::clamp(1.0f - pssm_factor, 0.0f, 1.0f);
+        _shadow_infos[shadow_index].cascade_splits = glm::vec4(max_distance, max_distance, max_distance, max_distance);
         for (uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++)
         {
             float distribute = static_cast<float>(i + 1) / SHADOW_CASCADE_COUNT;
@@ -183,7 +185,7 @@ void ShadowPass::exec(RenderContext* ctx)
 
             EzRenderingInfo rendering_info{};
             EzRenderingAttachmentInfo depth_info{};
-            depth_info.texture = shadow_map;
+            depth_info.texture = t_shadow_map;
             depth_info.texture_view = i;
             depth_info.clear_value.depthStencil = {1.0f, 1};
             rendering_info.depth.push_back(depth_info);
@@ -213,7 +215,7 @@ void ShadowPass::exec(RenderContext* ctx)
         update_render_buffer(u_shadow_infos, EZ_RESOURCE_STATE_SHADER_RESOURCE, _shadow_infos.size() * sizeof(PerShadowInfo), 0, (uint8_t*)_shadow_infos.data());
     }
 
-    rt_barriers[0] = ez_image_barrier(shadow_map, EZ_RESOURCE_STATE_SHADER_RESOURCE);
+    rt_barriers[0] = ez_image_barrier(t_shadow_map, EZ_RESOURCE_STATE_SHADER_RESOURCE);
     ez_pipeline_barrier(0, 0, nullptr, 1, rt_barriers);
 }
 

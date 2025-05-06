@@ -14,7 +14,12 @@ layout(location = 0) out vec4 frag_color;
 #define USING_CLUSTER_LIGHTING 2
 #include "light_inc.glsl"
 
-layout(std140, binding = 6) uniform Params
+// 6 - 7
+#define USING_SHADOW_INFO 6
+#define USING_SHADOW_MAP 7
+#include "shadow_inc.glsl"
+
+layout(std140, binding = 8) uniform Params
 {
     uvec2 screen_size;
 } u_params;
@@ -102,7 +107,16 @@ void main()
         vec3 L = normalize(-lit.direction);
         float NoL = clamp(dot(N, L), 0.0, 1.0);
 
-        final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * NoL;
+        float visibility = 1.0;
+        if (lit.has_shadow)
+        {
+            PerShadowInfo shadow_info = u_shadow_infos.data[lit.shadow];
+            vec3 view_position = (u_frame.view_matrix * vertex_world_position).xyz;
+            bvec4 greater_z = greaterThan(vec4(abs(view_position.z)), shadow_info.cascade_splits);
+            uint cascade = clamp(uint(dot(vec4(greater_z), vec4(1.0))), 0u, SHADOW_CASCADE_COUNT - 1u);
+        }
+
+        final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * NoL * visibility;
     }
 
     frag_color = final_color;

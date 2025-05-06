@@ -27,6 +27,7 @@ enum class SamplerType
 {
     NearestClamp = 0,
     LinearClamp,
+    Shadow,
     Count
 };
 

@@ -38,6 +38,7 @@ public:
     glm::uvec4 viewport_size;
     glm::uvec2 screen_size;
     glm::uvec4 cluster_size;
+    uint32_t shadow_cascade_count;
     DrawCommandList draw_lists[DRAW_MAXCOUNT];
 
 private:

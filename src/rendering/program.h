@@ -5,6 +5,17 @@
 #include <unordered_map>
 #include "rhi/ez_vulkan.h"
 
+struct ProgramParameter
+{
+    uint32_t size = 0;
+    uint32_t offset = 0;
+    EzBuffer buffer = VK_NULL_HANDLE;
+    uint32_t views[6] = {0};
+    EzTexture textures[6] = {VK_NULL_HANDLE};
+    EzSampler samplers[6] = {VK_NULL_HANDLE};
+    uint32_t array_count= 0;
+};
+
 class Program
 {
 public:
@@ -30,6 +41,10 @@ public:
 
     void set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view = 0);
 
+    void set_parameter_array(const std::string& name, EzTexture texture, uint32_t view = 0, uint32_t array = 0);
+
+    void set_parameter_array(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view = 0, uint32_t array = 0);
+
 private:
     void init_parameters();
 
@@ -43,15 +58,6 @@ private:
     SpvReflectDescriptorBinding* _parameter_buffer_binding = nullptr;
     std::unordered_map<std::string, uint32_t> _members_lookup;
 
-    struct ProgramParameter
-    {
-        uint32_t view = 0;
-        uint32_t size = 0;
-        uint32_t offset = 0;
-        EzBuffer buffer = VK_NULL_HANDLE;
-        EzTexture texture = VK_NULL_HANDLE;
-        EzSampler sampler = VK_NULL_HANDLE;
-    };
     std::unordered_map<uint32_t, ProgramParameter> _parameters;
     std::unordered_map<uint32_t, SpvReflectDescriptorBinding*> _parameters_binding;
     std::unordered_map<std::string, uint32_t> _parameters_lookup;
