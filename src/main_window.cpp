@@ -25,9 +25,9 @@ void MainWindow::draw_ui()
     if (!_app)
         return;
 
-    if (show_demo_window)
-        ImGui::ShowDemoWindow(&show_demo_window);
-    return;
+//    if (show_demo_window)
+//        ImGui::ShowDemoWindow(&show_demo_window);
+//    return;
 
     World* world = _app->get_world();
     CameraController* camera_controller = _app->get_camera_controller();

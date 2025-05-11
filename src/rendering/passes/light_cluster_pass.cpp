@@ -23,9 +23,15 @@ struct Cluster
 
 LightClusterPass::LightClusterPass()
 {
-    _debug_program = std::make_unique<Program>("shader://cluster_debug.comp");
-    _aabb_program = std::make_unique<Program>("shader://cluster_aabb.comp");
-    _clustering_program = std::make_unique<Program>("shader://clustering.comp");
+    ProgramDesc program_desc;
+    program_desc.cs = "shader://cluster_debug.comp";
+    _debug_program = std::make_unique<Program>(program_desc);
+
+    program_desc.cs = "shader://cluster_aabb.comp";
+    _aabb_program = std::make_unique<Program>(program_desc);
+
+    program_desc.cs = "shader://clustering.comp";
+    _clustering_program = std::make_unique<Program>(program_desc);
 }
 
 LightClusterPass::~LightClusterPass()

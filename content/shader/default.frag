@@ -1,5 +1,6 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
+#include "common.glsl"
 
 layout(location = 0) in vec4 vertex_world_position;
 layout(location = 1) in vec3 vertex_normal;
@@ -114,6 +115,13 @@ void main()
             vec3 view_position = (u_frame.view_matrix * vertex_world_position).xyz;
             bvec4 greater_z = greaterThan(vec4(abs(view_position.z)), shadow_info.cascade_splits);
             uint cascade = clamp(uint(dot(vec4(greater_z), vec4(1.0))), 0u, SHADOW_CASCADE_COUNT - 1u);
+
+            vec4 light_space_position = (shadow_info.light_matrixs[cascade] * vertex_world_position);
+            vec3 shadow_position = light_space_position.xyz / light_space_position.w;
+            shadow_position.xy = shadow_position.xy * 0.5 + 0.5;
+            float bias = 0.005;
+
+            visibility = sampler_shadow_map(cascade, shadow_position, bias);
         }
 
         final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * NoL * visibility;

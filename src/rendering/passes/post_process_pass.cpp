@@ -7,7 +7,10 @@
 
 PostProcessPass::PostProcessPass()
 {
-    _tonemapping_program = std::make_unique<Program>("shader://post_process/tonemapping.vert", "shader://post_process/tonemapping.frag");
+    ProgramDesc program_desc;
+    program_desc.vs = "shader://post_process/tonemapping.vert";
+    program_desc.fs = "shader://post_process/tonemapping.frag";
+    _tonemapping_program = std::make_unique<Program>(program_desc);
 }
 
 PostProcessPass::~PostProcessPass()

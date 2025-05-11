@@ -15,7 +15,10 @@
 
 ImGuiRenderer::ImGuiRenderer()
 {
-    _program = std::make_unique<Program>("shader://imgui.vert", "shader://imgui.frag");
+    ProgramDesc program_desc;
+    program_desc.vs = "shader://imgui.vert";
+    program_desc.fs = "shader://imgui.frag";
+    _program = std::make_unique<Program>(program_desc);
 }
 
 ImGuiRenderer::~ImGuiRenderer()

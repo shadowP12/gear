@@ -41,15 +41,16 @@ void RenderSharedData::init_samplers()
         ez_create_sampler(sampler_desc, sampler);
         _samplers[(int)SamplerType::LinearClamp] = sampler;
     }
-
     {
         EzSampler sampler;
         EzSamplerDesc sampler_desc{};
-        sampler_desc.mag_filter = VK_FILTER_NEAREST;
-        sampler_desc.min_filter = VK_FILTER_NEAREST;
-        sampler_desc.address_u = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        sampler_desc.address_v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        sampler_desc.address_w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        sampler_desc.mag_filter = VK_FILTER_LINEAR;
+        sampler_desc.min_filter = VK_FILTER_LINEAR;
+        sampler_desc.address_u = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler_desc.address_v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler_desc.address_w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler_desc.compare_enable = true;
+        sampler_desc.compare_op = VK_COMPARE_OP_LESS_OR_EQUAL;
         ez_create_sampler(sampler_desc, sampler);
         _samplers[(int)SamplerType::Shadow] = sampler;
     }

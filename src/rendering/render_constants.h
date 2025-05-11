@@ -34,6 +34,6 @@ enum class SamplerType
 enum DrawType
 {
     DRAW_OPAQUE = 0,
-    DRAW_SHADOW = 1,
+    DRAW_SHADOW,
     DRAW_MAXCOUNT
 };

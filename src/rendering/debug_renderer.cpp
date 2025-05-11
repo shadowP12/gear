@@ -11,7 +11,10 @@
 
 DebugRenderer::DebugRenderer()
 {
-    _geometry_program = std::make_unique<Program>("shader://debug_geometry.vert", "shader://debug_geometry.frag");
+    ProgramDesc program_desc;
+    program_desc.vs = "shader://debug_geometry.vert";
+    program_desc.fs = "shader://debug_geometry.frag";
+    _geometry_program = std::make_unique<Program>(program_desc);
 }
 
 DebugRenderer::~DebugRenderer()

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include "features.h"
 #include "rhi/ez_vulkan.h"
 
 struct ProgramParameter
@@ -10,24 +11,31 @@ struct ProgramParameter
     uint32_t size = 0;
     uint32_t offset = 0;
     EzBuffer buffer = VK_NULL_HANDLE;
-    uint32_t views[6] = {0};
-    EzTexture textures[6] = {VK_NULL_HANDLE};
-    EzSampler samplers[6] = {VK_NULL_HANDLE};
-    uint32_t array_count= 0;
+    EzTexture texture = VK_NULL_HANDLE;
+    EzSampler sampler = VK_NULL_HANDLE;
+    uint32_t views[6];
+    uint32_t view_count= 0;
+};
+
+struct ProgramDesc
+{
+    std::string vs;
+    std::string fs;
+    std::string cs;
+    std::vector<std::string> macros;
+    std::vector<Feature> features;
 };
 
 class Program
 {
 public:
-    Program(const std::string& vs, const std::string& fs);
-
-    Program(const std::string& vs, const std::string& fs, const std::vector<std::string>& macros);
-
-    Program(const std::string& cs);
-
-    Program(const std::string& cs, const std::vector<std::string>& macros);
+    Program(const ProgramDesc& desc);
 
     ~Program();
+
+    bool has_feature(const std::vector<Feature>& features);
+
+    void reload();
 
     void bind();
 
@@ -41,9 +49,9 @@ public:
 
     void set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view = 0);
 
-    void set_parameter_array(const std::string& name, EzTexture texture, uint32_t view = 0, uint32_t array = 0);
+    void set_parameter(const std::string& name, EzTexture texture, uint32_t view_count, const uint32_t* views);
 
-    void set_parameter_array(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view = 0, uint32_t array = 0);
+    void set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view_count, const uint32_t* views);
 
 private:
     void init_parameters();
@@ -61,4 +69,21 @@ private:
     std::unordered_map<uint32_t, ProgramParameter> _parameters;
     std::unordered_map<uint32_t, SpvReflectDescriptorBinding*> _parameters_binding;
     std::unordered_map<std::string, uint32_t> _parameters_lookup;
+
+    ProgramDesc _desc;
 };
+
+class ProgramPool
+{
+public:
+    void add_program(Program* program);
+
+    void remove_program(Program* program);
+
+    void reload(const std::vector<Feature>& features);
+
+private:
+    std::vector<Program*> _programs;
+};
+
+extern ProgramPool* g_program_pool;

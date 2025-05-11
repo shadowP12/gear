@@ -17,7 +17,14 @@ layout(set = 0, binding = USING_SHADOW_INFO) uniform ShadowInfoBuffer
 #endif
 
 #ifdef USING_SHADOW_MAP
-layout(set = 0, binding = USING_SHADOW_MAP) uniform sampler2DArray t_shadow_map;
+layout(set = 0, binding = USING_SHADOW_MAP) uniform sampler2DArrayShadow t_shadow_map;
+
+float sampler_shadow_map(uint cascade, vec3 shadow_position, float bias)
+{
+    vec2 uv = shadow_position.xy;
+    float depth = shadow_position.z - bias;
+    return texture(t_shadow_map, vec4(uv, cascade, saturate(depth)));
+}
 #endif
 
 #endif

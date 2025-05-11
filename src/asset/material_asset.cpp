@@ -129,7 +129,12 @@ void MaterialAsset::deserialize(const rapidjson::Value& value, Serialization::Bi
                 pass.macros.push_back(pass_value["macros"][j].GetString());
             }
         }
-        program = new Program(pass.vs, pass.fs, pass.macros);
+
+        ProgramDesc program_desc;
+        program_desc.vs = pass.vs;
+        program_desc.fs = pass.fs;
+        program_desc.macros = pass.macros;
+        program = new Program(program_desc);
 
         if (pass_value.HasMember("params"))
         {

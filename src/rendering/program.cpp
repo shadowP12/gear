@@ -2,47 +2,57 @@
 #include <rhi/rhi_shader_mgr.h>
 #include <math/math_define.h>
 
-static void reset_parameter(ProgramParameter& parameter)
-{
-    parameter = ProgramParameter();
-}
+ProgramPool* g_program_pool = nullptr;
 
-Program::Program(const std::string& vs, const std::string& fs)
+Program::Program(const ProgramDesc& desc)
 {
-    std::vector<std::string> macros;
-    _vs = rhi_get_shader(vs, macros);
-    _fs = rhi_get_shader(fs, macros);
+    _desc = desc;
+    reload();
     init_parameters();
-}
-
-Program::Program(const std::string& vs, const std::string& fs, const std::vector<std::string>& macros)
-{
-    _vs = rhi_get_shader(vs, macros);
-    _fs = rhi_get_shader(fs, macros);
-    init_parameters();
-}
-
-Program::Program(const std::string& cs)
-{
-    std::vector<std::string> macros;
-    _cs = rhi_get_shader(cs, macros);
-    init_parameters();
-}
-
-Program::Program(const std::string& cs, const std::vector<std::string>& macros)
-{
-    _cs = rhi_get_shader(cs, macros);
-    init_parameters();
+    g_program_pool->add_program(this);
 }
 
 Program::~Program()
 {
+    g_program_pool->remove_program(this);
     if (_parameter_buffer)
     {
         ez_unmap_memory(_parameter_buffer);
         _parameter_data = nullptr;
         ez_destroy_buffer(_parameter_buffer);
     }
+}
+
+bool Program::has_feature(const std::vector<Feature>& features)
+{
+    for (auto feature : _desc.features)
+    {
+        if (std::find(features.begin(), features.end(), feature) != features.end())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Program::reload()
+{
+    std::vector<std::string> total_macros = _desc.macros;
+    g_feature_config.get_macros(_desc.features, total_macros);
+
+    if (!_desc.vs.empty())
+    {
+        _vs = rhi_get_shader(_desc.vs, total_macros);
+    }
+    if (!_desc.fs.empty())
+    {
+        _fs = rhi_get_shader(_desc.fs, total_macros);
+    }
+    if (!_desc.cs.empty())
+    {
+        _cs = rhi_get_shader(_desc.cs, total_macros);
+    }
+    init_parameters();
 }
 
 void Program::init_parameters()
@@ -141,35 +151,32 @@ void Program::bind()
         {
             if ( parameter_binding->image.arrayed > 0)
             {
-                for (int i = 0; i < parameter.array_count; ++i)
+                for (int i = 0; i < parameter.view_count; ++i)
                 {
-                    ez_bind_texture_array(parameter_binding->binding, parameter.textures[i], parameter.views[i], i);
+                    ez_bind_texture_array(parameter_binding->binding, parameter.texture, parameter.views[i], i);
                 }
             }
             else
             {
-                ez_bind_texture(parameter_binding->binding, parameter.textures[0], parameter.views[0]);
+                ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.views[0]);
             }
         }
         else if(descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
         {
             if ( parameter_binding->image.arrayed > 0)
             {
-                for (int i = 0; i < parameter.array_count; ++i)
+                for (int i = 0; i < parameter.view_count; ++i)
                 {
-                    ez_bind_texture_array(parameter_binding->binding, parameter.textures[i], parameter.views[i], i);
-                    ez_bind_sampler_array(parameter_binding->binding, parameter.samplers[i], i);
+                    ez_bind_texture_array(parameter_binding->binding, parameter.texture, parameter.views[i], i);
+                    ez_bind_sampler_array(parameter_binding->binding, parameter.sampler, i);
                 }
             }
             else
             {
-                ez_bind_texture(parameter_binding->binding, parameter.textures[0], parameter.views[0]);
-                ez_bind_sampler(parameter_binding->binding, parameter.samplers[0]);
+                ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.views[0]);
+                ez_bind_sampler(parameter_binding->binding, parameter.sampler);
             }
         }
-
-        // Reset parameter
-        reset_parameter(parameter);
     }
 }
 
@@ -198,31 +205,64 @@ void Program::set_parameter(const std::string& name, EzBuffer buffer, uint32_t s
 void Program::set_parameter(const std::string& name, EzTexture texture, uint32_t view)
 {
     uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].textures[0] = texture;
+    _parameters[binding].texture = texture;
     _parameters[binding].views[0] = view;
+    _parameters[binding].view_count = 1;
 }
 
 void Program::set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view)
 {
     uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].textures[0] = texture;
-    _parameters[binding].samplers[0] = sampler;
+    _parameters[binding].texture = texture;
+    _parameters[binding].sampler = sampler;
     _parameters[binding].views[0] = view;
+    _parameters[binding].view_count = 1;
 }
 
-void Program::set_parameter_array(const std::string& name, EzTexture texture, uint32_t view, uint32_t array)
+void Program::set_parameter(const std::string& name, EzTexture texture, uint32_t view_count, const uint32_t* views)
 {
     uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].textures[array] = texture;
-    _parameters[binding].views[array] = view;
-    _parameters[binding].array_count = glm::max(array, _parameters[binding].array_count);
+    _parameters[binding].texture = texture;
+    _parameters[binding].view_count = view_count;
+    for (int i = 0; i < view_count; ++i)
+    {
+        _parameters[binding].views[i] = views[i];
+    }
 }
 
-void Program::set_parameter_array(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view, uint32_t array)
+void Program::set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view_count, const uint32_t* views)
 {
     uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].textures[array] = texture;
-    _parameters[binding].samplers[array] = sampler;
-    _parameters[binding].views[array] = view;
-    _parameters[binding].array_count = glm::max(array, _parameters[binding].array_count);
+    _parameters[binding].texture = texture;
+    _parameters[binding].sampler = sampler;
+    _parameters[binding].view_count = view_count;
+    for (int i = 0; i < view_count; ++i)
+    {
+        _parameters[binding].views[i] = views[i];
+    }
+}
+
+void ProgramPool::add_program(Program* program)
+{
+    _programs.push_back(program);
+}
+
+void ProgramPool::remove_program(Program* program)
+{
+    auto iter = std::find(_programs.begin(), _programs.end(), program);
+    if (iter != _programs.end())
+    {
+        _programs.erase(iter);
+    }
+}
+
+void ProgramPool::reload(const std::vector<Feature>& features)
+{
+    for (auto program : _programs)
+    {
+        if (program->has_feature(features))
+        {
+            program->reload();
+        }
+    }
 }

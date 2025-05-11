@@ -5,12 +5,14 @@
 #include "imgui_renderer.h"
 #include "debug_renderer.h"
 #include "render_shared_data.h"
+#include "program.h"
 #include "window.h"
 #include <core/memory.h>
 
 void RenderSystem::setup()
 {
     _ctx = new RenderContext();
+    g_program_pool = new ProgramPool();
     g_rsd = new RenderSharedData();
     g_scene = new RenderScene();
     g_renderer = new Renderer();
@@ -25,6 +27,7 @@ void RenderSystem::finish()
     SAFE_DELETE(g_scene);
     SAFE_DELETE(g_renderer);
     SAFE_DELETE(g_rsd);
+    SAFE_DELETE(g_program_pool);
     SAFE_DELETE(_ctx);
 }
 
