@@ -105,16 +105,24 @@ void main()
         float visibility = 1.0;
         if (lit.has_shadow)
         {
+            float constant_bias = 0.5;
+            float slope_bias = 5.0;
+            float normal_bias = 0.04;
+
             PerShadowInfo shadow_info = u_shadow_infos.data[lit.shadow];
-            vec3 view_position = (u_frame.view_matrix * vertex_world_position).xyz;
+            vec2 bias_offset = get_shadow_offsets(N, L);
+            vec2 shadow_texel_size = get_shadow_texel_size();
+            vec3 normal_offset_bias = N * normal_bias * bias_offset.x;
+            vec4 position_world = vec4(vertex_world_position.xyz + normal_offset_bias, 1.0);
+
+            vec3 view_position = (u_frame.view_matrix * position_world).xyz;
             bvec4 greater_z = greaterThan(vec4(abs(view_position.z)), shadow_info.cascade_splits);
             uint cascade = clamp(uint(dot(vec4(greater_z), vec4(1.0))), 0u, SHADOW_CASCADE_COUNT - 1u);
-
-            mat4 xx = shadow_info.light_matrixs[cascade];
-            vec4 light_space_position = (xx * vertex_world_position);
+            vec4 light_space_position = (shadow_info.light_matrixs[cascade] * position_world);
             vec3 shadow_position = light_space_position.xyz / light_space_position.w;
             shadow_position.xy = shadow_position.xy * 0.5 + 0.5;
-            float bias = 0.005;
+            float bias = constant_bias * shadow_texel_size.x * (constant_bias + slope_bias * bias_offset.y);
+
             #if defined(SHADOW_SIMPLE)
             visibility = sampler_shadow(cascade, shadow_position, bias);
             #elif defined(SHADOW_PCF)

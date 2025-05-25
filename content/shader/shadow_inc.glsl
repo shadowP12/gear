@@ -19,6 +19,22 @@ layout(set = 0, binding = USING_SHADOW_INFO) uniform ShadowInfoBuffer
 #ifdef USING_SHADOW_MAP
 layout(set = 0, binding = USING_SHADOW_MAP) uniform sampler2DArrayShadow t_shadow_map;
 
+vec2 get_shadow_texel_size()
+{
+    vec2 size = vec2(textureSize(t_shadow_map, 0));
+    vec2 texel_size = vec2(1.0) / size;
+    return texel_size;
+}
+
+
+vec2 get_shadow_offsets(vec3 N, vec3 L)
+{
+    float cos_alpha = saturate(dot(N, L));
+    float offset_scale_N = sqrt(1 - cos_alpha * cos_alpha);
+    float offset_scale_L = offset_scale_N / cos_alpha;
+    return vec2(offset_scale_N, min(2, offset_scale_L));
+}
+
 float sampler_shadow(uint cascade, vec3 shadow_position, float bias)
 {
     vec2 uv = shadow_position.xy;
@@ -117,7 +133,7 @@ float sampler_shadow_pcf_random_disc(uint cascade, vec3 shadow_position, float b
     vec2 texel_size = vec2(1.0) / size;
     vec2 uv = shadow_position.xy;
     float depth = shadow_position.z - bias;
-    vec2 sample_scale = 6.0f * texel_size;
+    vec2 sample_scale = 2.0f * texel_size;
 
     mat2 disk_rotation;
     {
