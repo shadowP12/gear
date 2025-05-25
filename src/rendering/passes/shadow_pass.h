@@ -2,6 +2,7 @@
 #include "../draw_command.h"
 #include <math/bounding_box.h>
 #include <rhi/ez_vulkan.h>
+#include <memory>
 
 #define SHADOW_CASCADE_COUNT 3
 
@@ -36,7 +37,12 @@ public:
 
     void exec(RenderContext* ctx);
 
+    void convert_to_vsm(RenderContext* ctx);
+
 private:
     ShadowDrawCommandList _draw_list;
     std::vector<PerShadowInfo> _shadow_infos;
+    std::unique_ptr<Program> _vsm_convert_program;
+    std::unique_ptr<Program> _vsm_blur_vertical_program;
+    std::unique_ptr<Program> _vsm_blur_horizontal_program;
 };

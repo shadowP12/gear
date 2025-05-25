@@ -8,13 +8,12 @@
 
 struct ProgramParameter
 {
+    uint32_t view = 0;
     uint32_t size = 0;
     uint32_t offset = 0;
     EzBuffer buffer = VK_NULL_HANDLE;
     EzTexture texture = VK_NULL_HANDLE;
     EzSampler sampler = VK_NULL_HANDLE;
-    uint32_t views[6];
-    uint32_t view_count= 0;
 };
 
 struct ProgramDesc
@@ -48,10 +47,6 @@ public:
     void set_parameter(const std::string& name, EzTexture texture, uint32_t view = 0);
 
     void set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view = 0);
-
-    void set_parameter(const std::string& name, EzTexture texture, uint32_t view_count, const uint32_t* views);
-
-    void set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view_count, const uint32_t* views);
 
 private:
     void init_parameters();

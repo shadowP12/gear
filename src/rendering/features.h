@@ -5,7 +5,8 @@
 enum class ShadowMode
 {
     Simple = 0,
-    PCF
+    PCF,
+    VSM
 };
 
 enum class PCFMethod
@@ -30,8 +31,8 @@ public:
 
     void get_shadow_macros(std::vector<std::string>& macros);
 
-    ShadowMode shadow_mode = ShadowMode::PCF;
-    PCFMethod pcf_method = PCFMethod::RandomDisc;
+    ShadowMode shadow_mode = ShadowMode::VSM;
+    PCFMethod pcf_method = PCFMethod::Optimized;
 };
 
 extern FeatureConfig g_feature_config;

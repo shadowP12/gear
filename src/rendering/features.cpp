@@ -6,7 +6,7 @@ void FeatureConfig::get_shadow_macros(std::vector<std::string>& macros)
     {
         macros.push_back("SHADOW_SIMPLE");
     }
-    else if(shadow_mode == ShadowMode::PCF)
+    else if (shadow_mode == ShadowMode::PCF)
     {
         if (pcf_method == PCFMethod::Optimized)
         {
@@ -20,6 +20,10 @@ void FeatureConfig::get_shadow_macros(std::vector<std::string>& macros)
         {
             macros.push_back("SHADOW_PCF");
         }
+    }
+    else if (shadow_mode == ShadowMode::VSM)
+    {
+        macros.push_back("SHADOW_VSM");
     }
 }
 

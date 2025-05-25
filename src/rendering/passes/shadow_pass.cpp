@@ -2,16 +2,34 @@
 #include "rendering/render_context.h"
 #include "rendering/renderable.h"
 #include "rendering/render_scene.h"
+#include "rendering/render_shared_data.h"
 #include "rendering/program.h"
 #include "rendering/vertex_factory.h"
+#include "rendering/features.h"
 #include "rendering/utils/render_utils.h"
 #include "rendering/utils/debug_utils.h"
 #include <math/transform_util.h>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
+uint32_t k_dimension = 2048;
+
 ShadowPass::ShadowPass()
-{}
+{
+    ProgramDesc program_desc;
+    program_desc.vs = "shader://quad.vert";
+    program_desc.fs = "shader://vsm_convert.frag";
+    _vsm_convert_program = std::make_unique<Program>(program_desc);
+
+    program_desc.vs = "shader://quad.vert";
+    program_desc.fs = "shader://vsm_blur.frag";
+    _vsm_blur_horizontal_program = std::make_unique<Program>(program_desc);
+
+    program_desc.vs = "shader://quad.vert";
+    program_desc.fs = "shader://vsm_blur.frag";
+    program_desc.macros.push_back("Vertical");
+    _vsm_blur_vertical_program = std::make_unique<Program>(program_desc);
+}
 
 ShadowPass::~ShadowPass()
 {}
@@ -43,11 +61,10 @@ void ShadowPass::process(RenderContext* ctx, Renderable* renderable)
 
 void ShadowPass::exec(RenderContext* ctx)
 {
-    uint32_t dimension = 2048;
     RenderContext::CreateStatus create_status;
     EzTextureDesc texture_desc{};
-    texture_desc.width = dimension;
-    texture_desc.height = dimension;
+    texture_desc.width = k_dimension;
+    texture_desc.height = k_dimension;
     texture_desc.layers = SHADOW_CASCADE_COUNT;
     texture_desc.image_type = VK_IMAGE_TYPE_2D;
     texture_desc.format = VK_FORMAT_D24_UNORM_S8_UINT;
@@ -72,7 +89,8 @@ void ShadowPass::exec(RenderContext* ctx)
     buffer_desc.size = glm::max(1, (int)_shadow_infos.size()) * sizeof(PerShadowInfo);
     EzBuffer u_shadow_infos = ctx->create_buffer("u_shadow_infos", buffer_desc, false);
 
-    if (g_scene->dir_lights.size() > 0 && g_scene->dir_lights[0]->has_shadow)
+    bool has_shadow = g_scene->dir_lights.size() > 0 && g_scene->dir_lights[0]->has_shadow;
+    if (has_shadow)
     {
         DirectionLight* sun = g_scene->dir_lights[0];
         uint32_t shadow_index = sun->shadow;
@@ -155,7 +173,7 @@ void ShadowPass::exec(RenderContext* ctx)
             radius = std::ceil(radius * 16.0f) / 16.0f;
 
             // Snap to texel grid
-            float world_units_per_texel = radius * 2.0f / (float)dimension;
+            float world_units_per_texel = radius * 2.0f / (float)k_dimension;
             glm::mat4 shadow_view_matrix = glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 0.0) + sun->direction, glm::vec3(0.0f, 1.0f, 0.0f));
             glm::vec3 shadow_space_origin = TransformUtil::transform_point(center, shadow_view_matrix);
             glm::vec2 snap_offset(fmod(shadow_space_origin.x, world_units_per_texel), fmod(shadow_space_origin.y, world_units_per_texel));
@@ -190,12 +208,12 @@ void ShadowPass::exec(RenderContext* ctx)
             depth_info.texture_view = i + 1;
             depth_info.clear_value.depthStencil = {1.0f, 1};
             rendering_info.depth.push_back(depth_info);
-            rendering_info.width = dimension;
-            rendering_info.height = dimension;
+            rendering_info.width = k_dimension;
+            rendering_info.height = k_dimension;
 
             ez_begin_rendering(rendering_info);
-            ez_set_viewport(0, 0, (float)dimension, (float)dimension);
-            ez_set_scissor(0, 0, (int32_t)dimension, (int32_t)dimension);
+            ez_set_viewport(0, 0, (float)k_dimension, (float)k_dimension);
+            ez_set_scissor(0, 0, (int32_t)k_dimension, (int32_t)k_dimension);
 
             EzBlendState blend_state;
             ez_set_blend_state(blend_state);
@@ -218,6 +236,170 @@ void ShadowPass::exec(RenderContext* ctx)
     }
 
     rt_barriers[0] = ez_image_barrier(t_shadow_map, EZ_RESOURCE_STATE_SHADER_RESOURCE);
+    ez_pipeline_barrier(0, 0, nullptr, 1, rt_barriers);
+
+    if (g_feature_config.shadow_mode == ShadowMode::VSM)
+    {
+        convert_to_vsm(ctx);
+    }
+}
+
+void ShadowPass::convert_to_vsm(RenderContext* ctx)
+{
+    RenderContext::CreateStatus create_status;
+    EzTextureDesc texture_desc{};
+    texture_desc.width = k_dimension;
+    texture_desc.height = k_dimension;
+    texture_desc.layers = SHADOW_CASCADE_COUNT;
+    texture_desc.image_type = VK_IMAGE_TYPE_2D;
+    texture_desc.format = VK_FORMAT_R16G16_SFLOAT;
+    texture_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    EzTexture t_vsm = ctx->create_texture("t_vsm", texture_desc, create_status);
+    if (create_status == RenderContext::CreateStatus::Recreated)
+    {
+        ez_create_texture_view(t_vsm, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, SHADOW_CASCADE_COUNT);
+        for (uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++)
+        {
+            ez_create_texture_view(t_vsm, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, i, 1);
+        }
+    }
+
+    texture_desc.layers = 1;
+    EzTexture t_temp_vsm = ctx->create_texture("t_temp_vsm", texture_desc, create_status);
+    if (create_status == RenderContext::CreateStatus::Recreated)
+    {
+        ez_create_texture_view(t_temp_vsm, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1);
+    }
+
+    VkImageMemoryBarrier2 rt_barriers[2];
+
+    EzTexture t_shadow_map = ctx->get_texture("t_shadow_map");
+    bool has_shadow = g_scene->dir_lights.size() > 0 && g_scene->dir_lights[0]->has_shadow;
+    if (has_shadow)
+    {
+        DirectionLight* sun = g_scene->dir_lights[0];
+        uint32_t shadow_index = sun->shadow;
+
+        ez_reset_pipeline_state();
+        EzBlendState blend_state;
+        ez_set_blend_state(blend_state);
+
+        EzDepthState depth_state;
+        depth_state.depth_test = false;
+        depth_state.depth_write = false;
+        ez_set_depth_state(depth_state);
+
+        for (uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++)
+        {
+            std::string label_text = "Convert vsm " + std::to_string(i);
+            DebugLabel debug_label(label_text.c_str(), DebugLabel::WHITE);
+            std::string u_pass_name = "u_csm_pass_"+ std::to_string(i);
+            EzBuffer u_pass = ctx->get_buffer(u_pass_name);
+
+            // Convert
+            {
+                rt_barriers[0] = ez_image_barrier(t_vsm, EZ_RESOURCE_STATE_RENDERTARGET);
+                ez_pipeline_barrier(0, 0, nullptr, 1, rt_barriers);
+
+                EzRenderingInfo rendering_info{};
+                EzRenderingAttachmentInfo color_info{};
+                color_info.texture = t_vsm;
+                color_info.texture_view = i + 1;
+                color_info.load_op = VK_ATTACHMENT_LOAD_OP_LOAD;
+                color_info.clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+                rendering_info.colors.push_back(color_info);
+                rendering_info.width = k_dimension;
+                rendering_info.height = k_dimension;
+
+                ez_begin_rendering(rendering_info);
+                ez_set_viewport(0, 0, (float)k_dimension, (float)k_dimension);
+                ez_set_scissor(0, 0, (int32_t)k_dimension, (int32_t)k_dimension);
+
+                _vsm_convert_program->set_parameter("u_pass", u_pass);
+                _vsm_convert_program->set_parameter("t_shadow_map", t_shadow_map, g_rsd->get_sampler(SamplerType::LinearClamp));
+                _vsm_convert_program->bind();
+
+                ez_set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+                ez_set_vertex_binding(0, 20);
+                ez_set_vertex_attrib(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+                ez_set_vertex_attrib(0, 1, VK_FORMAT_R32G32_SFLOAT, 12);
+                ez_bind_vertex_buffer(0, g_rsd->quad_buffer);
+                ez_draw(6, 0);
+
+                ez_end_rendering();
+            }
+
+            // Horizontal blur
+            {
+                rt_barriers[0] = ez_image_barrier(t_vsm, EZ_RESOURCE_STATE_SHADER_RESOURCE);
+                rt_barriers[1] = ez_image_barrier(t_temp_vsm, EZ_RESOURCE_STATE_RENDERTARGET);
+                ez_pipeline_barrier(0, 0, nullptr, 2, rt_barriers);
+
+                EzRenderingInfo rendering_info{};
+                EzRenderingAttachmentInfo color_info{};
+                color_info.texture = t_temp_vsm;
+                color_info.texture_view = 0;
+                color_info.load_op = VK_ATTACHMENT_LOAD_OP_LOAD;
+                color_info.clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+                rendering_info.colors.push_back(color_info);
+                rendering_info.width = k_dimension;
+                rendering_info.height = k_dimension;
+
+                ez_begin_rendering(rendering_info);
+                ez_set_viewport(0, 0, (float)k_dimension, (float)k_dimension);
+                ez_set_scissor(0, 0, (int32_t)k_dimension, (int32_t)k_dimension);
+
+                _vsm_blur_horizontal_program->set_parameter("u_pass", u_pass);
+                _vsm_blur_horizontal_program->set_parameter("t_input", t_vsm, g_rsd->get_sampler(SamplerType::LinearClamp), i + 1);
+                _vsm_blur_horizontal_program->bind();
+
+                ez_set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+                ez_set_vertex_binding(0, 20);
+                ez_set_vertex_attrib(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+                ez_set_vertex_attrib(0, 1, VK_FORMAT_R32G32_SFLOAT, 12);
+                ez_bind_vertex_buffer(0, g_rsd->quad_buffer);
+                ez_draw(6, 0);
+
+                ez_end_rendering();
+            }
+
+            // Vertical blur
+            {
+                rt_barriers[0] = ez_image_barrier(t_vsm, EZ_RESOURCE_STATE_RENDERTARGET);
+                rt_barriers[1] = ez_image_barrier(t_temp_vsm, EZ_RESOURCE_STATE_SHADER_RESOURCE);
+                ez_pipeline_barrier(0, 0, nullptr, 2, rt_barriers);
+
+                EzRenderingInfo rendering_info{};
+                EzRenderingAttachmentInfo color_info{};
+                color_info.texture = t_vsm;
+                color_info.texture_view = i + 1;
+                color_info.load_op = VK_ATTACHMENT_LOAD_OP_LOAD;
+                color_info.clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+                rendering_info.colors.push_back(color_info);
+                rendering_info.width = k_dimension;
+                rendering_info.height = k_dimension;
+
+                ez_begin_rendering(rendering_info);
+                ez_set_viewport(0, 0, (float)k_dimension, (float)k_dimension);
+                ez_set_scissor(0, 0, (int32_t)k_dimension, (int32_t)k_dimension);
+
+                _vsm_blur_vertical_program->set_parameter("u_pass", u_pass);
+                _vsm_blur_vertical_program->set_parameter("t_input", t_temp_vsm, g_rsd->get_sampler(SamplerType::LinearClamp));
+                _vsm_blur_vertical_program->bind();
+
+                ez_set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+                ez_set_vertex_binding(0, 20);
+                ez_set_vertex_attrib(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0);
+                ez_set_vertex_attrib(0, 1, VK_FORMAT_R32G32_SFLOAT, 12);
+                ez_bind_vertex_buffer(0, g_rsd->quad_buffer);
+                ez_draw(6, 0);
+
+                ez_end_rendering();
+            }
+        }
+    }
+
+    rt_barriers[0] = ez_image_barrier(t_vsm, EZ_RESOURCE_STATE_SHADER_RESOURCE);
     ez_pipeline_barrier(0, 0, nullptr, 1, rt_barriers);
 }
 

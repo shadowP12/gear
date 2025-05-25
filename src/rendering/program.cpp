@@ -149,33 +149,12 @@ void Program::bind()
         else if( descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE ||
                  descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE)
         {
-            if ( parameter_binding->image.arrayed > 0)
-            {
-                for (int i = 0; i < parameter.view_count; ++i)
-                {
-                    ez_bind_texture_array(parameter_binding->binding, parameter.texture, parameter.views[i], i);
-                }
-            }
-            else
-            {
-                ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.views[0]);
-            }
+            ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.view);
         }
         else if(descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
         {
-            if ( parameter_binding->image.arrayed > 0)
-            {
-                for (int i = 0; i < parameter.view_count; ++i)
-                {
-                    ez_bind_texture_array(parameter_binding->binding, parameter.texture, parameter.views[i], i);
-                    ez_bind_sampler_array(parameter_binding->binding, parameter.sampler, i);
-                }
-            }
-            else
-            {
-                ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.views[0]);
-                ez_bind_sampler(parameter_binding->binding, parameter.sampler);
-            }
+            ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.view);
+            ez_bind_sampler(parameter_binding->binding, parameter.sampler);
         }
     }
 }
@@ -206,8 +185,7 @@ void Program::set_parameter(const std::string& name, EzTexture texture, uint32_t
 {
     uint32_t binding = _parameters_lookup[name];
     _parameters[binding].texture = texture;
-    _parameters[binding].views[0] = view;
-    _parameters[binding].view_count = 1;
+    _parameters[binding].view = view;
 }
 
 void Program::set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view)
@@ -215,31 +193,7 @@ void Program::set_parameter(const std::string& name, EzTexture texture, EzSample
     uint32_t binding = _parameters_lookup[name];
     _parameters[binding].texture = texture;
     _parameters[binding].sampler = sampler;
-    _parameters[binding].views[0] = view;
-    _parameters[binding].view_count = 1;
-}
-
-void Program::set_parameter(const std::string& name, EzTexture texture, uint32_t view_count, const uint32_t* views)
-{
-    uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].texture = texture;
-    _parameters[binding].view_count = view_count;
-    for (int i = 0; i < view_count; ++i)
-    {
-        _parameters[binding].views[i] = views[i];
-    }
-}
-
-void Program::set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view_count, const uint32_t* views)
-{
-    uint32_t binding = _parameters_lookup[name];
-    _parameters[binding].texture = texture;
-    _parameters[binding].sampler = sampler;
-    _parameters[binding].view_count = view_count;
-    for (int i = 0; i < view_count; ++i)
-    {
-        _parameters[binding].views[i] = views[i];
-    }
+    _parameters[binding].view = view;
 }
 
 void ProgramPool::add_program(Program* program)
