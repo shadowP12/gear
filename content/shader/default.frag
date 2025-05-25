@@ -40,12 +40,6 @@ uint get_cluster_index(vec4 frag_coord)
     return tile_index;
 }
 
-float quick_hash(vec2 pos)
-{
-    const vec3 magic = vec3(0.06711056f, 0.00583715f, 52.9829189f);
-    return fract(magic.z * fract(dot(pos, magic.xy)));
-}
-
 vec3 surface_shading()
 {
     vec3 base_color = vec3(1.0, 1.0, 1.0);
@@ -116,12 +110,20 @@ void main()
             bvec4 greater_z = greaterThan(vec4(abs(view_position.z)), shadow_info.cascade_splits);
             uint cascade = clamp(uint(dot(vec4(greater_z), vec4(1.0))), 0u, SHADOW_CASCADE_COUNT - 1u);
 
-            vec4 light_space_position = (shadow_info.light_matrixs[cascade] * vertex_world_position);
+            mat4 xx = shadow_info.light_matrixs[cascade];
+            vec4 light_space_position = (xx * vertex_world_position);
             vec3 shadow_position = light_space_position.xyz / light_space_position.w;
             shadow_position.xy = shadow_position.xy * 0.5 + 0.5;
             float bias = 0.005;
-
-            visibility = sampler_shadow_map(cascade, shadow_position, bias);
+            #if defined(SHADOW_SIMPLE)
+            visibility = sampler_shadow(cascade, shadow_position, bias);
+            #elif defined(SHADOW_PCF)
+            visibility = sampler_shadow_pcf(cascade, shadow_position, bias);
+            #elif defined(SHADOW_OPTIMIZED_PCF)
+            visibility = sampler_shadow_pcf_optimized(cascade, shadow_position, bias);
+            #elif defined(SHADOW_RANDOM_DISC_PCF)
+            visibility = sampler_shadow_pcf_random_disc(cascade, shadow_position, bias);
+            #endif
         }
 
         final_color.xyz += surface_shading() * lit.color * lit.intensity * exposure * NoL * visibility;

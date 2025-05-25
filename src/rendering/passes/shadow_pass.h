@@ -3,7 +3,7 @@
 #include <math/bounding_box.h>
 #include <rhi/ez_vulkan.h>
 
-#define SHADOW_CASCADE_COUNT 2
+#define SHADOW_CASCADE_COUNT 3
 
 class Program;
 class Renderable;

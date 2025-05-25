@@ -55,7 +55,6 @@ void DrawCommandList::draw(RenderContext* ctx)
     EzBuffer u_shadow_infos = ctx->get_buffer("u_shadow_infos");
     EzTexture t_shadow_map = ctx->get_texture("t_shadow_map");
     EzSampler shadow_sampler = g_rsd->get_sampler(SamplerType::Shadow);
-    uint32_t shadow_map_views[] = {0, 1, 2, 3};
 
     for (int i = 0; i < cmd_count; ++i)
     {
@@ -71,7 +70,7 @@ void DrawCommandList::draw(RenderContext* ctx)
         program->set_parameter("u_dir_lits", u_dir_lits);
         program->set_parameter("s_clusters", s_clusters);
         program->set_parameter("u_shadow_infos", u_shadow_infos);
-        program->set_parameter("t_shadow_map", t_shadow_map, shadow_sampler, ctx->shadow_cascade_count, shadow_map_views);
+        program->set_parameter("t_shadow_map", t_shadow_map, shadow_sampler);
 
         program->bind();
 

@@ -130,10 +130,14 @@ void MaterialAsset::deserialize(const rapidjson::Value& value, Serialization::Bi
             }
         }
 
+        std::vector<Feature> features;
+        features.push_back(Feature::Shadow);
+
         ProgramDesc program_desc;
         program_desc.vs = pass.vs;
         program_desc.fs = pass.fs;
         program_desc.macros = pass.macros;
+        program_desc.features = features;
         program = new Program(program_desc);
 
         if (pass_value.HasMember("params"))

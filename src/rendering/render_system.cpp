@@ -18,6 +18,8 @@ void RenderSystem::setup()
     g_renderer = new Renderer();
     g_imgui_renderer = new ImGuiRenderer();
     g_debug_renderer = new DebugRenderer();
+
+    feature_config = g_feature_config;
 }
 
 void RenderSystem::finish()
@@ -33,6 +35,13 @@ void RenderSystem::finish()
 
 void RenderSystem::render(Window* window)
 {
+    std::vector<Feature> diff_features = g_feature_config.get_diff_features(feature_config);
+    if (!diff_features.empty())
+    {
+        g_feature_config = feature_config;
+        g_program_pool->reload(diff_features);
+    }
+
     predraw_event.broadcast();
 
     EzSwapchain swapchain = window->get_swapchain();
@@ -48,7 +57,7 @@ void RenderSystem::render(Window* window)
         EzTextureDesc texture_desc{};
         texture_desc.width = swapchain->width;
         texture_desc.height = swapchain->height;
-        texture_desc.format = VK_FORMAT_B8G8R8A8_UNORM;
+        texture_desc.format = VK_FORMAT_R8G8B8A8_UNORM;
         texture_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
         EzTexture out_rt = _ctx->create_texture("out_color", texture_desc, create_status);
         if (create_status == RenderContext::CreateStatus::Recreated)

@@ -43,7 +43,7 @@ void ShadowPass::process(RenderContext* ctx, Renderable* renderable)
 
 void ShadowPass::exec(RenderContext* ctx)
 {
-    uint32_t dimension = 1024;
+    uint32_t dimension = 2048;
     RenderContext::CreateStatus create_status;
     EzTextureDesc texture_desc{};
     texture_desc.width = dimension;
@@ -55,6 +55,7 @@ void ShadowPass::exec(RenderContext* ctx)
     EzTexture t_shadow_map = ctx->create_texture("t_shadow_map", texture_desc, create_status);
     if (create_status == RenderContext::CreateStatus::Recreated)
     {
+        ez_create_texture_view(t_shadow_map, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, SHADOW_CASCADE_COUNT);
         for (uint32_t i = 0; i < SHADOW_CASCADE_COUNT; i++)
         {
             ez_create_texture_view(t_shadow_map, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, i, 1);
@@ -82,7 +83,7 @@ void ShadowPass::exec(RenderContext* ctx)
         float min_distance = camera_near;
         float max_distance = camera_near + camera_range;
         float cascade_splits[SHADOW_CASCADE_COUNT];
-        float pssm_factor = 0.95f;
+        float pssm_factor = 0.5f;
         float range = max_distance - min_distance;
         float ratio = max_distance / min_distance;
         float log_ratio = glm::clamp(1.0f - pssm_factor, 0.0f, 1.0f);
@@ -110,7 +111,7 @@ void ShadowPass::exec(RenderContext* ctx)
         {
             cs_near = cascade_split;
             cs_far = cascade_splits[i];
-            cascade_split = cascade_splits[i];
+            cascade_split = cs_far;
 
             glm::vec3 cs_view_frustum_corners[8] = {
                 { -1, -1,  -1.0 },
@@ -186,7 +187,7 @@ void ShadowPass::exec(RenderContext* ctx)
             EzRenderingInfo rendering_info{};
             EzRenderingAttachmentInfo depth_info{};
             depth_info.texture = t_shadow_map;
-            depth_info.texture_view = i;
+            depth_info.texture_view = i + 1;
             depth_info.clear_value.depthStencil = {1.0f, 1};
             rendering_info.depth.push_back(depth_info);
             rendering_info.width = dimension;
@@ -210,6 +211,7 @@ void ShadowPass::exec(RenderContext* ctx)
             ez_end_rendering();
         }
     }
+
     if (!_shadow_infos.empty())
     {
         update_render_buffer(u_shadow_infos, EZ_RESOURCE_STATE_SHADER_RESOURCE, _shadow_infos.size() * sizeof(PerShadowInfo), 0, (uint8_t*)_shadow_infos.data());

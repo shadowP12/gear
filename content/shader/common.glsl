@@ -6,4 +6,10 @@
 
 #define saturate(x)        clamp(x, 0.0, 1.0)
 
+float quick_hash(vec2 pos)
+{
+    const vec3 magic = vec3(0.06711056f, 0.00583715f, 52.9829189f);
+    return fract(magic.z * fract(dot(pos, magic.xy)));
+}
+
 #endif

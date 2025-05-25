@@ -4,6 +4,7 @@
 #include "entity/entity.h"
 #include "entity/components/c_camera.h"
 #include "gameplay/camera_controller.h"
+#include "rendering/render_system.h"
 
 MainWindow::MainWindow(uint32_t width, uint32_t height)
     : Window(width, height)
@@ -64,6 +65,27 @@ void MainWindow::draw_ui()
             }
             ImGui::EndTabItem();
         }
+
+        if (ImGui::BeginTabItem("Shadow"))
+        {
+            int shadow_mode = (int)RenderSystem::get()->feature_config.shadow_mode;
+            ImGui::AlignTextToFramePadding(); ImGui::Text("Shadow Mode:");
+            ImGui::SameLine(); ImGui::RadioButton("Simple", &shadow_mode, (int)ShadowMode::Simple);
+            ImGui::SameLine(); ImGui::RadioButton("PCF", &shadow_mode, (int)ShadowMode::PCF);
+
+            if ((ShadowMode)shadow_mode == ShadowMode::PCF)
+            {
+                const char* items[] = { "Common", "Optimized", "RandomDisc" };
+                static int item_current = (int)RenderSystem::get()->feature_config.pcf_method;
+                ImGui::Combo("PCF Method", &item_current, items, IM_ARRAYSIZE(items));
+
+                RenderSystem::get()->feature_config.pcf_method = (PCFMethod)item_current;
+            }
+
+            RenderSystem::get()->feature_config.shadow_mode = (ShadowMode)shadow_mode;
+            ImGui::EndTabItem();
+        }
+
         ImGui::EndTabBar();
     }
     ImGui::End();

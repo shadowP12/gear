@@ -1,4 +1,5 @@
 #pragma once
+#include "features.h"
 #include <core/module.h>
 #include <core/event.h>
 #include <rhi/ez_vulkan.h>
@@ -23,6 +24,7 @@ public:
 
 public:
     Event<> predraw_event;
+    FeatureConfig feature_config;
 
 private:
     RenderContext* _ctx;

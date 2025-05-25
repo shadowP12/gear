@@ -5,8 +5,14 @@
 enum class ShadowMode
 {
     Simple = 0,
-    PCF,
-    Count
+    PCF
+};
+
+enum class PCFMethod
+{
+    Common = 0,
+    Optimized,
+    RandomDisc
 };
 
 enum class Feature
@@ -18,11 +24,14 @@ enum class Feature
 class FeatureConfig
 {
 public:
+    std::vector<Feature> get_diff_features(const FeatureConfig& config);
+
     void get_macros(const std::vector<Feature>& features, std::vector<std::string>& macros);
 
     void get_shadow_macros(std::vector<std::string>& macros);
 
-    ShadowMode shadow_mode;
+    ShadowMode shadow_mode = ShadowMode::PCF;
+    PCFMethod pcf_method = PCFMethod::RandomDisc;
 };
 
 extern FeatureConfig g_feature_config;
