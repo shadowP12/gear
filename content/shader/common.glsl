@@ -3,6 +3,7 @@
 
 #define PI                 3.14159265359
 #define HALF_PI            1.570796327
+#define VSM_EXPONENT       5.54 // 42.0(32Bit)
 
 #define saturate(x)        clamp(x, 0.0, 1.0)
 

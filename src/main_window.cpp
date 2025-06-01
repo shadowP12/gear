@@ -72,6 +72,7 @@ void MainWindow::draw_ui()
             ImGui::AlignTextToFramePadding(); ImGui::Text("Shadow Mode:");
             ImGui::SameLine(); ImGui::RadioButton("Simple", &shadow_mode, (int)ShadowMode::Simple);
             ImGui::SameLine(); ImGui::RadioButton("PCF", &shadow_mode, (int)ShadowMode::PCF);
+            ImGui::SameLine(); ImGui::RadioButton("VSM", &shadow_mode, (int)ShadowMode::VSM);
 
             if ((ShadowMode)shadow_mode == ShadowMode::PCF)
             {

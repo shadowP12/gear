@@ -55,6 +55,11 @@ void DrawCommandList::draw(RenderContext* ctx)
     EzBuffer u_shadow_infos = ctx->get_buffer("u_shadow_infos");
     EzTexture t_shadow_map = ctx->get_texture("t_shadow_map");
     EzSampler shadow_sampler = g_rsd->get_sampler(SamplerType::Shadow);
+    if (g_feature_config.shadow_mode == ShadowMode::VSM)
+    {
+        t_shadow_map = ctx->get_texture("t_vsm");
+        shadow_sampler = g_rsd->get_sampler(SamplerType::LinearClamp);
+    }
 
     for (int i = 0; i < cmd_count; ++i)
     {

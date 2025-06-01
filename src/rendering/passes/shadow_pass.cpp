@@ -252,7 +252,7 @@ void ShadowPass::convert_to_vsm(RenderContext* ctx)
     texture_desc.height = k_dimension;
     texture_desc.layers = SHADOW_CASCADE_COUNT;
     texture_desc.image_type = VK_IMAGE_TYPE_2D;
-    texture_desc.format = VK_FORMAT_R16G16_SFLOAT;
+    texture_desc.format = VK_FORMAT_R16G16B16A16_SFLOAT;
     texture_desc.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     EzTexture t_vsm = ctx->create_texture("t_vsm", texture_desc, create_status);
     if (create_status == RenderContext::CreateStatus::Recreated)
