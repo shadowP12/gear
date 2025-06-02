@@ -21,6 +21,7 @@ Window::Window(uint32_t width, uint32_t height)
     glfwSetCursorPosCallback(_glfw_window, cursor_position_callback);
     glfwSetMouseButtonCallback(_glfw_window, mouse_button_callback);
     glfwSetScrollCallback(_glfw_window, mouse_scroll_callback);
+    glfwSetKeyCallback(_glfw_window, key_callback);
     glfw_window_table[_glfw_window] = this;
 
     ez_create_swapchain(_window_ptr, _swapchain);
@@ -129,6 +130,11 @@ void Window::mouse_scroll_callback(GLFWwindow* window, double offset_x, double o
     glfw_window_table[window]->internal_mouse_scroll_callback(offset_x, offset_y);
 }
 
+void Window::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    glfw_window_table[window]->internal_key_callback(key, scancode, action, mods);
+}
+
 void Window::internal_window_size_callback(int w, int h)
 {
     set_size(0, 0, w, h);
@@ -149,26 +155,25 @@ void Window::internal_mouse_button_callback(int button, int action, int mods)
     double pos_x, pos_y;
     glfwGetCursorPos(_glfw_window, &pos_x, &pos_y);
 
-    if (action == 0)
+    MouseEvent mouse_event;
+    mouse_event.window_id = _window_id;
+    mouse_event.x = (float)pos_x;
+    mouse_event.y = (float)pos_y;
+    mouse_event.button = button;
+
+    switch (action)
     {
-        MouseEvent mouse_event;
-        mouse_event.window_id = _window_id;
-        mouse_event.type = MouseEvent::Type::UP;
-        mouse_event.x = (float)pos_x;
-        mouse_event.y = (float)pos_y;
-        mouse_event.button = button;
-        Input::get_mouse_event().broadcast(mouse_event);
+        case 0:
+            mouse_event.type = MouseEvent::Type::UP;
+            break;
+        case 1:
+            mouse_event.type = MouseEvent::Type::DOWN;
+            break;
+        default:
+            mouse_event.type = MouseEvent::Type::UNKNOWN;
+            break;
     }
-    else if (action == 1)
-    {
-        MouseEvent mouse_event;
-        mouse_event.window_id = _window_id;
-        mouse_event.type = MouseEvent::Type::DOWN;
-        mouse_event.x = (float)pos_x;
-        mouse_event.y = (float)pos_y;
-        mouse_event.button = button;
-        Input::get_mouse_event().broadcast(mouse_event);
-    }
+    Input::get_mouse_event().broadcast(mouse_event);
 }
 
 void Window::internal_mouse_scroll_callback(double offset_x, double offset_y)
@@ -179,6 +184,29 @@ void Window::internal_mouse_scroll_callback(double offset_x, double offset_y)
     mouse_event.offset_x = (float)offset_x;
     mouse_event.offset_y = (float)offset_y;
     Input::get_mouse_event().broadcast(mouse_event);
+}
+
+void Window::internal_key_callback(int key, int scancode, int action, int mods)
+{
+    KeyboardEvent keyboard_event;
+    keyboard_event.window_id = _window_id;
+    keyboard_event.key = key;
+    switch (action)
+    {
+        case 0:
+            keyboard_event.action = KeyboardEvent::Action::RELEASE;
+            break;
+        case 1:
+            keyboard_event.action = KeyboardEvent::Action::PRESS;
+            break;
+        case 2:
+            keyboard_event.action = KeyboardEvent::Action::REPEAT;
+            break;
+        default:
+            keyboard_event.action = KeyboardEvent::Action::UNKNOWN;
+            break;
+    }
+    Input::get_keyboard_event().broadcast(keyboard_event);
 }
 
 EzSwapchain Window::get_swapchain()

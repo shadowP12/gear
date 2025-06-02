@@ -42,6 +42,8 @@ public:
 
     static void mouse_scroll_callback(GLFWwindow* window, double offset_x, double offset_y);
 
+    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 protected:
     virtual void draw_ui() {}
 
@@ -53,6 +55,8 @@ private:
     void internal_mouse_button_callback(int button, int action, int mods);
 
     void internal_mouse_scroll_callback(double offset_x, double offset_y);
+
+    void internal_key_callback(int key, int scancode, int action, int mods);
 
 protected:
     int _window_id = 0;

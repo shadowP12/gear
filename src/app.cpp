@@ -78,6 +78,8 @@ void Application::run()
 
 void Application::tick(float dt)
 {
+    _camera_controller->tick(dt);
+
     _world->tick(dt);
 
     _window->new_frame(dt);
