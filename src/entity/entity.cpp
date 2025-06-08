@@ -76,16 +76,6 @@ std::string Entity::get_name()
     return _name;
 }
 
-void Entity::set_id(int id)
-{
-    _id = id;
-}
-
-int Entity::get_id()
-{
-    return _id;
-}
-
 void Entity::set_level_id(int id)
 {
     _level_id = id;

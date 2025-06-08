@@ -1,6 +1,7 @@
 #include "level.h"
 #include "entity/entity.h"
 #include "entity/components/c_camera.h"
+#include <core/uuid.h>
 
 Level::Level(const std::string& asset_path)
     : Asset(asset_path)
@@ -36,6 +37,7 @@ void Level::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, 
         }
         _entities[i]->serialize(writer, bin);
     }
+
     writer.EndArray();
     writer.Key("hierarchy");
     writer.StartArray();
@@ -58,12 +60,13 @@ void Level::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bi
         _entities.push_back(entity);
     }
 
-    for(int i = 0; i < value["hierarchy"].Size(); i++)
+    if (value.HasMember("hierarchy"))
     {
-        Entity* entity = _entities[i];
-        int parent_idx = value["hierarchy"][i].GetInt();
-        if (parent_idx >= 0)
+        for(int i = 0; i < value["hierarchy"].Size(); i++)
         {
+            int child_idx = value["hierarchy"][i][0].GetInt();
+            int parent_idx = value["hierarchy"][i][1].GetInt();
+            Entity* entity = _entities[child_idx];
             Entity* parent = _entities[parent_idx];
             entity->set_parent(parent);
         }

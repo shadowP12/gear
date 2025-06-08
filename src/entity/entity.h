@@ -15,15 +15,12 @@ public:
     ~Entity();
 
     virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+
     virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
 
     void set_name(const std::string& name);
 
     std::string get_name();
-
-    void set_id(int id);
-
-    int get_id();
 
     void set_level_id(int id);
 
@@ -135,7 +132,6 @@ public:
     Event<> transform_changed_event;
 
 protected:
-    int _id = -1;
     int _level_id = -1;
     World* _world = nullptr;
     std::string _name;

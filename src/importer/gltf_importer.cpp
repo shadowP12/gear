@@ -1,4 +1,5 @@
 #include "gltf_importer.h"
+#include "sdf_generator.h"
 #include "asset/asset.h"
 #include "asset/texture_asset.h"
 #include "asset/material_asset.h"
@@ -7,6 +8,7 @@
 #include "asset/asset_manager.h"
 #include "rendering/vertex_factory.h"
 #include <core/path.h>
+#include <core/uuid.h>
 #include <core/io/dir_access.h>
 #include <math/bounding_box.h>
 #include <map>
@@ -42,6 +44,7 @@ struct GltfPrimitive
     bool using_16u_index;
     BoundingBox bounding_box;
     std::string material_path;
+    std::string sdf_path;
     cgltf_primitive_type primitive_type;
 };
 
@@ -212,39 +215,8 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
                 cgltf_primitive* cprimitive = &cmesh->primitives[i];
                 cgltf_material* cmaterial = cprimitive->material;
 
-                // Load gltf material
-                std::string material_path = "asset://" + output_path + "/materials/" + cmaterial->name;
-                if (!AssetManager::get()->exist_asset(material_path))
-                {
-                    rapidjson::Document m_doc;
-                    rapidjson::StringBuffer m_str_buffer;
-                    rapidjson::PrettyWriter<rapidjson::StringBuffer> m_writer(m_str_buffer);
-                    m_writer.StartObject();
-                    m_writer.Key("passes");
-                    m_writer.StartArray();
-                    {
-                        m_writer.StartObject();
-                        m_writer.Key("draw_type");
-                        m_writer.Int(DRAW_OPAQUE);
-                        m_writer.Key("vs");
-                        m_writer.String("shader://default.vert");
-                        m_writer.Key("fs");
-                        m_writer.String("shader://default.frag");
-                        m_writer.EndObject();
-                    }
-                    m_writer.EndArray();
-                    m_writer.EndObject();
-                    m_doc.Parse(m_str_buffer.GetString());
-
-                    MaterialAsset* mat = AssetManager::get()->create<MaterialAsset>(material_path);
-                    Serialization::BinaryStream m_bin;
-                    mat->deserialize(m_doc.GetObject(), m_bin);
-                    AssetManager::get()->save(mat);
-                }
-
                 GltfPrimitive gltf_primitive;
                 gltf_primitive.primitive_type = cprimitive->type;
-                gltf_primitive.material_path = material_path;
                 gltf_primitive.total_size = 0;
                 gltf_primitive.total_offset = bin.get_size();
 
@@ -327,6 +299,47 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
                     bin.write(index_data, gltf_primitive.index_size);
                 }
 
+                // Load gltf material
+                std::string material_path = "asset://" + output_path + "/materials/" + cmaterial->name;
+                gltf_primitive.material_path = material_path;
+                if (!AssetManager::get()->exist_asset(material_path))
+                {
+                    rapidjson::Document m_doc;
+                    rapidjson::StringBuffer m_str_buffer;
+                    rapidjson::PrettyWriter<rapidjson::StringBuffer> m_writer(m_str_buffer);
+                    m_writer.StartObject();
+                    m_writer.Key("passes");
+                    m_writer.StartArray();
+                    {
+                        m_writer.StartObject();
+                        m_writer.Key("draw_type");
+                        m_writer.Int(DRAW_OPAQUE);
+                        m_writer.Key("vs");
+                        m_writer.String("shader://default.vert");
+                        m_writer.Key("fs");
+                        m_writer.String("shader://default.frag");
+                        m_writer.EndObject();
+                    }
+                    m_writer.EndArray();
+                    m_writer.EndObject();
+                    m_doc.Parse(m_str_buffer.GetString());
+
+                    MaterialAsset* mat = AssetManager::get()->create<MaterialAsset>(material_path);
+                    Serialization::BinaryStream m_bin;
+                    mat->deserialize(m_doc.GetObject(), m_bin);
+                    AssetManager::get()->save(mat);
+                }
+
+                // Load sdf
+                std::string sdf_name = std::string(cmesh->name) + "/_" + std::to_string(i);
+                std::string sdf_path = "asset://" + output_path + "/sdfs/" + sdf_name;
+
+                gltf_primitive.sdf_path = sdf_path;
+                if (!AssetManager::get()->exist_asset(sdf_path))
+                {
+
+                }
+
                 gltf_primitives.push_back(gltf_primitive);
             }
 
@@ -390,6 +403,8 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
                 Serialization::w_vec3(writer, gltf_primitive.bounding_box.bb_min);
                 writer.Key("material");
                 writer.String(gltf_primitive.material_path.c_str());
+                writer.Key("sdf");
+                writer.String(gltf_primitive.sdf_path.c_str());
                 writer.EndObject();
             }
             writer.EndArray();
@@ -465,9 +480,12 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
         for (size_t i = 0; i < gltf_nodes.size(); ++i)
         {
             if (gltf_nodes[i].has_parent)
-                writer.Int(node_helper[gltf_nodes[i].parent_node]);
-            else
-                writer.Int(-1);
+            {
+                writer.StartArray();
+                writer.Int(i); // Child
+                writer.Int(node_helper[gltf_nodes[i].parent_node]); // Parent
+                writer.EndArray();
+            }
         }
         writer.EndArray();
 
