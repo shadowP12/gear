@@ -1,6 +1,6 @@
 #include "camera_controller.h"
-#include "entity/entity.h"
 #include "entity/components/c_camera.h"
+#include "entity/entity.h"
 #include <core/log.h>
 #include <input/input_events.h>
 
@@ -35,7 +35,6 @@ void CameraController::on_mouse_event_received(MouseEvent mouse_event)
             glm::vec2 mouse_position = glm::vec2(mouse_event.x, mouse_event.y);
             glm::vec2 offset = _start_point - mouse_position;
             _start_point = mouse_position;
-
 
             const float turn_rate = 0.001f;
             glm::vec3 euler = _camera->get_euler();

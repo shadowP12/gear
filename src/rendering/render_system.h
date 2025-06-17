@@ -1,9 +1,9 @@
 #pragma once
 #include "features.h"
-#include <core/module.h>
 #include <core/event.h>
-#include <rhi/ez_vulkan.h>
+#include <core/module.h>
 #include <memory>
+#include <rhi/ez_vulkan.h>
 
 class World;
 class Window;

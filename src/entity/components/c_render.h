@@ -1,7 +1,8 @@
 #pragma once
 
-#include <core/event.h>
 #include "entity_component.h"
+
+#include <core/event.h>
 
 class Entity;
 class CRender : public EntityComponent
@@ -18,7 +19,7 @@ public:
     virtual void notify_transform_changed();
 
 protected:
-    virtual void predraw() {};
+    virtual void predraw(){};
 
     virtual void make_render_dirty() { _render_dirty = true; };
 

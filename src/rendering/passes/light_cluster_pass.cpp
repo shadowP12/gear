@@ -1,8 +1,8 @@
 #include "light_cluster_pass.h"
-#include "rendering/program.h"
-#include "rendering/render_scene.h"
-#include "rendering/render_context.h"
 #include "rendering/debug_renderer.h"
+#include "rendering/program.h"
+#include "rendering/render_context.h"
+#include "rendering/render_scene.h"
 #include "rendering/render_shared_data.h"
 #include "rendering/utils/debug_utils.h"
 #include "rendering/utils/render_utils.h"
@@ -14,8 +14,7 @@ static uint32_t k_cluster_size_y = 12;
 static uint32_t k_cluster_size_z = 12;
 static uint32_t k_cluster_count = k_cluster_size_x * k_cluster_size_y * k_cluster_size_z;
 
-struct Cluster
-{
+struct Cluster {
     glm::vec4 aabb_min;
     glm::vec4 aabb_max;
     glm::uvec4 lit_bits;
@@ -35,7 +34,8 @@ LightClusterPass::LightClusterPass()
 }
 
 LightClusterPass::~LightClusterPass()
-{}
+{
+}
 
 void LightClusterPass::setup(RenderContext* ctx)
 {

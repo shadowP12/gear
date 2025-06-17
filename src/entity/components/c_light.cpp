@@ -34,53 +34,29 @@ void CLight::destroy_light()
     }
 }
 
-void CLight::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
+void CLight::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
 {
-    writer.StartObject();
-    writer.Key("class_name");
-    writer.String(get_class_name().c_str());
-    writer.Key("type");
-    writer.Int(int(_type));
-    writer.Key("intensity");
-    writer.Double(_intensity);
-    writer.Key("color");
-    Serialization::w_vec3(writer, _color);
-    writer.Key("range");
-    writer.Double(_range);
-    writer.Key("spot_angle");
-    writer.Double(_spot_angle);
-    writer.Key("inner_angle");
-    writer.Double(_inner_angle);
-    writer.Key("has_shadow");
-    writer.Bool(_has_shadow);
-    writer.EndObject();
+    ctx.object([&]() {
+        ctx.field("class_name", get_class_name());
+        ctx.field("type", _type);
+        ctx.field("intensity", _intensity);
+        ctx.field("color", _color);
+        ctx.field("range", _range);
+        ctx.field("spot_angle", _spot_angle);
+        ctx.field("inner_angle", _inner_angle);
+        ctx.field("has_shadow", _has_shadow);
+    });
 }
 
-void CLight::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
+void CLight::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
 {
-    _type = LightType(value["type"].GetInt());
-    _intensity = value["intensity"].GetDouble();
-    _color = Serialization::r_vec3(value["color"]);
-
-    if (value.HasMember("range"))
-    {
-        _range = value["range"].GetDouble();
-    }
-
-    if (value.HasMember("spot_angle"))
-    {
-        _spot_angle = value["spot_angle"].GetDouble();
-    }
-
-    if (value.HasMember("inner_angle"))
-    {
-        _inner_angle = value["inner_angle"].GetDouble();
-    }
-
-    if (value.HasMember("has_shadow"))
-    {
-        _has_shadow = value["has_shadow"].GetBool();
-    }
+    ctx.field("type", _type);
+    ctx.field("intensity", _intensity);
+    ctx.field("color", _color);
+    ctx.field("range", _range);
+    ctx.field("spot_angle", _spot_angle);
+    ctx.field("inner_angle", _inner_angle);
+    ctx.field("has_shadow", _has_shadow);
 }
 
 void CLight::set_light_type(LightType type)

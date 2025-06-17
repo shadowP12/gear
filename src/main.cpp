@@ -8,7 +8,8 @@ int main()
 
     Application app;
     app.setup(app_setting);
-    while (!app.should_close()) {
+    while (!app.should_close())
+    {
         app.run();
     }
     app.exit();

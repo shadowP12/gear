@@ -1,5 +1,7 @@
 #include "texture_asset.h"
+
 #include <core/path.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STBIR_FLAG_ALPHA_PREMULTIPLIED
 #include <stb_image.h>
@@ -54,9 +56,7 @@ EzTexture create_texture(Image* image)
 }
 
 TextureAsset::TextureAsset(const std::string& asset_path)
-    : Asset(asset_path)
-{
-}
+    : Asset(asset_path) {}
 
 TextureAsset::~TextureAsset()
 {
@@ -72,17 +72,16 @@ TextureAsset::~TextureAsset()
     }
 }
 
-void TextureAsset::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
+void TextureAsset::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
 {
-    writer.StartObject();
-    writer.Key("uri");
-    writer.String(_uri.c_str());
-    writer.EndObject();
+    ctx.object([&]() {
+        ctx.field("uri", _uri);
+    });
 }
 
-void TextureAsset::deserialize(const rapidjson::Value& value, Serialization::BinaryStream& bin)
+void TextureAsset::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
 {
-    _uri = value["uri"].GetString();
+    ctx.field("uri", _uri);
     _image = load_image(Path::fix_path(_uri));
 
     if (_image)

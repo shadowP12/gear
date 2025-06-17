@@ -1,10 +1,10 @@
 #include "main_window.h"
 #include "app.h"
-#include "world.h"
-#include "entity/entity.h"
 #include "entity/components/c_camera.h"
+#include "entity/entity.h"
 #include "gameplay/camera_controller.h"
 #include "rendering/render_system.h"
+#include "world.h"
 
 MainWindow::MainWindow(uint32_t width, uint32_t height)
     : Window(width, height)
@@ -26,9 +26,9 @@ void MainWindow::draw_ui()
     if (!_app)
         return;
 
-//    if (show_demo_window)
-//        ImGui::ShowDemoWindow(&show_demo_window);
-//    return;
+    //    if (show_demo_window)
+    //        ImGui::ShowDemoWindow(&show_demo_window);
+    //    return;
 
     World* world = _app->get_world();
     CameraController* camera_controller = _app->get_camera_controller();
@@ -69,14 +69,18 @@ void MainWindow::draw_ui()
         if (ImGui::BeginTabItem("Shadow"))
         {
             int shadow_mode = (int)RenderSystem::get()->feature_config.shadow_mode;
-            ImGui::AlignTextToFramePadding(); ImGui::Text("Shadow Mode:");
-            ImGui::SameLine(); ImGui::RadioButton("Simple", &shadow_mode, (int)ShadowMode::Simple);
-            ImGui::SameLine(); ImGui::RadioButton("PCF", &shadow_mode, (int)ShadowMode::PCF);
-            ImGui::SameLine(); ImGui::RadioButton("VSM", &shadow_mode, (int)ShadowMode::VSM);
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Shadow Mode:");
+            ImGui::SameLine();
+            ImGui::RadioButton("Simple", &shadow_mode, (int)ShadowMode::Simple);
+            ImGui::SameLine();
+            ImGui::RadioButton("PCF", &shadow_mode, (int)ShadowMode::PCF);
+            ImGui::SameLine();
+            ImGui::RadioButton("VSM", &shadow_mode, (int)ShadowMode::VSM);
 
             if ((ShadowMode)shadow_mode == ShadowMode::PCF)
             {
-                const char* items[] = { "Common", "Optimized", "RandomDisc" };
+                const char* items[] = {"Common", "Optimized", "RandomDisc"};
                 static int item_current = (int)RenderSystem::get()->feature_config.pcf_method;
                 ImGui::Combo("PCF Method", &item_current, items, IM_ARRAYSIZE(items));
 

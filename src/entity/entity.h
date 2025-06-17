@@ -1,10 +1,12 @@
 #pragma once
 
 #include "components/entity_component.h"
+
 #include <core/event.h>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
+
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 class World;
 class Entity : public Serializable
@@ -14,9 +16,9 @@ public:
 
     ~Entity();
 
-    virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+    virtual void serialize(SerializationContext& ctx, BinaryStream& bin_stream);
 
-    virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
+    virtual void deserialize(DeserializationContext& ctx, BinaryStream& bin_stream);
 
     void set_name(const std::string& name);
 
@@ -31,7 +33,7 @@ public:
     World* get_world();
 
     template<class T, class... Args>
-    T* add_component(Args &&... args)
+    T* add_component(Args&&... args)
     {
         T* component = new T(this, std::forward<Args>(args)...);
         _components.push_back(component);
@@ -66,7 +68,7 @@ public:
     {
         for (int i = 0; i < _components.size(); ++i)
         {
-            if(_components[i]->get_class_name() == T::get_static_class_name())
+            if (_components[i]->get_class_name() == T::get_static_class_name())
             {
                 return (T*)_components[i];
             }
@@ -79,7 +81,7 @@ public:
     {
         for (int i = 0; i < _components.size(); ++i)
         {
-            if(_components[i]->get_class_name() == T::get_static_class_name())
+            if (_components[i]->get_class_name() == T::get_static_class_name())
             {
                 return true;
             }

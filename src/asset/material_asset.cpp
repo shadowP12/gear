@@ -1,14 +1,70 @@
 #include "material_asset.h"
-#include "texture_asset.h"
+
 #include "asset_manager.h"
 #include "rendering/program.h"
 #include "rendering/render_shared_data.h"
+#include "texture_asset.h"
+
 #include <core/memory.h>
 
-MaterialAsset::MaterialAsset(const std::string& asset_path)
-    : Asset(asset_path)
+void MaterialParam::serialize(SerializationContext& ctx)
 {
+    ctx.field("name", name);
+    ctx.field("type", type);
+    ctx.key("value");
+    switch (type)
+    {
+        case Type::Float:
+            ctx.field(float_val);
+            break;
+        case Type::Vec2:
+            ctx.field(vec2_val);
+            break;
+        case Type::Vec3:
+            ctx.field(vec3_val);
+            break;
+        case Type::Vec4:
+            ctx.field(vec4_val);
+            break;
+        case Type::Texture:
+            ctx.field(texture_val->get_asset_path());
+            break;
+        default:
+            break;
+    }
 }
+
+void MaterialParam::deserialize(DeserializationContext& ctx)
+{
+    ctx.field("name", name);
+    ctx.field("type", type);
+    switch (type)
+    {
+        case Type::Float:
+            ctx.field("value", float_val);
+            break;
+        case Type::Vec2:
+            ctx.field("value", vec2_val);
+            break;
+        case Type::Vec3:
+            ctx.field("value", vec3_val);
+            break;
+        case Type::Vec4:
+            ctx.field("value", vec4_val);
+            break;
+        case Type::Texture: {
+            std::string asset_path;
+            ctx.field("value", asset_path);
+            texture_val = AssetManager::get()->load<TextureAsset>(asset_path);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+MaterialAsset::MaterialAsset(const std::string& asset_path)
+    : Asset(asset_path) {}
 
 MaterialAsset::~MaterialAsset()
 {
@@ -19,116 +75,51 @@ MaterialAsset::~MaterialAsset()
     _programs.clear();
 }
 
-void MaterialAsset::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
+void MaterialAsset::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
 {
-    writer.StartObject();
-    writer.Key("passes");
-    writer.StartArray();
-    for (auto& pass_iter : _passes)
-    {
-        DrawType draw_type = pass_iter.first;
-        Pass& pass = pass_iter.second;
+    ctx.object([&]() {
+        ctx.array("passes", [&]() {
+            for (auto& pass_it : _passes)
+            {
+                auto& pass = pass_it.second;
+                ctx.object([&]() {
+                    ctx.field("draw_type", pass.draw_type);
+                    ctx.field("vs", pass.vs);
+                    ctx.field("fs", pass.fs);
 
-        writer.StartObject();
-        writer.Key("draw_type");
-        writer.Int((int)draw_type);
-        writer.Key("vs");
-        writer.String(pass.vs.c_str());
-        writer.Key("fs");
-        writer.String(pass.fs.c_str());
+                    ctx.array("macros", [&]() {
+                        for (const auto& macro : pass.macros)
+                        {
+                            ctx.field(macro);
+                        }
+                    });
 
-        writer.Key("macros");
-        writer.StartArray();
-        for (auto& macro : pass.macros)
-        {
-            writer.String(macro.c_str());
-        }
-        writer.EndArray();
-
-        writer.Key("params");
-        writer.StartArray();
-        for (auto& param_iter : pass.float_params)
-        {
-            writer.StartObject();
-            writer.Key("param_name");
-            writer.String(param_iter.first.c_str());
-            writer.Key("param_type");
-            writer.String("float");
-            writer.Key("param_value");
-            writer.Double(param_iter.second);
-            writer.EndObject();
-        }
-        for (auto& param_iter : pass.vec2_params)
-        {
-            writer.StartObject();
-            writer.Key("param_name");
-            writer.String(param_iter.first.c_str());
-            writer.Key("param_type");
-            writer.String("float");
-            writer.Key("param_value");
-            Serialization::w_vec2(writer, param_iter.second);
-            writer.EndObject();
-        }
-        for (auto& param_iter : pass.vec3_params)
-        {
-            writer.StartObject();
-            writer.Key("param_name");
-            writer.String(param_iter.first.c_str());
-            writer.Key("param_type");
-            writer.String("float");
-            writer.Key("param_value");
-            Serialization::w_vec3(writer, param_iter.second);
-            writer.EndObject();
-        }
-        for (auto& param_iter : pass.vec4_params)
-        {
-            writer.StartObject();
-            writer.Key("param_name");
-            writer.String(param_iter.first.c_str());
-            writer.Key("param_type");
-            writer.String("float");
-            writer.Key("param_value");
-            Serialization::w_vec4(writer, param_iter.second);
-            writer.EndObject();
-        }
-        for (auto& param_iter : pass.texture_params)
-        {
-            writer.StartObject();
-            writer.Key("param_name");
-            writer.String(param_iter.first.c_str());
-            writer.Key("param_type");
-            writer.String("float");
-            writer.Key("param_value");
-            writer.String(param_iter.second->get_asset_path().c_str());
-            writer.EndObject();
-        }
-        writer.EndArray();
-        writer.EndObject();
-    }
-    writer.EndArray();
-    writer.EndObject();
+                    ctx.array("params", [&]() {
+                        for (MaterialParam& param : pass.params)
+                        {
+                            param.serialize(ctx);
+                        }
+                    });
+                });
+            }
+        });
+    });
 }
 
-void MaterialAsset::deserialize(const rapidjson::Value& value, Serialization::BinaryStream& bin)
+void MaterialAsset::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
 {
-    for(int i = 0; i < value["passes"].Size(); i++)
-    {
-        const rapidjson::Value& pass_value = value["passes"][i];
-        DrawType draw_type = (DrawType)pass_value["draw_type"].GetInt();
-
+    ctx.array("passes", [&]() {
         Pass pass;
-        Program* program = nullptr;
+        ctx.field("draw_type", pass.draw_type);
+        ctx.field("vs", pass.vs);
+        ctx.field("fs", pass.fs);
 
-        pass.vs = pass_value["vs"].GetString();
-        pass.fs = pass_value["fs"].GetString();
-
-        if (pass_value.HasMember("macros"))
-        {
-            for (int j = 0; j < pass_value["macros"].Size(); j++)
-            {
-                pass.macros.push_back(pass_value["macros"][j].GetString());
-            }
-        }
+        uint32_t macro_idx = 0;
+        ctx.array("macros", [&]() {
+            std::string macro;
+            ctx.field(macro_idx++, macro);
+            pass.macros.push_back(macro);
+        });
 
         std::vector<Feature> features;
         features.push_back(Feature::Shadow);
@@ -138,56 +129,24 @@ void MaterialAsset::deserialize(const rapidjson::Value& value, Serialization::Bi
         program_desc.fs = pass.fs;
         program_desc.macros = pass.macros;
         program_desc.features = features;
-        program = new Program(program_desc);
+        Program* program = new Program(program_desc);
 
-        if (pass_value.HasMember("params"))
-        {
-            for (int j = 0; j < pass_value["params"].Size(); j++)
+        ctx.array("params", [&]() {
+            MaterialParam param;
+            param.deserialize(ctx);
+            pass.params.push_back(param);
+
+            if (param.type == MaterialParam::Type::Texture)
             {
-                const rapidjson::Value& param_value = pass_value["params"][j];
-                std::string param_name = pass_value["param_name"].GetString();
-                std::string param_type = pass_value["param_type"].GetString();
-
-                void* f = nullptr;
-                EzTexture t = VK_NULL_HANDLE;
-                if (param_type == "float")
-                {
-                    pass.float_params[param_name] = pass_value["param_value"].GetDouble();
-                    f = &pass.float_params[param_name];
-                }
-                else if (param_type == "vec2")
-                {
-                    pass.vec2_params[param_name] = Serialization::r_vec2(pass_value["param_value"]);
-                    f = &pass.vec2_params[param_name];
-                }
-                else if (param_type == "vec3")
-                {
-                    pass.vec3_params[param_name] = Serialization::r_vec3(pass_value["param_value"]);
-                    f = &pass.vec3_params[param_name];
-                }
-                else if (param_type == "vec4")
-                {
-                    pass.vec4_params[param_name] = Serialization::r_vec4(pass_value["param_value"]);
-                    f = &pass.vec4_params[param_name];
-                }
-                else if (param_type == "texture")
-                {
-                    pass.texture_params[param_name] = AssetManager::get()->load<TextureAsset>(pass_value["param_value"].GetString());
-                    t = pass.texture_params[param_name]->get_texture();
-                }
-
-                if (f)
-                {
-                    program->set_parameter(param_name, f);
-                }
-                else if (t)
-                {
-                    program->set_parameter(param_name, t, g_rsd->get_sampler(SamplerType::LinearClamp), 0);
-                }
+                program->set_parameter(param.name, param.texture_val->get_texture(), g_rsd->get_sampler(SamplerType::LinearClamp), 0);
             }
-        }
+            else
+            {
+                program->set_parameter(param.name, &param.float_val);
+            }
+        });
 
-        _passes[draw_type] = pass;
-        _programs[draw_type] = program;
-    }
+        _passes[pass.draw_type] = pass;
+        _programs[pass.draw_type] = program;
+    });
 }

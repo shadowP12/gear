@@ -1,10 +1,10 @@
 #include "c_mesh.h"
-#include "entity/entity.h"
-#include "asset/mesh_asset.h"
-#include "asset/material_asset.h"
 #include "asset/asset_manager.h"
-#include "rendering/renderable.h"
+#include "asset/material_asset.h"
+#include "asset/mesh_asset.h"
+#include "entity/entity.h"
 #include "rendering/render_scene.h"
+#include "rendering/renderable.h"
 
 CMesh::CMesh(Entity* entity)
     : CRender(entity)
@@ -22,19 +22,19 @@ CMesh::~CMesh()
     destroy_renderables();
 }
 
-void CMesh::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
+void CMesh::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
 {
-    writer.StartObject();
-    writer.Key("class_name");
-    writer.String(get_class_name().c_str());
-    writer.Key("mesh");
-    writer.String(_mesh->get_asset_path().c_str());
-    writer.EndObject();
+    ctx.object([&]() {
+        ctx.field("class_name", get_class_name());
+        ctx.field("mesh", _mesh->get_asset_path());
+    });
 }
 
-void CMesh::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
+void CMesh::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
 {
-    set_mesh(AssetManager::get()->load<MeshAsset>(value["mesh"].GetString()));
+    std::string mesh_url;
+    ctx.field("mesh", mesh_url);
+    set_mesh(AssetManager::get()->load<MeshAsset>(mesh_url));
 }
 
 void CMesh::set_mesh(MeshAsset* mesh)
@@ -67,7 +67,7 @@ void CMesh::destroy_renderables()
 
 void CMesh::predraw()
 {
-    if ( _scene_inst == INVALID_OBJECT_S )
+    if (_scene_inst == INVALID_OBJECT_S)
     {
         _scene_inst = g_scene->scene_insts.add();
     }

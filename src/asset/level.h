@@ -12,9 +12,9 @@ public:
 
     virtual ~Level();
 
-    virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+    virtual void serialize(SerializationContext& ctx, BinaryStream& bin_stream);
 
-    virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
+    virtual void deserialize(DeserializationContext& ctx, BinaryStream& bin_stream);
 
     std::vector<Entity*>& get_entities() { return _entities; }
 

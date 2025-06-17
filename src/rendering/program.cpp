@@ -1,6 +1,6 @@
 #include "program.h"
-#include <rhi/rhi_shader_mgr.h>
 #include <math/math_define.h>
+#include <rhi/rhi_shader_mgr.h>
 
 ProgramPool* g_program_pool = nullptr;
 
@@ -57,8 +57,7 @@ void Program::reload()
 
 void Program::init_parameters()
 {
-    auto process_shader_func = [&](EzShader shader)
-    {
+    auto process_shader_func = [&](EzShader shader) {
         if (!shader)
         {
             return;
@@ -141,17 +140,15 @@ void Program::bind()
             continue;
         }
 
-        if (descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
-            descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+        if (descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER || descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER)
         {
             ez_bind_buffer(parameter_binding->binding, parameter.buffer, parameter.size, parameter.offset);
         }
-        else if( descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE ||
-                 descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+        else if (descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE || descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE)
         {
             ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.view);
         }
-        else if(descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+        else if (descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
         {
             ez_bind_texture(parameter_binding->binding, parameter.texture, parameter.view);
             ez_bind_sampler(parameter_binding->binding, parameter.sampler);

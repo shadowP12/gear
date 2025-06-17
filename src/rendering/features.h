@@ -2,22 +2,19 @@
 #include <string>
 #include <vector>
 
-enum class ShadowMode
-{
+enum class ShadowMode {
     Simple = 0,
     PCF,
     VSM
 };
 
-enum class PCFMethod
-{
+enum class PCFMethod {
     Common = 0,
     Optimized,
     RandomDisc
 };
 
-enum class Feature
-{
+enum class Feature {
     Shadow = 0,
     Count
 };

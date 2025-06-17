@@ -14,7 +14,8 @@ PostProcessPass::PostProcessPass()
 }
 
 PostProcessPass::~PostProcessPass()
-{}
+{
+}
 
 void PostProcessPass::exec(RenderContext* ctx)
 {
@@ -89,13 +90,11 @@ void PostProcessPass::exec(RenderContext* ctx)
         ez_end_rendering();
     }
 
-    auto get_output_in = [&]()
-    {
+    auto get_output_in = [&]() {
         return _swap_output ? post_process_rt_1 : post_process_rt_2;
     };
 
-    auto get_output_out = [&]()
-    {
+    auto get_output_out = [&]() {
         return _swap_output ? post_process_rt_2 : post_process_rt_1;
     };
 }

@@ -1,13 +1,15 @@
 #pragma once
 
 #include "asset.h"
-#include <string>
-#include <unordered_map>
-#include <memory>
-#include <core/module.h>
-#include <core/path.h>
+
 #include <core/io/dir_access.h>
 #include <core/io/file_access.h>
+#include <core/module.h>
+#include <core/path.h>
+
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 class AssetManager : public Module<AssetManager>
 {
@@ -54,19 +56,20 @@ public:
             if (dom.Parse(buf.data(), buf_size).HasParseError())
                 return nullptr;
         }
+        DeserializationContext ctx(&dom);
 
-        Serialization::BinaryStream bin;
+        BinaryStream bin_stream;
         if (FileAccess::exist(bin_path))
         {
             std::shared_ptr<FileAccess> fa = std::shared_ptr<FileAccess>(FileAccess::open(bin_path, FileAccess::READ));
-            uint32_t bin_size;
-            bin_size = fa->get_length();
-            bin.resize(bin_size);
-            fa->get_buffer(bin.get_data(), bin_size);
+            uint32_t bin_size = fa->get_length();
+            std::vector<uint8_t> bin_data(bin_size);
+            fa->get_buffer(bin_data.data(), bin_size);
+            bin_stream = std::move(bin_data);
         }
 
         T* asset = create<T>(asset_path);
-        asset->deserialize(dom.GetObject(), bin);
+        asset->deserialize(ctx, bin_stream);
 
         return asset;
     }

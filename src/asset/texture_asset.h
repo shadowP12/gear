@@ -1,10 +1,10 @@
 #pragma once
 
 #include "asset.h"
+
 #include <rhi/ez_vulkan.h>
 
-struct Image
-{
+struct Image {
     uint8_t* data = nullptr;
     uint32_t data_size = 0;
     uint32_t width = 1;
@@ -22,9 +22,9 @@ public:
 
     virtual ~TextureAsset();
 
-    virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+    virtual void serialize(SerializationContext& ctx, BinaryStream& bin_stream);
 
-    virtual void deserialize(const rapidjson::Value& value, Serialization::BinaryStream& bin);
+    virtual void deserialize(DeserializationContext& ctx, BinaryStream& bin_stream);
 
     Image* get_image() { return _image; }
 

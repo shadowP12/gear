@@ -1,22 +1,19 @@
 #pragma once
-#include <glm/glm.hpp>
 #include <core/enum_flag.h>
+#include <glm/glm.hpp>
 
-enum class ProjectionMode
-{
+enum class ProjectionMode {
     Perspective = 0,
     Ortho = 1
 };
 
-enum class ViewUsageFlags
-{
+enum class ViewUsageFlags {
     Main = 0x1,
     Display = 0x2
 };
 SP_MAKE_ENUM_FLAG(uint32_t, ViewUsageFlags)
 
-struct RenderView
-{
+struct RenderView {
     float zn;
     float zf;
     float exposure;

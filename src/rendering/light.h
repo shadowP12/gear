@@ -2,15 +2,13 @@
 
 #include <glm/glm.hpp>
 
-enum class LightType
-{
+enum class LightType {
     Point,
     Spot,
     Direction,
 };
 
-struct PunctualLight
-{
+struct PunctualLight {
     glm::vec3 position;
     float inv_radius;
 
@@ -26,8 +24,7 @@ struct PunctualLight
     float pad1;
 };
 
-struct DirectionLight
-{
+struct DirectionLight {
     glm::vec3 direction;
     float size;
     glm::vec3 color;

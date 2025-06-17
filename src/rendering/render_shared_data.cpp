@@ -196,16 +196,15 @@ void RenderSharedData::init_geometries()
     {
         static float quad_vertices[] = {
             // positions        // texcoords
-            -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
 
-            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-            1.0f,  1.0f, 0.0f, 1.0f, 1.0f
-        };
+            1.0f, 1.0f, 0.0f, 1.0f, 1.0f};
 
-        buffer_desc.size =  sizeof(quad_vertices);
+        buffer_desc.size = sizeof(quad_vertices);
         buffer_desc.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         quad_buffer = create_render_buffer(buffer_desc, EZ_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, quad_vertices);
     }

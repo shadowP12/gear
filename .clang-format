@@ -14,7 +14,13 @@ AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: Yes
-BreakBeforeBraces: Allman
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterControlStatement: true
+  BeforeElse: true
+  SplitEmptyRecord: false
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon

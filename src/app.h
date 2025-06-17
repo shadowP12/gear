@@ -1,11 +1,10 @@
 #pragma once
 
-#include <rhi/ez_vulkan.h>
 #include <memory>
+#include <rhi/ez_vulkan.h>
 #include <string>
 
-struct ApplicationSetting
-{
+struct ApplicationSetting {
     int window_width = 1024;
     int window_height = 768;
     int window_pos_x = 0;

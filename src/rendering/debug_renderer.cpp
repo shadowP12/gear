@@ -5,9 +5,9 @@
 #include "utils/render_utils.h"
 #include <core/memory.h>
 #include <glm/glm.hpp>
-#include <glm/matrix.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/matrix.hpp>
 
 DebugRenderer::DebugRenderer()
 {

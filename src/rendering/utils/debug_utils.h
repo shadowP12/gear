@@ -2,8 +2,7 @@
 
 #include <rhi/ez_vulkan.h>
 
-struct DebugLabel
-{
+struct DebugLabel {
     static float WHITE[4];
     static float RED[4];
 

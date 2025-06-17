@@ -7,8 +7,7 @@
 class Entity;
 class MeshAsset;
 
-enum class MeshRnderDirtyFlag
-{
+enum class MeshRnderDirtyFlag {
     None = 0
 };
 SP_MAKE_ENUM_FLAG(uint32_t, MeshRnderDirtyFlag)
@@ -24,9 +23,9 @@ public:
 
     virtual std::string get_class_name() { return "CMesh"; }
 
-    virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+    virtual void serialize(SerializationContext& ctx, BinaryStream& bin_stream);
 
-    virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
+    virtual void deserialize(DeserializationContext& ctx, BinaryStream& bin_stream);
 
     void set_mesh(MeshAsset* mesh);
 

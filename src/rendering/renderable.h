@@ -7,8 +7,7 @@
 class Program;
 class VertexFactory;
 
-struct Renderable
-{
+struct Renderable {
     uint32_t scene_index;
     DrawType draw_type;
     Program* program;

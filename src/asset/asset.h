@@ -1,8 +1,8 @@
 #pragma once
 
+#include <serialization/serializable.h>
+
 #include <string>
-#include <core/serializable.h>
-#include <core/serialization.h>
 
 class Asset : public Serializable
 {
@@ -11,7 +11,7 @@ public:
 
     virtual ~Asset();
 
-    std::string get_asset_path() {return _asset_path;}
+    std::string get_asset_path() { return _asset_path; }
 
 protected:
     std::string _asset_path;

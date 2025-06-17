@@ -1,9 +1,9 @@
 #pragma once
 
-#include <set>
 #include <core/event.h>
-#include <input/input_events.h>
 #include <glm/glm.hpp>
+#include <input/input_events.h>
+#include <set>
 
 class Entity;
 class CTransform;

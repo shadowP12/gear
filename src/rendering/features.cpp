@@ -47,7 +47,7 @@ std::vector<Feature> FeatureConfig::get_diff_features(const FeatureConfig& confi
     }
     else if (shadow_mode == ShadowMode::PCF)
     {
-        if(pcf_method != config.pcf_method)
+        if (pcf_method != config.pcf_method)
         {
             diff_features.push_back(Feature::Shadow);
         }

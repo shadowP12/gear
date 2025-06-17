@@ -1,28 +1,29 @@
 #include "gltf_importer.h"
-#include "sdf_generator.h"
 #include "asset/asset.h"
-#include "asset/texture_asset.h"
+#include "asset/asset_manager.h"
+#include "asset/level.h"
 #include "asset/material_asset.h"
 #include "asset/mesh_asset.h"
-#include "asset/level.h"
-#include "asset/asset_manager.h"
+#include "asset/texture_asset.h"
 #include "rendering/vertex_factory.h"
-#include <core/path.h>
-#include <core/uuid.h>
+#include "sdf_generator.h"
+
 #include <core/io/dir_access.h>
+#include <core/path.h>
 #include <math/bounding_box.h>
-#include <map>
-#include <string>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtx/euler_angles.hpp>
+
 #define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 
-struct GltfPrimitive
-{
+#include <map>
+#include <string>
+
+struct GltfPrimitive {
     uint32_t total_size;
     uint32_t total_offset;
     uint32_t vertex_count;
@@ -48,8 +49,7 @@ struct GltfPrimitive
     cgltf_primitive_type primitive_type;
 };
 
-struct GltfNode
-{
+struct GltfNode {
     std::string name;
     glm::vec3 translation;
     glm::vec3 scale;
@@ -112,7 +112,7 @@ cgltf_attribute* get_gltf_attribute(cgltf_primitive* primitive, cgltf_attribute_
     for (int i = 0; i < primitive->attributes_count; i++)
     {
         cgltf_attribute* att = &primitive->attributes[i];
-        if(att->type == type)
+        if (att->type == type)
             return att;
     }
     return nullptr;
@@ -138,10 +138,41 @@ VkPrimitiveTopology get_primitive_topology_from_gltf(cgltf_primitive_type gltf_p
     return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 }
 
+MaterialAsset* import_material(const std::string& path, cgltf_material* cmaterial)
+{
+    rapidjson::Document doc;
+    rapidjson::StringBuffer str_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
+    SerializationContext s_ctx(&writer);
+    s_ctx.object([&]() {
+        s_ctx.array("passes", [&]() {
+            s_ctx.object([&]() {
+                s_ctx.field("draw_type", DRAW_OPAQUE);
+                s_ctx.field("vs", std::string("shader://default.vert"));
+                s_ctx.field("fs", std::string("shader://default.frag"));
+            });
+
+            s_ctx.object([&]() {
+                s_ctx.field("draw_type", DRAW_SHADOW);
+                s_ctx.field("vs", std::string("shader://shadow.vert"));
+                s_ctx.field("fs", std::string("shader://shadow.frag"));
+            });
+        });
+    });
+    doc.Parse(str_buffer.GetString());
+    DeserializationContext d_ctx(&doc);
+
+    MaterialAsset* mat = AssetManager::get()->create<MaterialAsset>(path);
+    BinaryStream empty_bin_stream;
+    mat->deserialize(d_ctx, empty_bin_stream);
+    AssetManager::get()->save(mat);
+    return mat;
+}
+
 void GltfImporter::import_asset(const std::string& file_path, const std::string& output_path)
 {
     cgltf_options options = {static_cast<cgltf_file_type>(0)};
-    cgltf_data* data = NULL;
+    cgltf_data* data = nullptr;
     if (cgltf_parse_file(&options, file_path.c_str(), &data) != cgltf_result_success)
     {
         cgltf_free(data);
@@ -185,15 +216,16 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             rapidjson::Document doc;
             rapidjson::StringBuffer str_buffer;
             rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
-            writer.StartObject();
-            writer.Key("uri");
-            writer.String(asset_path.c_str());
-            writer.EndObject();
+            SerializationContext s_ctx(&writer);
+            s_ctx.object([&]() {
+                s_ctx.field("uri", asset_path);
+            });
             doc.Parse(str_buffer.GetString());
+            DeserializationContext d_ctx(&doc);
 
-            Serialization::BinaryStream bin;
+            BinaryStream bin_stream;
             TextureAsset* tex_2d = AssetManager::get()->create<TextureAsset>(asset_path);
-            tex_2d->deserialize(doc.GetObject(), bin);
+            tex_2d->deserialize(d_ctx, bin_stream);
             AssetManager::get()->save(tex_2d);
         }
 
@@ -208,7 +240,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
         std::string asset_path = "asset://" + output_path + "/meshes/" + cmesh->name;
         if (!AssetManager::get()->exist_asset(asset_path))
         {
-            Serialization::BinaryStream bin;
+            BinaryStream bin_stream;
             std::vector<GltfPrimitive> gltf_primitives;
             for (int i = 0; i < cmesh->primitives_count; i++)
             {
@@ -218,7 +250,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
                 GltfPrimitive gltf_primitive;
                 gltf_primitive.primitive_type = cprimitive->type;
                 gltf_primitive.total_size = 0;
-                gltf_primitive.total_offset = bin.get_size();
+                gltf_primitive.total_offset = bin_stream.get_size();
 
                 cgltf_attribute* position_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_position);
                 cgltf_accessor* position_accessor = position_attribute->data;
@@ -226,7 +258,7 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
                 uint32_t vertex_count = (uint32_t)position_accessor->count;
                 gltf_primitive.vertex_count = vertex_count;
                 gltf_primitive.vertex_size = 0;
-                gltf_primitive.vertex_offset = bin.get_size();
+                gltf_primitive.vertex_offset = bin_stream.get_size();
 
                 const float* minp = &position_accessor->min[0];
                 const float* maxp = &position_accessor->max[0];
@@ -235,99 +267,69 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
 
                 uint8_t* position_data = (uint8_t*)(position_view->buffer->data) + position_accessor->offset + position_view->offset;
                 gltf_primitive.position_size = vertex_count * 3 * sizeof(float);
-                gltf_primitive.position_offset = bin.get_size();
+                gltf_primitive.position_offset = bin_stream.get_size();
                 gltf_primitive.vertex_size += gltf_primitive.position_size;
                 gltf_primitive.total_size += gltf_primitive.position_size;
-                bin.write(position_data, gltf_primitive.position_size);
+                bin_stream.write(position_data, gltf_primitive.position_size);
 
                 cgltf_attribute* normal_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_normal);
                 cgltf_accessor* normal_accessor = normal_attribute->data;
                 cgltf_buffer_view* normal_view = normal_accessor->buffer_view;
                 uint8_t* normal_data = (uint8_t*)(normal_view->buffer->data) + normal_accessor->offset + normal_view->offset;
                 gltf_primitive.normal_size = vertex_count * 3 * sizeof(float);
-                gltf_primitive.normal_offset = bin.get_size();
+                gltf_primitive.normal_offset = bin_stream.get_size();
                 gltf_primitive.vertex_size += gltf_primitive.normal_size;
                 gltf_primitive.total_size += gltf_primitive.normal_size;
-                bin.write(normal_data, gltf_primitive.normal_size);
+                bin_stream.write(normal_data, gltf_primitive.normal_size);
 
                 cgltf_attribute* tangent_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_tangent);
                 cgltf_accessor* tangent_accessor = tangent_attribute->data;
                 cgltf_buffer_view* tangent_view = tangent_accessor->buffer_view;
                 uint8_t* tangent_data = (uint8_t*)(tangent_view->buffer->data) + tangent_accessor->offset + tangent_view->offset;
                 gltf_primitive.tangent_size = vertex_count * 3 * sizeof(float);
-                gltf_primitive.tangent_offset = bin.get_size();
+                gltf_primitive.tangent_offset = bin_stream.get_size();
                 gltf_primitive.vertex_size += gltf_primitive.tangent_size;
                 gltf_primitive.total_size += gltf_primitive.tangent_size;
-                bin.write(tangent_data, gltf_primitive.tangent_size);
+                bin_stream.write(tangent_data, gltf_primitive.tangent_size);
 
                 cgltf_attribute* texcoord_attribute = get_gltf_attribute(cprimitive, cgltf_attribute_type_texcoord);
                 cgltf_accessor* texcoord_accessor = texcoord_attribute->data;
                 cgltf_buffer_view* texcoord_view = texcoord_accessor->buffer_view;
                 uint8_t* uv_data = (uint8_t*)(texcoord_view->buffer->data) + texcoord_accessor->offset + texcoord_view->offset;
                 gltf_primitive.uv0_size = vertex_count * 2 * sizeof(float);
-                gltf_primitive.uv0_offset = bin.get_size();
+                gltf_primitive.uv0_offset = bin_stream.get_size();
                 gltf_primitive.vertex_size += gltf_primitive.uv0_size;
                 gltf_primitive.total_size += gltf_primitive.uv0_size;
-                bin.write(uv_data, gltf_primitive.uv0_size);
+                bin_stream.write(uv_data, gltf_primitive.uv0_size);
 
                 gltf_primitive.uv1_size = vertex_count * 2 * sizeof(float);
-                gltf_primitive.uv1_offset = bin.get_size();
+                gltf_primitive.uv1_offset = bin_stream.get_size();
                 gltf_primitive.vertex_size += gltf_primitive.uv1_size;
                 gltf_primitive.total_size += gltf_primitive.uv1_size;
-                bin.write(uv_data, gltf_primitive.uv1_size);
+                bin_stream.write(uv_data, gltf_primitive.uv1_size);
 
                 cgltf_accessor* index_accessor = cprimitive->indices;
                 cgltf_buffer_view* index_buffer_view = index_accessor->buffer_view;
                 cgltf_buffer* index_buffer = index_buffer_view->buffer;
                 uint8_t* index_data = (uint8_t*)index_buffer->data + index_accessor->offset + index_buffer_view->offset;
                 uint32_t index_count = (uint32_t)index_accessor->count;
+                bool using_16u_index = index_accessor->component_type == cgltf_component_type_r_16u;
+                uint32_t* indices_32 = using_16u_index ? nullptr : (uint32_t*)index_data;
+                uint16_t* indices_16 = using_16u_index ? (uint16_t*)index_data : nullptr;
+
+                gltf_primitive.using_16u_index = using_16u_index;
                 gltf_primitive.index_count = index_count;
-                if (index_accessor->component_type == cgltf_component_type_r_16u)
-                {
-                    gltf_primitive.using_16u_index = true;
-                    gltf_primitive.index_size = index_count * sizeof(uint16_t);
-                    gltf_primitive.index_offset = bin.get_size();
-                    gltf_primitive.total_size += gltf_primitive.index_size;
-                    bin.write(index_data, gltf_primitive.index_size);
-                }
-                else
-                {
-                    gltf_primitive.using_16u_index = false;
-                    gltf_primitive.index_size = index_count * sizeof(uint32_t);
-                    gltf_primitive.index_offset = bin.get_size();
-                    gltf_primitive.total_size += gltf_primitive.index_size;
-                    bin.write(index_data, gltf_primitive.index_size);
-                }
+                gltf_primitive.index_size = using_16u_index ? index_count * sizeof(uint16_t) : index_count * sizeof(uint32_t);
+                gltf_primitive.index_offset = bin_stream.get_size();
+                gltf_primitive.total_size += gltf_primitive.index_size;
+                bin_stream.write(index_data, gltf_primitive.index_size);
 
                 // Load gltf material
                 std::string material_path = "asset://" + output_path + "/materials/" + cmaterial->name;
                 gltf_primitive.material_path = material_path;
                 if (!AssetManager::get()->exist_asset(material_path))
                 {
-                    rapidjson::Document m_doc;
-                    rapidjson::StringBuffer m_str_buffer;
-                    rapidjson::PrettyWriter<rapidjson::StringBuffer> m_writer(m_str_buffer);
-                    m_writer.StartObject();
-                    m_writer.Key("passes");
-                    m_writer.StartArray();
-                    {
-                        m_writer.StartObject();
-                        m_writer.Key("draw_type");
-                        m_writer.Int(DRAW_OPAQUE);
-                        m_writer.Key("vs");
-                        m_writer.String("shader://default.vert");
-                        m_writer.Key("fs");
-                        m_writer.String("shader://default.frag");
-                        m_writer.EndObject();
-                    }
-                    m_writer.EndArray();
-                    m_writer.EndObject();
-                    m_doc.Parse(m_str_buffer.GetString());
-
-                    MaterialAsset* mat = AssetManager::get()->create<MaterialAsset>(material_path);
-                    Serialization::BinaryStream m_bin;
-                    mat->deserialize(m_doc.GetObject(), m_bin);
-                    AssetManager::get()->save(mat);
+                    import_material(material_path, cmaterial);
                 }
 
                 // Load sdf
@@ -337,7 +339,14 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
                 gltf_primitive.sdf_path = sdf_path;
                 if (!AssetManager::get()->exist_asset(sdf_path))
                 {
-
+                    if (using_16u_index)
+                    {
+                        generate_sdf(sdf_path, vertex_count, (float*)position_data, index_count, indices_16);
+                    }
+                    else
+                    {
+                        generate_sdf(sdf_path, vertex_count, (float*)position_data, index_count, indices_32);
+                    }
                 }
 
                 gltf_primitives.push_back(gltf_primitive);
@@ -347,72 +356,45 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
             rapidjson::Document doc;
             rapidjson::StringBuffer str_buffer;
             rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
-            writer.StartObject();
-            writer.Key("data_size");
-            writer.Int(bin.get_size());
-
-            writer.Key("surfaces");
-            writer.StartArray();
-            for (int j = 0; j < gltf_primitives.size(); ++j)
-            {
-                GltfPrimitive& gltf_primitive = gltf_primitives[j];
-                writer.StartObject();
-                writer.Key("total_size");
-                writer.Int(gltf_primitive.total_size);
-                writer.Key("total_offset");
-                writer.Int(gltf_primitive.total_offset);
-                writer.Key("vertex_count");
-                writer.Int(gltf_primitive.vertex_count);
-                writer.Key("vertex_size");
-                writer.Int(gltf_primitive.vertex_size);
-                writer.Key("vertex_offset");
-                writer.Int(gltf_primitive.vertex_offset);
-                writer.Key("position_size");
-                writer.Int(gltf_primitive.position_size);
-                writer.Key("position_offset");
-                writer.Int(gltf_primitive.position_offset);
-                writer.Key("normal_size");
-                writer.Int(gltf_primitive.normal_size);
-                writer.Key("normal_offset");
-                writer.Int(gltf_primitive.normal_offset);
-                writer.Key("tangent_size");
-                writer.Int(gltf_primitive.tangent_size);
-                writer.Key("tangent_offset");
-                writer.Int(gltf_primitive.tangent_offset);
-                writer.Key("uv0_size");
-                writer.Int(gltf_primitive.uv0_size);
-                writer.Key("uv0_offset");
-                writer.Int(gltf_primitive.uv0_offset);
-                writer.Key("uv1_size");
-                writer.Int(gltf_primitive.uv1_size);
-                writer.Key("uv1_offset");
-                writer.Int(gltf_primitive.uv1_offset);
-                writer.Key("index_count");
-                writer.Int(gltf_primitive.index_count);
-                writer.Key("index_size");
-                writer.Int(gltf_primitive.index_size);
-                writer.Key("index_offset");
-                writer.Int(gltf_primitive.index_offset);
-                writer.Key("using_16u");
-                writer.Bool(gltf_primitive.using_16u_index);
-                writer.Key("primitive_topology");
-                writer.Int(get_primitive_topology_from_gltf(gltf_primitive.primitive_type));
-                writer.Key("maxp");
-                Serialization::w_vec3(writer, gltf_primitive.bounding_box.bb_max);
-                writer.Key("minp");
-                Serialization::w_vec3(writer, gltf_primitive.bounding_box.bb_min);
-                writer.Key("material");
-                writer.String(gltf_primitive.material_path.c_str());
-                writer.Key("sdf");
-                writer.String(gltf_primitive.sdf_path.c_str());
-                writer.EndObject();
-            }
-            writer.EndArray();
-            writer.EndObject();
+            SerializationContext s_ctx(&writer);
+            s_ctx.object([&]() {
+                s_ctx.field("data_size", bin_stream.get_size());
+                s_ctx.array("surfaces", [&]() {
+                    for (auto& gltf_primitive : gltf_primitives)
+                    {
+                        s_ctx.object([&]() {
+                            s_ctx.field("total_size", gltf_primitive.total_size);
+                            s_ctx.field("total_offset", gltf_primitive.total_offset);
+                            s_ctx.field("vertex_count", gltf_primitive.vertex_count);
+                            s_ctx.field("vertex_size", gltf_primitive.vertex_size);
+                            s_ctx.field("vertex_offset", gltf_primitive.vertex_offset);
+                            s_ctx.field("position_size", gltf_primitive.position_size);
+                            s_ctx.field("position_offset", gltf_primitive.position_offset);
+                            s_ctx.field("normal_size", gltf_primitive.normal_size);
+                            s_ctx.field("normal_offset", gltf_primitive.normal_offset);
+                            s_ctx.field("tangent_size", gltf_primitive.tangent_size);
+                            s_ctx.field("tangent_offset", gltf_primitive.tangent_offset);
+                            s_ctx.field("uv0_size", gltf_primitive.uv0_size);
+                            s_ctx.field("uv0_offset", gltf_primitive.uv0_offset);
+                            s_ctx.field("uv1_size", gltf_primitive.uv1_size);
+                            s_ctx.field("uv1_offset", gltf_primitive.uv1_offset);
+                            s_ctx.field("index_count", gltf_primitive.index_count);
+                            s_ctx.field("index_size", gltf_primitive.index_size);
+                            s_ctx.field("index_offset", gltf_primitive.index_offset);
+                            s_ctx.field("using_16u", gltf_primitive.using_16u_index);
+                            s_ctx.field("primitive_topology", get_primitive_topology_from_gltf(gltf_primitive.primitive_type));
+                            s_ctx.field("bounds", gltf_primitive.bounding_box);
+                            s_ctx.field("material", gltf_primitive.material_path);
+                            s_ctx.field("sdf", gltf_primitive.sdf_path);
+                        });
+                    }
+                });
+            });
             doc.Parse(str_buffer.GetString());
+            DeserializationContext d_ctx(&doc);
 
             MeshAsset* mesh = AssetManager::get()->create<MeshAsset>(asset_path);
-            mesh->deserialize(doc.GetObject(), bin);
+            mesh->deserialize(d_ctx, bin_stream);
             AssetManager::get()->save(mesh);
         }
 
@@ -474,61 +456,52 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
         rapidjson::Document doc;
         rapidjson::StringBuffer str_buffer;
         rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(str_buffer);
-        writer.StartObject();
-        writer.Key("hierarchy");
-        writer.StartArray();
-        for (size_t i = 0; i < gltf_nodes.size(); ++i)
-        {
-            if (gltf_nodes[i].has_parent)
-            {
-                writer.StartArray();
-                writer.Int(i); // Child
-                writer.Int(node_helper[gltf_nodes[i].parent_node]); // Parent
-                writer.EndArray();
-            }
-        }
-        writer.EndArray();
+        SerializationContext s_ctx(&writer);
+        s_ctx.object([&]() {
+            s_ctx.array("hierarchy", [&]() {
+                for (size_t i = 0; i < gltf_nodes.size(); ++i)
+                {
+                    if (gltf_nodes[i].has_parent)
+                    {
+                        s_ctx.array("hierarchy", [&]() {
+                            s_ctx.field(i);
+                            s_ctx.field(node_helper[gltf_nodes[i].parent_node]);
+                        });
+                    }
+                }
+            });
 
-        writer.Key("entities");
-        writer.StartArray();
-        for (size_t i = 0; i < gltf_nodes.size(); ++i)
-        {
-            GltfNode& gltf_node = gltf_nodes[i];
-            writer.StartObject();
-            writer.Key("name");
-            writer.String(gltf_node.name.c_str());
+            s_ctx.array("entities", [&]() {
+                for (auto& gltf_node : gltf_nodes)
+                {
+                    s_ctx.object([&]() {
+                        s_ctx.field("name", gltf_node.name);
+                        s_ctx.field("translation", gltf_node.translation);
+                        s_ctx.field("scale", gltf_node.scale);
+                        s_ctx.field("euler", gltf_node.euler);
 
-            writer.Key("translation");
-            Serialization::w_vec3(writer, gltf_node.translation);
-            writer.Key("scale");
-            Serialization::w_vec3(writer, gltf_node.scale);
-            writer.Key("euler");
-            Serialization::w_vec3(writer, gltf_node.euler);
-
-            writer.Key("components");
-            writer.StartArray();
-            if (gltf_node.has_mesh)
-            {
-                writer.StartObject();
-                writer.Key("class_name");
-                writer.String("CMesh");
-                writer.Key("mesh");
-                writer.String(gltf_node.mesh_path.c_str());
-                writer.EndObject();
-            }
-            writer.EndArray();
-            writer.EndObject();
-        }
-        writer.EndArray();
-        writer.EndObject();
+                        s_ctx.array("components", [&]() {
+                            if (gltf_node.has_mesh)
+                            {
+                                s_ctx.object([&]() {
+                                    s_ctx.field("class_name", std::string("CMesh"));
+                                    s_ctx.field("mesh", gltf_node.mesh_path);
+                                });
+                            }
+                        });
+                    });
+                }
+            });
+        });
         doc.Parse(str_buffer.GetString());
+        DeserializationContext d_ctx(&doc);
 
         std::string asset_path = "asset://" + output_path + "/" + data->scene->name;
         if (!AssetManager::get()->exist_asset(asset_path))
         {
-            Serialization::BinaryStream bin;
+            BinaryStream bin_stream;
             Level* level = AssetManager::get()->create<Level>(asset_path);
-            level->deserialize(doc.GetObject(), bin);
+            level->deserialize(d_ctx, bin_stream);
             AssetManager::get()->save(level);
         }
     }

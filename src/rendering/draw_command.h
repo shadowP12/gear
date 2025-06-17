@@ -8,14 +8,12 @@ class Program;
 class VertexFactory;
 class RenderContext;
 
-struct DrawCommand
-{
+struct DrawCommand {
     uint32_t scene_index;
     float distance;
     Program* program;
     VertexFactory* vertex_factory;
-    union
-    {
+    union {
         struct
         {
             uint64_t sort_key;

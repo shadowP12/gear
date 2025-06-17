@@ -1,10 +1,10 @@
 #pragma once
 
-#include "render_constants.h"
 #include "draw_command.h"
 #include "light.h"
-#include <rhi/ez_vulkan.h>
+#include "render_constants.h"
 #include <glm/glm.hpp>
+#include <rhi/ez_vulkan.h>
 #include <string>
 #include <unordered_map>
 
@@ -13,8 +13,7 @@ class Window;
 class RenderContext
 {
 public:
-    enum class CreateStatus
-    {
+    enum class CreateStatus {
         Keep,
         Recreated,
     };

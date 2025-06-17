@@ -1,13 +1,12 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <unordered_map>
 #include "features.h"
 #include "rhi/ez_vulkan.h"
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-struct ProgramParameter
-{
+struct ProgramParameter {
     uint32_t view = 0;
     uint32_t size = 0;
     uint32_t offset = 0;
@@ -16,8 +15,7 @@ struct ProgramParameter
     EzSampler sampler = VK_NULL_HANDLE;
 };
 
-struct ProgramDesc
-{
+struct ProgramDesc {
     std::string vs;
     std::string fs;
     std::string cs;

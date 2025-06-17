@@ -1,6 +1,6 @@
 #include "render_context.h"
-#include <window.h>
 #include <core/hash.h>
+#include <window.h>
 
 std::size_t compute_texture_hash(const EzTextureDesc& desc)
 {
@@ -40,7 +40,7 @@ RenderContext::~RenderContext()
 void RenderContext::collect_info(Window* window)
 {
     viewport_size = window->get_size();
-    screen_size =  glm::uvec2(viewport_size.z, viewport_size.w);
+    screen_size = glm::uvec2(viewport_size.z, viewport_size.w);
 }
 
 EzBuffer RenderContext::get_buffer(const std::string& name)
@@ -60,7 +60,7 @@ EzBuffer RenderContext::create_buffer(const std::string& name, const EzBufferDes
     {
         if (buffer)
         {
-            if ( !fit && buffer->size > desc.size )
+            if (!fit && buffer->size > desc.size)
             {
                 return buffer;
             }

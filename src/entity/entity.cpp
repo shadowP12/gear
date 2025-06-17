@@ -1,8 +1,6 @@
 #include "entity.h"
 
-Entity::Entity()
-{
-}
+Entity::Entity() {}
 
 Entity::~Entity()
 {
@@ -22,48 +20,41 @@ Entity::~Entity()
     _components.clear();
 }
 
-void Entity::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
+void Entity::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
 {
-    writer.StartObject();
-    writer.Key("name");
-    writer.String(_name.c_str());
+    ctx.object([&]() {
+        ctx.field("name", _name);
+        ctx.field("translation", _translation);
+        ctx.field("scale", _scale);
+        ctx.field("euler", _euler);
 
-    writer.Key("translation");
-    Serialization::w_vec3(writer, _translation);
-    writer.Key("scale");
-    Serialization::w_vec3(writer, _scale);
-    writer.Key("euler");
-    Serialization::w_vec3(writer, _euler);
-
-    writer.Key("components");
-    writer.StartArray();
-    for (int i = 0; i < _components.size(); ++i)
-    {
-        _components[i]->serialize(writer, bin);
-    }
-    writer.EndArray();
-    writer.EndObject();
+        ctx.array("components", [&]() {
+            for (auto& component : _components)
+            {
+                component->serialize(ctx, bin_stream);
+            }
+        });
+    });
 }
 
-void Entity::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
+void Entity::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
 {
-    _name = value["name"].GetString();
+    ctx.field("name", _name);
+    ctx.field("translation", _translation);
+    ctx.field("scale", _scale);
+    ctx.field("euler", _euler);
 
-    _translation = Serialization::r_vec3(value["translation"]);
-    _scale = Serialization::r_vec3(value["scale"]);
-    _euler = Serialization::r_vec3(value["euler"]);
     _rot = glm::quat(_euler);
     update_local_transform();
     update_transform();
 
-    for(int i = 0; i < value["components"].Size(); i++)
-    {
-        rapidjson::Value& component_value = value["components"][i];
-        std::string component_class_name = component_value["class_name"].GetString();
+    ctx.array("components", [&]() {
+        std::string component_class_name;
+        ctx.field("class_name", component_class_name);
         EntityComponent* component = EntityComponentFactory::get()->create(this, component_class_name);
-        component->deserialize(component_value, bin);
+        component->deserialize(ctx, bin_stream);
         _components.push_back(component);
-    }
+    });
 }
 
 void Entity::set_name(const std::string& name)
@@ -200,7 +191,8 @@ glm::vec3 Entity::get_front_vector()
 
 glm::vec3 Entity::get_world_translation()
 {
-    return glm::vec3(_world_transform[3][0], _world_transform[3][1], _world_transform[3][2]);
+    glm::vec3 ret(_world_transform[3][0], _world_transform[3][1], _world_transform[3][2]);
+    return ret;
 }
 
 void Entity::update_transform()
@@ -211,9 +203,9 @@ void Entity::update_transform()
         _world_transform = _parent->_world_transform * _local_transform;
     }
 
-    for (int i = 0; i < _children.size(); ++i)
+    for (auto& child : _children)
     {
-        _children[i]->update_transform();
+        child->update_transform();
     }
 
     transform_changed_event.broadcast();

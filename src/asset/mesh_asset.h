@@ -1,9 +1,11 @@
 #pragma once
 
 #include "asset.h"
-#include <rhi/ez_vulkan.h>
-#include <math/bounding_box.h>
 
+#include <math/bounding_box.h>
+#include <rhi/ez_vulkan.h>
+
+class SdfAsset;
 class MaterialAsset;
 
 class MeshAsset : public Asset
@@ -13,14 +15,13 @@ public:
 
     virtual ~MeshAsset();
 
-    virtual void serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin);
+    virtual void serialize(SerializationContext& ctx, BinaryStream& bin_stream);
 
-    virtual void deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin);
+    virtual void deserialize(DeserializationContext& ctx, BinaryStream& bin_stream);
 
     std::vector<uint8_t>& get_data() { return _data; }
 
-    struct Surface
-    {
+    struct Surface {
         uint32_t total_size;
         uint32_t total_offset;
         uint32_t vertex_count;
@@ -41,6 +42,7 @@ public:
         uint32_t index_offset;
         bool using_16u;
         BoundingBox bounding_box;
+        SdfAsset* sdf = nullptr;
         MaterialAsset* material = nullptr;
         VkPrimitiveTopology primitive_topology;
         int vertex_buffer_count = 0;
@@ -49,7 +51,7 @@ public:
         EzBuffer index_buffer = VK_NULL_HANDLE;
     };
 
-    std::vector<Surface*>& get_surfaces() {return _surfaces;}
+    std::vector<Surface*>& get_surfaces() { return _surfaces; }
 
 protected:
     std::vector<uint8_t> _data;

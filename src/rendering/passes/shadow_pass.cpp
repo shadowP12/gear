@@ -1,16 +1,16 @@
 #include "shadow_pass.h"
+#include "rendering/features.h"
+#include "rendering/program.h"
 #include "rendering/render_context.h"
-#include "rendering/renderable.h"
 #include "rendering/render_scene.h"
 #include "rendering/render_shared_data.h"
-#include "rendering/program.h"
-#include "rendering/vertex_factory.h"
-#include "rendering/features.h"
-#include "rendering/utils/render_utils.h"
+#include "rendering/renderable.h"
 #include "rendering/utils/debug_utils.h"
-#include <math/transform_util.h>
-#include <glm/gtx/matrix_decompose.hpp>
+#include "rendering/utils/render_utils.h"
+#include "rendering/vertex_factory.h"
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <math/transform_util.h>
 
 uint32_t k_dimension = 2048;
 
@@ -32,7 +32,8 @@ ShadowPass::ShadowPass()
 }
 
 ShadowPass::~ShadowPass()
-{}
+{
+}
 
 void ShadowPass::setup(RenderContext* ctx)
 {
@@ -132,14 +133,14 @@ void ShadowPass::exec(RenderContext* ctx)
             cascade_split = cs_far;
 
             glm::vec3 cs_view_frustum_corners[8] = {
-                { -1, -1,  -1.0 },
-                {  1, -1,  -1.0 },
-                { -1,  1,  -1.0 },
-                {  1,  1,  -1.0 },
-                { -1, -1,  1.0 },
-                {  1, -1,  1.0 },
-                { -1,  1,  1.0 },
-                {  1,  1,  1.0 },
+                {-1, -1, -1.0},
+                {1, -1, -1.0},
+                {-1, 1, -1.0},
+                {1, 1, -1.0},
+                {-1, -1, 1.0},
+                {1, -1, 1.0},
+                {-1, 1, 1.0},
+                {1, 1, 1.0},
             };
 
             glm::vec3 ws_view_frustum_vertices[8];
@@ -194,7 +195,7 @@ void ShadowPass::exec(RenderContext* ctx)
             std::string label_text = "Render cascade shadow " + std::to_string(i);
             DebugLabel debug_label(label_text.c_str(), DebugLabel::WHITE);
 
-            std::string u_pass_name = "u_csm_pass_"+ std::to_string(i);
+            std::string u_pass_name = "u_csm_pass_" + std::to_string(i);
             glm::uvec2 sm_face(shadow_index, i);
             buffer_desc.size = sizeof(glm::uvec2);
             EzBuffer u_pass = ctx->create_buffer(u_pass_name, buffer_desc, false);
@@ -293,7 +294,7 @@ void ShadowPass::convert_to_vsm(RenderContext* ctx)
         {
             std::string label_text = "Convert vsm " + std::to_string(i);
             DebugLabel debug_label(label_text.c_str(), DebugLabel::WHITE);
-            std::string u_pass_name = "u_csm_pass_"+ std::to_string(i);
+            std::string u_pass_name = "u_csm_pass_" + std::to_string(i);
             EzBuffer u_pass = ctx->get_buffer(u_pass_name);
 
             // Convert

@@ -1,48 +1,38 @@
 #include "c_camera.h"
-#include "world.h"
-#include "viewport.h"
 #include "entity/entity.h"
 #include "rendering/render_scene.h"
-#include <glm/gtx/matrix_decompose.hpp>
+#include "viewport.h"
+#include "world.h"
+
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 CCamera::CCamera(Entity* entity)
-    : CRender(entity)
+    : CRender(entity) {}
+
+CCamera::~CCamera() {}
+
+void CCamera::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
 {
+    ctx.object([&]() {
+        ctx.field("class_name",get_class_name());
+        ctx.field("near", _near);
+        ctx.field("far", _far);
+        ctx.field("fov", _fov);
+        ctx.field("exposure", _exposure);
+        ctx.field("usage", _usage);
+        ctx.field("mode", _mode);
+    });
 }
 
-CCamera::~CCamera()
+void CCamera::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
 {
-}
-
-void CCamera::serialize(rapidjson::PrettyWriter<rapidjson::StringBuffer>& writer, Serialization::BinaryStream& bin)
-{
-    writer.StartObject();
-    writer.Key("class_name");
-    writer.String(get_class_name().c_str());
-    writer.Key("near");
-    writer.Double(_near);
-    writer.Key("far");
-    writer.Double(_far);
-    writer.Key("fov");
-    writer.Double(_fov);
-    writer.Key("exposure");
-    writer.Double(_exposure);
-    writer.Key("usage");
-    writer.Int(int(_usage));
-    writer.Key("mode");
-    writer.Int(int(_mode));
-    writer.EndObject();
-}
-
-void CCamera::deserialize(rapidjson::Value& value, Serialization::BinaryStream& bin)
-{
-    _near = value["near"].GetDouble();
-    _far = value["far"].GetDouble();
-    _fov = value["fov"].GetDouble();
-    _exposure = value["exposure"].GetDouble();
-    _usage = ViewUsageFlags(value["usage"].GetInt());
-    _mode = ProjectionMode(value["mode"].GetInt());
+    ctx.field("near", _near);
+    ctx.field("far", _far);
+    ctx.field("fov", _fov);
+    ctx.field("exposure", _exposure);
+    ctx.field("usage", _usage);
+    ctx.field("mode", _mode);
 }
 
 glm::mat4 CCamera::get_proj_matrix()
@@ -112,8 +102,7 @@ void CCamera::set_exposure(float exposure)
 
 void CCamera::predraw()
 {
-    auto change_view_func = [&](int view_id)
-    {
+    auto change_view_func = [&](int view_id) {
         g_scene->view[view_id].model = TransformUtil::remove_scale(_entity->get_world_transform());
         g_scene->view[view_id].view = glm::inverse(g_scene->view[view_id].model);
         g_scene->view[view_id].proj = get_proj_matrix();
@@ -123,7 +112,7 @@ void CCamera::predraw()
 
         g_scene->view[view_id].zn = get_near();
         g_scene->view[view_id].zf = get_far();
-        g_scene->view[view_id].exposure =  get_exposure();
+        g_scene->view[view_id].exposure = get_exposure();
 
         g_scene->view[view_id].proj_model = get_proj_mode();
     };

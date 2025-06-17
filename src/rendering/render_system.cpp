@@ -1,11 +1,11 @@
 #include "render_system.h"
+#include "debug_renderer.h"
+#include "imgui_renderer.h"
+#include "program.h"
 #include "render_context.h"
 #include "render_scene.h"
-#include "renderer.h"
-#include "imgui_renderer.h"
-#include "debug_renderer.h"
 #include "render_shared_data.h"
-#include "program.h"
+#include "renderer.h"
 #include "window.h"
 #include <core/memory.h>
 
@@ -84,12 +84,12 @@ void RenderSystem::render(Window* window)
         copy_region.srcSubresource.layerCount = 1;
         copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         copy_region.dstSubresource.layerCount = 1;
-        copy_region.extent = { swapchain->width, swapchain->height, 1 };
+        copy_region.extent = {swapchain->width, swapchain->height, 1};
         ez_copy_image(out_rt, swapchain, copy_region);
     }
 
     // Present
-    VkImageMemoryBarrier2 present_barrier[] = { ez_image_barrier(swapchain, EZ_RESOURCE_STATE_PRESENT) };
+    VkImageMemoryBarrier2 present_barrier[] = {ez_image_barrier(swapchain, EZ_RESOURCE_STATE_PRESENT)};
     ez_pipeline_barrier(0, 0, nullptr, 1, present_barrier);
     ez_present(swapchain);
 }

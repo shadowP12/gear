@@ -1,12 +1,12 @@
 #include "renderer.h"
-#include "render_scene.h"
+#include "passes/light_cluster_pass.h"
+#include "passes/post_process_pass.h"
+#include "passes/shadow_pass.h"
 #include "render_context.h"
-#include "vertex_factory.h"
+#include "render_scene.h"
 #include "utils/debug_utils.h"
 #include "utils/render_utils.h"
-#include "passes/light_cluster_pass.h"
-#include "passes/shadow_pass.h"
-#include "passes/post_process_pass.h"
+#include "vertex_factory.h"
 
 Renderer::Renderer()
 {
@@ -85,7 +85,7 @@ void Renderer::setup(RenderContext* ctx)
     EzBuffer frame_ub = ctx->create_buffer("u_frame", buffer_desc);
     update_render_buffer(frame_ub, EZ_RESOURCE_STATE_SHADER_RESOURCE, sizeof(FrameConstants), 0, (uint8_t*)&frame_constants);
 
-    buffer_desc.size = sizeof(SceneInstanceData) * g_scene->scene_insts.size();
+    buffer_desc.size = sizeof(SceneInstanceData) * glm::max((size_t)1, g_scene->scene_insts.size());
     EzBuffer scene_ub = ctx->create_buffer("u_scene", buffer_desc, false);
     update_render_buffer(scene_ub, EZ_RESOURCE_STATE_SHADER_RESOURCE, sizeof(SceneInstanceData) * g_scene->scene_insts.size(), 0, (uint8_t*)g_scene->scene_insts.data());
 
@@ -170,7 +170,7 @@ void Renderer::copy_to_screen(RenderContext* ctx)
     copy_region.srcSubresource.layerCount = 1;
     copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     copy_region.dstSubresource.layerCount = 1;
-    copy_region.extent = { out_color_rt->width, out_color_rt->height, 1 };
+    copy_region.extent = {out_color_rt->width, out_color_rt->height, 1};
     ez_copy_image(final_rt_rt, out_color_rt, copy_region);
 }
 

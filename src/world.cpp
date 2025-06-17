@@ -1,9 +1,9 @@
 #include "world.h"
 #include "asset/level.h"
-#include "entity/entity.h"
-#include "entity/components/c_mesh.h"
 #include "entity/components/c_camera.h"
 #include "entity/components/c_light.h"
+#include "entity/components/c_mesh.h"
+#include "entity/entity.h"
 
 World::World()
 {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <rhi/ez_vulkan.h>
 #include <memory>
+#include <rhi/ez_vulkan.h>
 
 class Program;
 class RenderContext;

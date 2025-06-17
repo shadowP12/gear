@@ -1,8 +1,8 @@
 #pragma once
 #include "../draw_command.h"
 #include <math/bounding_box.h>
-#include <rhi/ez_vulkan.h>
 #include <memory>
+#include <rhi/ez_vulkan.h>
 
 #define SHADOW_CASCADE_COUNT 3
 
@@ -10,8 +10,7 @@ class Program;
 class Renderable;
 class RenderContext;
 
-struct PerShadowInfo
-{
+struct PerShadowInfo {
     glm::mat4 light_matrixs[6];
     glm::vec4 cascade_splits;
 };

@@ -2,9 +2,10 @@
 
 #include <core/event.h>
 #include <core/module.h>
-#include <core/serializable.h>
-#include <map>
+#include <serialization/serializable.h>
+
 #include <functional>
+#include <map>
 
 class Entity;
 class EntityComponent : public Serializable
