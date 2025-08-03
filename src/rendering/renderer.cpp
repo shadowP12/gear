@@ -85,10 +85,6 @@ void Renderer::setup(RenderContext* ctx)
     EzBuffer frame_ub = ctx->create_buffer("u_frame", buffer_desc);
     update_render_buffer(frame_ub, EZ_RESOURCE_STATE_SHADER_RESOURCE, sizeof(FrameConstants), 0, (uint8_t*)&frame_constants);
 
-    buffer_desc.size = sizeof(SceneInstanceData) * glm::max((size_t)1, g_scene->scene_insts.size());
-    EzBuffer scene_ub = ctx->create_buffer("u_scene", buffer_desc, false);
-    update_render_buffer(scene_ub, EZ_RESOURCE_STATE_SHADER_RESOURCE, sizeof(SceneInstanceData) * g_scene->scene_insts.size(), 0, (uint8_t*)g_scene->scene_insts.data());
-
     // Prepare drawlist
     for (int i = 0; i < DRAW_MAXCOUNT; ++i)
     {

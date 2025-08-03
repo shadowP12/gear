@@ -2,9 +2,13 @@
 
 #include "features.h"
 #include "rhi/ez_vulkan.h"
+
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#define MAX_PROGRAM_TEX_ARRAY 8
 
 struct ProgramParameter {
     uint32_t view = 0;
@@ -13,6 +17,8 @@ struct ProgramParameter {
     EzBuffer buffer = VK_NULL_HANDLE;
     EzTexture texture = VK_NULL_HANDLE;
     EzSampler sampler = VK_NULL_HANDLE;
+    EzTexture texture_array[MAX_PROGRAM_TEX_ARRAY];
+    uint32_t texture_views[MAX_PROGRAM_TEX_ARRAY];
 };
 
 struct ProgramDesc {
@@ -45,6 +51,8 @@ public:
     void set_parameter(const std::string& name, EzTexture texture, uint32_t view = 0);
 
     void set_parameter(const std::string& name, EzTexture texture, EzSampler sampler, uint32_t view = 0);
+
+    //void set_parameter(const std::string& name, std::span<EzTexture> textures, std::span<uint32_t> views, EzSampler sampler);
 
 private:
     void init_parameters();

@@ -1,9 +1,9 @@
 #include "sdf_asset.h"
 
-SdfAsset::SdfAsset(const std::string& asset_path)
+SDFAsset::SDFAsset(const std::string& asset_path)
     : Asset(asset_path) {}
 
-SdfAsset::~SdfAsset()
+SDFAsset::~SDFAsset()
 {
     if (_texture)
     {
@@ -11,7 +11,7 @@ SdfAsset::~SdfAsset()
     }
 }
 
-void SdfAsset::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
+void SDFAsset::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
 {
     ctx.object([&]() {
         ctx.field("data_size", _data.size());
@@ -24,7 +24,7 @@ void SdfAsset::serialize(SerializationContext& ctx, BinaryStream& bin_stream)
     bin_stream.write(_data.data(), _data.size());
 }
 
-void SdfAsset::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
+void SDFAsset::deserialize(DeserializationContext& ctx, BinaryStream& bin_stream)
 {
     uint32_t data_size;
     ctx.field("data_size", data_size);

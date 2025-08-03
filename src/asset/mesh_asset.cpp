@@ -11,6 +11,12 @@ EzBuffer create_mesh_buffer(void* data, uint32_t data_size, VkBufferUsageFlags u
     EzBufferDesc buffer_desc = {};
     buffer_desc.size = data_size;
     buffer_desc.usage = usage | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if (ez_support_feature(EZ_FEATURE_RAYTRACING))
+    {
+        buffer_desc.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+        buffer_desc.usage |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
+    }
+
     buffer_desc.memory_usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     EzResourceState flag = EZ_RESOURCE_STATE_UNDEFINED;
@@ -34,6 +40,30 @@ void generate_surface_buffer(MeshAsset::Surface* surface, uint8_t* data)
     surface->index_count = surface->index_count;
     surface->index_type = surface->using_16u ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32;
     surface->index_buffer = create_mesh_buffer(data + surface->index_offset, surface->index_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
+    if (ez_support_feature(EZ_FEATURE_RAYTRACING))
+    {
+        EzAccelerationStructureBuildInfo blas_info = {};
+        blas_info.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+        blas_info.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR;
+        blas_info.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+
+        EzAccelerationStructureTriangles triangles;
+        triangles.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+        triangles.vertex_format = VK_FORMAT_R32G32B32_SFLOAT;
+        triangles.vertex_count = surface->vertex_count;
+        triangles.vertex_offset = 0;
+        triangles.vertex_stride = sizeof(glm::vec3);
+        triangles.vertex_buffer = surface->vertex_buffers[0];
+        triangles.index_type = surface->index_type;
+        triangles.index_count = surface->index_count;
+        triangles.index_offset = 0;
+        triangles.index_buffer = surface->index_buffer;
+        blas_info.geometry_set.triangles.push_back(triangles);
+
+        ez_create_acceleration_structure(blas_info, surface->blas);
+        ez_build_acceleration_structure(blas_info, surface->blas);
+    }
 }
 
 MeshAsset::MeshAsset(const std::string& asset_path)
@@ -50,6 +80,10 @@ MeshAsset::~MeshAsset()
         if (surface->index_buffer)
         {
             ez_destroy_buffer(surface->index_buffer);
+        }
+        if (surface->blas)
+        {
+            ez_destroy_acceleration_structure(surface->blas);
         }
 
         SAFE_DELETE(surface);
@@ -141,7 +175,7 @@ void MeshAsset::deserialize(DeserializationContext& ctx, BinaryStream& bin_strea
         {
             std::string sdf_url;
             ctx.field("sdf", sdf_url);
-            surface->sdf = AssetManager::get()->load<SdfAsset>(sdf_url);
+            surface->sdf = AssetManager::get()->load<SDFAsset>(sdf_url);
         }
 
         _surfaces.push_back(surface);

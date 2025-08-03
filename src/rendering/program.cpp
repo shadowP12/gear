@@ -193,6 +193,19 @@ void Program::set_parameter(const std::string& name, EzTexture texture, EzSample
     _parameters[binding].view = view;
 }
 
+/*
+void Program::set_parameter(const std::string& name, std::span<EzTexture> textures, std::span<uint32_t> views, EzSampler sampler)
+{
+    uint32_t binding = _parameters_lookup[name];
+    for (size_t i = 0; i < textures.size(); ++i)
+    {
+        _parameters[binding].texture_array[i] = textures[i];
+        _parameters[binding].texture_views[i] = views[i];
+    }
+    _parameters[binding].sampler = sampler;
+}
+ */
+
 void ProgramPool::add_program(Program* program)
 {
     _programs.push_back(program);

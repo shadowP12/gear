@@ -8,7 +8,7 @@
 #define SDF_RESOLUTION 32
 
 template<typename T>
-SdfAsset* generate_sdf_imp(const std::string& path, uint32_t vertex_count, float* vertices, uint32_t index_count, T* indices)
+SDFAsset* generate_sdf_imp(const std::string& path, uint32_t vertex_count, float* vertices, uint32_t index_count, T* indices)
 {
     BoundingBox bounds;
     for (int i = 0; i < vertex_count; ++i)
@@ -141,7 +141,7 @@ SdfAsset* generate_sdf_imp(const std::string& path, uint32_t vertex_count, float
     // Bin stream
     BinaryStream bin_stream(voxel_data);
 
-    SdfAsset* sdf = AssetManager::get()->create<SdfAsset>(path);
+    SDFAsset* sdf = AssetManager::get()->create<SDFAsset>(path);
     sdf->deserialize(d_ctx, bin_stream);
     AssetManager::get()->save(sdf);
 
@@ -149,7 +149,7 @@ SdfAsset* generate_sdf_imp(const std::string& path, uint32_t vertex_count, float
 }
 
 #define IMPLEMENT_SDF_GENERATE(IndexType)                                                       \
-    SdfAsset* generate_sdf(const std::string& path,                                             \
+    SDFAsset* generate_sdf(const std::string& path,                                             \
                            uint32_t vertex_count,                                               \
                            float* vertices,                                                     \
                            uint32_t index_count,                                                \

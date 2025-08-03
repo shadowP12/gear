@@ -66,6 +66,7 @@ void RenderSystem::render(Window* window)
         }
     }
 
+    g_scene->predraw(_ctx);
     g_renderer->render(_ctx);
     g_debug_renderer->render(_ctx);
     g_imgui_renderer->render(_ctx, window);

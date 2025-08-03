@@ -5,12 +5,12 @@
 #include <math/bounding_box.h>
 #include <rhi/ez_vulkan.h>
 
-class SdfAsset : public Asset
+class SDFAsset : public Asset
 {
 public:
-    SdfAsset(const std::string& asset_path = "");
+    SDFAsset(const std::string& asset_path = "");
 
-    virtual ~SdfAsset();
+    virtual ~SDFAsset();
 
     virtual void serialize(SerializationContext& ctx, BinaryStream& bin_stream);
 

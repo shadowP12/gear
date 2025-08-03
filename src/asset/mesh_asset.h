@@ -5,7 +5,7 @@
 #include <math/bounding_box.h>
 #include <rhi/ez_vulkan.h>
 
-class SdfAsset;
+class SDFAsset;
 class MaterialAsset;
 
 class MeshAsset : public Asset
@@ -42,13 +42,14 @@ public:
         uint32_t index_offset;
         bool using_16u;
         BoundingBox bounding_box;
-        SdfAsset* sdf = nullptr;
+        SDFAsset* sdf = nullptr;
         MaterialAsset* material = nullptr;
         VkPrimitiveTopology primitive_topology;
         int vertex_buffer_count = 0;
         EzBuffer vertex_buffers[EZ_NUM_VERTEX_BUFFERS];
         VkIndexType index_type;
         EzBuffer index_buffer = VK_NULL_HANDLE;
+        EzAccelerationStructure blas = VK_NULL_HANDLE;
     };
 
     std::vector<Surface*>& get_surfaces() { return _surfaces; }

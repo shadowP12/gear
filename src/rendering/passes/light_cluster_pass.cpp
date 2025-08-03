@@ -61,7 +61,6 @@ void LightClusterPass::exec(RenderContext* ctx)
     */
 
     uint32_t update_lit_count = 0;
-
     EzBufferDesc buffer_desc{};
     buffer_desc.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     buffer_desc.memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;

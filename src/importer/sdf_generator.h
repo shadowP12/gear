@@ -1,12 +1,13 @@
 #pragma once
 
 #include <math/bounding_box.h>
+
 #include <string>
 
-class SdfAsset;
+class SDFAsset;
 
 #define DECLARE_SDF_GENERATE(IndexType)             \
-    SdfAsset* generate_sdf(const std::string& path, \
+    SDFAsset* generate_sdf(const std::string& path, \
                            uint32_t vertex_count,   \
                            float* vertices,         \
                            uint32_t index_count,    \

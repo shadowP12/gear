@@ -333,19 +333,22 @@ void GltfImporter::import_asset(const std::string& file_path, const std::string&
                 }
 
                 // Load sdf
-                std::string sdf_name = std::string(cmesh->name) + "/_" + std::to_string(i);
-                std::string sdf_path = "asset://" + output_path + "/sdfs/" + sdf_name;
-
-                gltf_primitive.sdf_path = sdf_path;
-                if (!AssetManager::get()->exist_asset(sdf_path))
+                if(false)
                 {
-                    if (using_16u_index)
+                    std::string sdf_name = std::string(cmesh->name) + "/_" + std::to_string(i);
+                    std::string sdf_path = "asset://" + output_path + "/sdfs/" + sdf_name;
+                    gltf_primitive.sdf_path = sdf_path;
+
+                    if (!AssetManager::get()->exist_asset(sdf_path))
                     {
-                        generate_sdf(sdf_path, vertex_count, (float*)position_data, index_count, indices_16);
-                    }
-                    else
-                    {
-                        generate_sdf(sdf_path, vertex_count, (float*)position_data, index_count, indices_32);
+                        if (using_16u_index)
+                        {
+                            generate_sdf(sdf_path, vertex_count, (float*)position_data, index_count, indices_16);
+                        }
+                        else
+                        {
+                            generate_sdf(sdf_path, vertex_count, (float*)position_data, index_count, indices_32);
+                        }
                     }
                 }
 

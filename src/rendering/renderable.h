@@ -1,6 +1,7 @@
 #pragma once
 
 #include "render_constants.h"
+
 #include <math/bounding_box.h>
 #include <rhi/ez_vulkan.h>
 
@@ -15,4 +16,12 @@ struct Renderable {
     glm::mat4 transform;
     BoundingBox bounding_box;
     BoundingBox local_bounding_box;
+};
+
+struct SDFObject {
+    glm::vec3 local_to_uvw_mul;
+    glm::vec3 local_to_uvw_add;
+    uint32_t resolution;
+    BoundingBox bounds;
+    EzTexture texture;
 };

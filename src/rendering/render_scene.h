@@ -23,6 +23,8 @@ public:
 
     ~RenderScene();
 
+    void predraw(RenderContext* ctx);
+
 public:
     // Views
     RenderView view[2];
@@ -34,9 +36,15 @@ public:
 
     // Renderables
     ObjectPool<Renderable> renderables;
+    ObjectPool<SDFObject> sdf_objects;
+    ObjectPool<VkAccelerationStructureInstanceKHR> as_instances;
 
     // Scene instances
     ObjectPool<SceneInstanceData> scene_insts;
+
+    // AS
+    bool tlas_dirty = false;
+    EzAccelerationStructure tlas = VK_NULL_HANDLE;
 };
 
 extern RenderScene* g_scene;
